@@ -146,3 +146,12 @@ enum TestStatus {
   Completed
   Cancelled
 }
+
+model AuthUser {
+  id        Int      @id @default(autoincrement())
+  userId    String   @unique // Alphanumeric user ID
+  password  String
+  role      String   // frontdesk, dataentry, doctor, admin, patient
+  createdAt DateTime @default(now())
+  isOnline  Boolean  @default(false)
+}
