@@ -33,38 +33,40 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit }) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 w-full max-w-md mx-auto mt-20 p-8 bg-white border border-gray-200 rounded-2xl shadow-lg"
+      className="space-y-8 w-full max-w-lg mx-auto mt-24 p-10 bg-white border border-gray-200 rounded-2xl shadow-2xl"
     >
-      <h2 className="text-2xl font-bold text-center text-gray-800">
+      <h2 className="text-3xl font-bold text-center text-gray-800">
         {type === "login" ? "Login" : "Sign Up"}
       </h2>
 
-      <div className="space-y-2">
-        <Label htmlFor="userId">User ID</Label>
+      <div className="space-y-3">
+        <Label htmlFor="userId" className="text-lg">User ID</Label>
         <Input
           id="userId"
           type="text"
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
           required
+          className="text-base"
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
+      <div className="space-y-3">
+        <Label htmlFor="password" className="text-lg">Password</Label>
         <Input
           id="password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          className="text-base"
         />
       </div>
 
-      <div className="space-y-2">
-        <Label>User Role</Label>
+      <div className="space-y-3">
+        <Label className="text-lg">User Role</Label>
         <Select value={role} onValueChange={setRole}>
-          <SelectTrigger>
+          <SelectTrigger className="text-base">
             <SelectValue placeholder="Select user role" />
           </SelectTrigger>
           <SelectContent>
@@ -77,11 +79,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit }) => {
         </Select>
       </div>
 
-      <Button type="submit" className="w-full text-base py-2">
+      <Button type="submit" className="w-full text-lg py-3">
         {type === "login" ? "Log In" : "Sign Up"}
       </Button>
 
-      <div className="text-sm text-center text-gray-600">
+      <div className="text-md text-center text-gray-600">
         {type === "login" ? (
           <>
             Don’t have an account?{" "}
