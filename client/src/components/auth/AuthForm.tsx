@@ -1,77 +1,114 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import React, { useState } from "react"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
+import {
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectItem,
+} from "@/components/ui/select"
 
-type AuthFormProps = {
-  type: "login" | "signup"
-  onSubmit: (data: { email: string; password: string }) => void
+interface AuthFormProps {
+    onSubmit: (
+        email: string,
+        password: string,
+        role: string,
+        type: "login" | "signup"
+    ) => void
 }
 
-export default function AuthForm({ type, onSubmit }: AuthFormProps) {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+const AuthForm: React.FC<AuthFormProps> = ({ onSubmit }) => {
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [role, setRole] = useState("patient")
+    const [type, setType] = useState<"login" | "signup">("login")
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit({ email, password })
-  }
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        onSubmit(email, password, role, type)
+    }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <Card className="w-full max-w-md shadow-md p-6">
-        <CardHeader className="text-center text-2xl font-semibold capitalize mb-4">
-          {type === "login" ? "Login to your account" : "Create an account"}
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+    return (
+        <form
+            onSubmit={handleSubmit}
+            className="space-y-6 w-full max-w-md mx-auto mt-20 p-8 bg-white border border-gray-200 rounded-2xl shadow-lg"
+        >
+            <h2 className="text-2xl font-bold text-center text-gray-800">
+                {type === "login" ? "Login" : "Sign Up"}
+            </h2>
+
+            <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
             </div>
 
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+            <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                />
             </div>
 
-            <Button className="w-full mt-2" type="submit">
-              {type === "login" ? "Login" : "Sign Up"}
+            <div className="space-y-2">
+                <Label>User Role</Label>
+                <Select value={role} onValueChange={setRole}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select user role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="frontdesk">Front Desk Operator</SelectItem>
+                        <SelectItem value="dataentry">Data Entry Operator</SelectItem>
+                        <SelectItem value="doctor">Doctor</SelectItem>
+                        <SelectItem value="admin">Database Administrator</SelectItem>
+                        <SelectItem value="patient">Patient</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <Button type="submit" className="w-full text-base py-2">
+                {type === "login" ? "Log In" : "Sign Up"}
             </Button>
-          </form>
 
-          <div className="text-sm text-center text-gray-600 mt-4">
-            {type === "login" ? (
-              <p>
-                Don't have an account?{" "}
-                <a href="/signup" className="text-blue-600 hover:underline">
-                  Sign up
-                </a>
-              </p>
-            ) : (
-              <p>
-                Already have an account?{" "}
-                <a href="/" className="text-blue-600 hover:underline">
-                  Log in
-                </a>
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
+            <div className="text-sm text-center text-gray-600">
+                {type === "login" ? (
+                    <>
+                        Don’t have an account?{" "}
+                        <button
+                            type="button"
+                            className="text-blue-600 hover:underline"
+                            onClick={() => setType("signup")}
+                        >
+                            Sign Up
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        Already have an account?{" "}
+                        <button
+                            type="button"
+                            className="text-blue-600 hover:underline"
+                            onClick={() => setType("login")}
+                        >
+                            Log In
+                        </button>
+                    </>
+                )}
+            </div>
+        </form>
+
+    )
 }
+
+export default AuthForm

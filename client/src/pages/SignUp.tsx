@@ -1,15 +1,22 @@
-// src/pages/Signup.tsx
-import { useNavigate } from "react-router-dom"
+import React from "react"
 import AuthForm from "../components/auth/AuthForm"
 
-export default function Signup() {
-  const navigate = useNavigate()
-
-  const handleSignup = ({ email, password }: { email: string; password: string }) => {
-    console.log("Signing up with:", email, password)
-    // Replace this with actual signup logic (e.g., Supabase Auth)
-    navigate("/dashboard") // Redirect after successful signup
+const SignUp = () => {
+  const handleAuth = (
+    email: string,
+    password: string,
+    role: string,
+    type: "login" | "signup"
+  ) => {
+    console.log(`SIGNUP as ${role}:`, { email, password })
+    // Replace with your signup API logic here
   }
 
-  return <AuthForm type="signup" onSubmit={handleSignup} />
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <AuthForm onSubmit={handleAuth} />
+    </div>
+  )
 }
+
+export default SignUp
