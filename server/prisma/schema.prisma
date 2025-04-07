@@ -11,4 +11,138 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Patient {
+  P_ID               Int       @id @default(autoincrement())
+  name               String
+  address            String?
+  DOB                DateTime
+  Sex                Gender    @default(M)
+  mail               String?
+  phone_no           String
+  emergency_phone_no String
+  medicalHistory     MedicalHistory[]
+  allergies          Allergy[]
+  appointments       Appointment[]
+  admissions         Admit[]
+}
+
+model Doctor {
+  D_ID           Int       @id @default(autoincrement())
+  name           String
+  specialization String
+  mail           String?
+  phone          String
+  shift          String?
+  available      Boolean   @default(true)
+  appointments   Appointment[]
+}
+
+model TestsAvailable {
+  T_ID            Int     @id @default(autoincrement())
+  test_name       String
+  count_available Int
+
+  Test Test[]
+}
+
+model TreatmentsAvailable {
+  Tr_ID           Int     @id @default(autoincrement())
+  treatment_name  String
+
+  Treatment Treatment[]
+}
+
+model Ward {
+  W_No            Int     @id @default(autoincrement())
+  Room_Type       RoomType
+  beds_available  Int
+
+  Admit Admit[]
+}
+
+model Appointment {
+  A_ID            Int       @id @default(autoincrement())
+  patient         Patient   @relation(fields: [P_ID], references: [P_ID])
+  doctor          Doctor    @relation(fields: [D_ID], references: [D_ID])
+  P_ID            Int
+  D_ID            Int
+  TimeStamp       DateTime
+  Diagnosis       String?
+  tests           Test[]
+
+  Treatment Treatment[]
+}
+
+model Treatment {
+  treatment_id    Int                 @id @default(autoincrement())
+  // appointment     Appointment         @relation(fields: [A_ID], references: [A_ID])
+  appointment     Appointment         @relation(fields: [A_ID], references: [A_ID])
+  A_ID            Int
+  treatment       TreatmentsAvailable @relation(fields: [Tr_ID], references: [Tr_ID])
+  Tr_ID           Int
+  Dosage          String?
+  Duration        String?
+}
+
+model Test {
+  test_id         Int             @id @default(autoincrement())
+  appointment     Appointment     @relation(fields: [A_ID], references: [A_ID])
+  A_ID            Int
+  test            TestsAvailable  @relation(fields: [T_ID], references: [T_ID])
+  T_ID            Int
+  TimeStamp       DateTime
+  Status          TestStatus
+}
+
+model Admit {
+  admit_id        Int       @id @default(autoincrement())
+  patient         Patient   @relation(fields: [P_ID], references: [P_ID])
+  P_ID            Int
+  ward            Ward      @relation(fields: [Ward_No], references: [W_No])
+  Ward_No         Int
+  admit_time      DateTime
+  discharge_time  DateTime?
+}
+
+model Disease {
+  disease_id      Int       @id @default(autoincrement())
+  Disease_Name    String
+  Description     String?
+
+  MedicalHistory MedicalHistory[]
+}
+
+model MedicalHistory {
+  history_id      Int       @id @default(autoincrement())
+  patient         Patient   @relation(fields: [P_ID], references: [P_ID])
+  P_ID            Int
+  disease         Disease   @relation(fields: [disease_id], references: [disease_id])
+  disease_id      Int
+}
+
+model Allergy {
+  allergy_id      Int       @id @default(autoincrement())
+  patient         Patient   @relation(fields: [P_ID], references: [P_ID])
+  P_ID            Int
+}
+
+enum Gender {
+  M
+  F
+  O
+}
+
+enum RoomType {
+  General
+  ICU
+  Maternity
+}
+
+enum TestStatus {
+  Pending
+  Completed
+  Cancelled
 }
