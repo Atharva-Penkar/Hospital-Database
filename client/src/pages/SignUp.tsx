@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import AuthForm from "../components/auth/AuthForm";
+import { toast } from "sonner";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -18,11 +19,18 @@ const SignUp = () => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Signup failed");
-      console.log("Signup response:", data);
+
+      localStorage.setItem("userId", data.user.userId);
+
+      toast.success("Signup successful!", {
+        className: "bg-emerald-500 text-white",
+      });      
       navigate("/home");
     } catch (err: any) {
       console.error("Signup error:", err);
-      alert("Signup failed: " + err.message);
+      toast.error("Signup failed: " + err.message, {
+        className: "bg-rose-500 text-white",
+      });      
     }
   };
 
