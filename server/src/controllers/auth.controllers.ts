@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export const signupUser = async (req: Request, res: Response) => {
   try {
     const { userId, password, role } = req.body;
-
+    console.log("received body: ", req.body)
     if (!userId || !password || !role) {
       return res.status(400).json({ message: "Missing required fields" });
     }
@@ -37,7 +37,7 @@ export const signupUser = async (req: Request, res: Response) => {
 export const loginUser = async (req: Request, res: Response) => {
   try {
     const { userId, password } = req.body;
-
+    console.log("received body: ", req.body)
     if (!userId || !password) {
       return res.status(400).json({ message: "Missing userId or password" });
     }
@@ -67,7 +67,7 @@ export const loginUser = async (req: Request, res: Response) => {
 export const logoutUser = async (req: Request, res: Response) => {
   try {
     const { userId } = req.body;
-
+    console.log("received body: ", req.body)
     if (!userId) {
       return res.status(400).json({ message: "Missing userId in request body" });
     }

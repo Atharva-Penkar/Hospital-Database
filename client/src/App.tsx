@@ -1,22 +1,19 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
-import Login from "./pages/Login"
-import Signup from "./pages/SignUp"
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import Login  from "./pages/Login";
+import SignUp from "./pages/SignUp";
+import Home   from "./pages/Home";
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Redirect root path to /login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
-
-        {/* Login and Signup routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-
-        {/* Add more routes like /dashboard etc. as needed */}
+        <Route path="/"      element={<Navigate to="/login" replace />} />
+        <Route path="/login"  element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/home"   element={<Home />} />
       </Routes>
     </Router>
-  )
+  );
 }
 
-export default App
+export default App;

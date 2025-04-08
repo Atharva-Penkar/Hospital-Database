@@ -1,14 +1,16 @@
-import React, { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
+// client/src/components/auth/AuthForm.tsx
+import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Input }  from "../ui/input";
+import { Button } from "../ui/button";
+import { Label }  from "../ui/label";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/ui/select"
+} from "../ui/select";
 
 interface AuthFormProps {
   onSubmit: (
@@ -16,19 +18,24 @@ interface AuthFormProps {
     password: string,
     role: string,
     type: "login" | "signup"
-  ) => void
+  ) => void;
 }
 
 const AuthForm: React.FC<AuthFormProps> = ({ onSubmit }) => {
-  const [userId, setUserId] = useState("")
-  const [password, setPassword] = useState("")
-  const [role, setRole] = useState("patient")
-  const [type, setType] = useState<"login" | "signup">("login")
+  const [userId, setUserId]     = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole]         = useState("patient");
+
+  const location = useLocation();
+  const navigate = useNavigate();
+  const type: "login" | "signup" =
+    location.pathname === "/signup" ? "signup" : "login";
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(userId, password, role, type)
-  }
+    e.preventDefault();
+    console.log("Submitting form:", { userId, password, role, type });
+    onSubmit(userId, password, role, type);
+  };
 
   return (
     <form
@@ -47,7 +54,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit }) => {
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
           required
-          className="text-base"
         />
       </div>
 
@@ -59,14 +65,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit }) => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="text-base"
         />
       </div>
 
       <div className="space-y-3">
         <Label className="text-lg">User Role</Label>
         <Select value={role} onValueChange={setRole}>
-          <SelectTrigger className="text-base">
+          <SelectTrigger>
             <SelectValue placeholder="Select user role" />
           </SelectTrigger>
           <SelectContent>
@@ -90,7 +95,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit }) => {
             <button
               type="button"
               className="text-blue-600 hover:underline"
-              onClick={() => setType("signup")}
+              onClick={() => navigate("/signup")}
             >
               Sign Up
             </button>
@@ -101,7 +106,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit }) => {
             <button
               type="button"
               className="text-blue-600 hover:underline"
-              onClick={() => setType("login")}
+              onClick={() => navigate("/login")}
             >
               Log In
             </button>
@@ -109,7 +114,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSubmit }) => {
         )}
       </div>
     </form>
-  )
-}
+  );
+};
 
-export default AuthForm
+export default AuthForm;
