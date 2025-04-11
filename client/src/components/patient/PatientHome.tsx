@@ -31,12 +31,13 @@ const PatientHome = () => {
   };
 
   const handleSubmit = () => {
-    // TODO: Hook up to backend
+    // TODO: Hook this to your backend
     console.log("Appointment requested:", appointmentData);
   };
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
+      {/* Patient Profile */}
       <Card className="rounded-2xl shadow-md">
         <CardHeader>
           <CardTitle className="text-xl">Patient Profile</CardTitle>
@@ -56,6 +57,7 @@ const PatientHome = () => {
         </CardContent>
       </Card>
 
+      {/* Tabbed Interface */}
       <Tabs defaultValue="appointments" className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="appointments">Appointments</TabsTrigger>
@@ -63,6 +65,7 @@ const PatientHome = () => {
           <TabsTrigger value="request">Request Appointment</TabsTrigger>
         </TabsList>
 
+        {/* Appointments Tab */}
         <TabsContent value="appointments">
           <Card className="rounded-xl shadow">
             <CardHeader>
@@ -74,6 +77,7 @@ const PatientHome = () => {
           </Card>
         </TabsContent>
 
+        {/* History Tab */}
         <TabsContent value="history">
           <Card className="rounded-xl shadow">
             <CardHeader>
@@ -85,25 +89,39 @@ const PatientHome = () => {
           </Card>
         </TabsContent>
 
+        {/* Request Appointment Tab */}
         <TabsContent value="request">
           <Card className="rounded-xl shadow">
             <CardHeader>
               <CardTitle>Request Appointment</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="date">Date</Label>
-                  <Input type="date" name="date" value={appointmentData.date} onChange={handleChange} />
+                  <Input
+                    id="date"
+                    type="date"
+                    name="date"
+                    value={appointmentData.date}
+                    onChange={handleChange}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="time">Time</Label>
-                  <Input type="time" name="time" value={appointmentData.time} onChange={handleChange} />
+                  <Input
+                    id="time"
+                    type="time"
+                    name="time"
+                    value={appointmentData.time}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
               <div>
                 <Label htmlFor="message">Symptoms / Message</Label>
                 <Textarea
+                  id="message"
                   name="message"
                   rows={4}
                   value={appointmentData.message}
@@ -111,7 +129,10 @@ const PatientHome = () => {
                   placeholder="Briefly describe your symptoms or concerns"
                 />
               </div>
-              <Button onClick={handleSubmit} className="bg-blue-600 text-white hover:bg-blue-700">
+              <Button
+                onClick={handleSubmit}
+                className="bg-blue-600 text-white hover:bg-blue-700"
+              >
                 Submit Appointment Request
               </Button>
             </CardContent>
