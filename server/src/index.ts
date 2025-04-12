@@ -2,13 +2,14 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 
-// Auth routes
+// Routes
 import authRouter from "./routes/auth.routes";
+import patientRouter from "./routes/patient/patientHome.routes"; // 👈 Import added
 
 dotenv.config();
 
 const app = express();
-const PORT = parseInt(process.env.PORT || "5000", 10); // 👈 Fix here
+const PORT = parseInt(process.env.PORT || "5000", 10);
 
 // Middleware
 app.use(
@@ -22,14 +23,15 @@ app.use(
 );
 app.use(express.json());
 
-// Auth routes
+// Routes
 app.use("/api/auth", authRouter);
+app.use("/api/patient", patientRouter); // 👈 Mount patient router
 
 app.get("/", (req, res) => {
-  res.send("Auth API is running");
+  res.send("Hospital Management API is running");
 });
 
 // Start server on all interfaces
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Auth server running on http://0.0.0.0:${PORT}`);
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
