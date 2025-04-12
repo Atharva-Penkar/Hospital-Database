@@ -10,7 +10,7 @@ const PatientHomePage = () => {
 
     //navigate to login if userId is not available
     if (!userId) {
-      navigate("/patientHome");
+      navigate("/login");
     }
   }, [navigate]);
 

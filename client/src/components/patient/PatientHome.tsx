@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardHeader,
@@ -16,7 +16,25 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
+// TypeScript type for patient (simplified)
+type Patient = {
+  P_ID: number;
+  name: string;
+  address: string;
+  DOB: string;
+  sex: string;
+  email: string;
+  phone: string;
+  alt_phone: string;
+  emergency_contact: string;
+  allergies: { name: string }[];
+  admissions: any[]; // you can type this more strictly later
+};
+
 const PatientHome = () => {
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(true);
+
   const [appointmentData, setAppointmentData] = useState({
     date: "",
     time: "",
@@ -31,9 +49,25 @@ const PatientHome = () => {
   };
 
   const handleSubmit = () => {
-    // TODO: Hook this to your backend
     console.log("Appointment requested:", appointmentData);
   };
+
+  useEffect(() => {
+    const fetchPatient = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/patient/1"); // Replace 1 with dynamic ID if needed
+        if (!res.ok) throw new Error("Failed to fetch patient");
+        const data = await res.json();
+        setPatient(data.patient);
+      } catch (err) {
+        console.error("Error fetching patient:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPatient();
+  }, []);
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
@@ -43,17 +77,25 @@ const PatientHome = () => {
           <CardTitle className="text-xl">Patient Profile</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 text-sm">
-          <p><strong>PID:</strong> P123456</p>
-          <p><strong>Name:</strong> John Doe</p>
-          <p><strong>Address:</strong> 123 Main St</p>
-          <p><strong>DOB:</strong> 1990-01-01</p>
-          <p><strong>Sex:</strong> Male</p>
-          <p><strong>Email:</strong> john@example.com</p>
-          <p><strong>Phone:</strong> 9876543210</p>
-          <p><strong>Alt Phone:</strong> 1122334455</p>
-          <p><strong>Emergency Contact:</strong> 9988776655</p>
-          <p><strong>Admissions:</strong> 2</p>
-          <p><strong>Allergies:</strong> Penicillin</p>
+          {loading ? (
+            <p>Loading...</p>
+          ) : patient ? (
+            <>
+              <p><strong>PID:</strong> {patient.P_ID}</p>
+              <p><strong>Name:</strong> {patient.name}</p>
+              <p><strong>Address:</strong> {patient.address}</p>
+              <p><strong>DOB:</strong> {patient.DOB}</p>
+              <p><strong>Sex:</strong> {patient.sex}</p>
+              <p><strong>Email:</strong> {patient.email}</p>
+              <p><strong>Phone:</strong> {patient.phone}</p>
+              <p><strong>Alt Phone:</strong> {patient.alt_phone}</p>
+              <p><strong>Emergency Contact:</strong> {patient.emergency_contact}</p>
+              <p><strong>Admissions:</strong> {patient.admissions.length}</p>
+              <p><strong>Allergies:</strong> {patient.allergies.map(a => a.name).join(", ") || "None"}</p>
+            </>
+          ) : (
+            <p>Patient not found.</p>
+          )}
         </CardContent>
       </Card>
 
