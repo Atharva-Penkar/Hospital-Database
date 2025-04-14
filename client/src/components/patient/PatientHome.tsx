@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 // TypeScript type for patient (simplified)
 type Patient = {
@@ -23,12 +24,11 @@ type Patient = {
   address: string;
   DOB: string;
   sex: string;
-  email: string;
-  phone: string;
-  alt_phone: string;
-  emergency_contact: string;
+  mail: string;
+  phone_no: string;
+  emergency_phone_no: string;
   allergies: { name: string }[];
-  admissions: any[]; // you can type this more strictly later
+  admissions: any[]; // Can be typed more strictly
 };
 
 const PatientHome = () => {
@@ -48,15 +48,36 @@ const PatientHome = () => {
     setAppointmentData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    console.log("Appointment requested:", appointmentData);
+  const handleSubmit = async () => {
+    try {
+      const userId = localStorage.getItem("userId");
+      if (!userId) throw new Error("User ID not found");
+
+      const res = await fetch("http://localhost:5000/api/appointments/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, ...appointmentData }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to request appointment");
+
+      toast.success("Appointment requested successfully!");
+      setAppointmentData({ date: "", time: "", message: "" });
+    } catch (err: any) {
+      toast.error(`Failed: ${err.message}`);
+    }
   };
 
   useEffect(() => {
     const fetchPatient = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/patient/1"); // Replace 1 with dynamic ID if needed
+        const userId = localStorage.getItem("userId");
+        if (!userId) throw new Error("User ID not found");
+
+        const res = await fetch(`http://localhost:5000/api/patient/${userId}`);
         if (!res.ok) throw new Error("Failed to fetch patient");
+
         const data = await res.json();
         setPatient(data.patient);
       } catch (err) {
@@ -84,12 +105,11 @@ const PatientHome = () => {
               <p><strong>PID:</strong> {patient.P_ID}</p>
               <p><strong>Name:</strong> {patient.name}</p>
               <p><strong>Address:</strong> {patient.address}</p>
-              <p><strong>DOB:</strong> {patient.DOB}</p>
+              <p><strong>DOB:</strong> {patient.DOB.slice(0, 10)}</p>
               <p><strong>Sex:</strong> {patient.sex}</p>
-              <p><strong>Email:</strong> {patient.email}</p>
-              <p><strong>Phone:</strong> {patient.phone}</p>
-              <p><strong>Alt Phone:</strong> {patient.alt_phone}</p>
-              <p><strong>Emergency Contact:</strong> {patient.emergency_contact}</p>
+              <p><strong>Email:</strong> {patient.mail}</p>
+              <p><strong>Phone:</strong> {patient.phone_no}</p>
+              <p><strong>Emergency Contact:</strong> {patient.emergency_phone_no}</p>
               <p><strong>Admissions:</strong> {patient.admissions.length}</p>
               <p><strong>Allergies:</strong> {patient.allergies.map(a => a.name).join(", ") || "None"}</p>
             </>
@@ -107,7 +127,6 @@ const PatientHome = () => {
           <TabsTrigger value="request">Request Appointment</TabsTrigger>
         </TabsList>
 
-        {/* Appointments Tab */}
         <TabsContent value="appointments">
           <Card className="rounded-xl shadow">
             <CardHeader>
@@ -119,7 +138,6 @@ const PatientHome = () => {
           </Card>
         </TabsContent>
 
-        {/* History Tab */}
         <TabsContent value="history">
           <Card className="rounded-xl shadow">
             <CardHeader>
@@ -131,7 +149,6 @@ const PatientHome = () => {
           </Card>
         </TabsContent>
 
-        {/* Request Appointment Tab */}
         <TabsContent value="request">
           <Card className="rounded-xl shadow">
             <CardHeader>

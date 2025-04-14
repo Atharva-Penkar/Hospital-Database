@@ -24,13 +24,19 @@ const SignUp = () => {
 
       toast.success("Signup successful!", {
         className: "bg-emerald-500 text-white",
-      });      
-      navigate("/home");
+      });
+      // After a successful signup
+      if (role === "patient") {
+        navigate("/patient-info");
+      } else {
+        navigate("/home");
+      }
+
     } catch (err: any) {
       console.error("Signup error:", err);
       toast.error("Signup failed: " + err.message, {
         className: "bg-rose-500 text-white",
-      });      
+      });
     }
   };
 

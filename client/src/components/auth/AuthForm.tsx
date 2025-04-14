@@ -1,4 +1,3 @@
-// client/src/components/auth/AuthForm.tsx
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Input }  from "../ui/input";
