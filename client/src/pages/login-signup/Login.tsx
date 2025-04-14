@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import AuthForm from "../components/auth/AuthForm";
+import AuthForm from "../../components/auth/AuthForm";
 import { toast } from "sonner";
 
 const Login = () => {
