@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+
 import {
   Card,
   CardHeader,
@@ -69,6 +71,39 @@ const PatientHome = () => {
     }
   };
 
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      // Retrieve the JWT token from localStorage
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No token found");
+  
+      // Call the backend API to log out the user
+      const res = await fetch("http://localhost:5000/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Send the JWT token in Authorization header
+        },
+      });
+  
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Logout failed");
+  
+      // Handle successful logout
+      toast.success("Logged out successfully");
+  
+      // Clear the token from localStorage
+      localStorage.removeItem("token");
+  
+      // Redirect to login page
+      navigate("/login-patient");
+    } catch (err: any) {
+      toast.error(`Logout failed: ${err.message}`);
+    }
+  };
+
   useEffect(() => {
     const fetchPatient = async () => {
       try {
@@ -94,8 +129,15 @@ const PatientHome = () => {
     <div className="max-w-5xl mx-auto px-6 py-10 space-y-6">
       {/* Patient Profile */}
       <Card className="rounded-2xl shadow-md">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl">Patient Profile</CardTitle>
+          <Button
+            variant="destructive"
+            onClick={handleLogout}
+            className="text-sm"
+          >
+            Logout
+          </Button>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 text-sm">
           {loading ? (

@@ -9,7 +9,7 @@ const SignUpPatient = () => {
     userId: string,
     password: string,
     role: "patient",
-    type: "signup" | "login"  // ✅ Matches expected prop type
+    type: "signup" | "login"
   ) => {
     try {
       const res = await fetch("http://127.0.0.1:5000/api/auth/signup", {
@@ -21,7 +21,8 @@ const SignUpPatient = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Signup failed");
 
-      localStorage.setItem("userId", data.user.userId);
+      // Store JWT token in localStorage
+      localStorage.setItem("token", data.token); // Save the JWT token
 
       toast.success("Signup successful!", {
         className: "bg-emerald-500 text-white",

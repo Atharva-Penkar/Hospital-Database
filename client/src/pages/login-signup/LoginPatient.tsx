@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import AuthFormPatient from "../../components/auth/AuthFormPatient"; // Make sure the path is correct
+import AuthFormPatient from "../../components/auth/AuthFormPatient";
 import { toast } from "sonner";
 
 const LoginPatient = () => {
@@ -8,11 +8,14 @@ const LoginPatient = () => {
   const handleAuth = async (
     userId: string,
     password: string,
-    role: "patient",
+    role: "patient", // You can keep this for future use if needed
     type: "login" | "signup"
   ) => {
     try {
-      const res = await fetch("http://127.0.0.1:5000/api/auth/login", {
+      // Decide the API URL based on the type (login or signup)
+      const apiUrl = type === "login" ? "/api/auth/login" : "/api/auth/signup";
+
+      const res = await fetch("http://127.0.0.1:5000" + apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, password }),
@@ -22,8 +25,8 @@ const LoginPatient = () => {
 
       if (!res.ok) throw new Error(data.message || "Login failed");
 
-      localStorage.setItem("userId", data.user.userId);
-      localStorage.setItem("role", "patient");
+      // Store JWT token in localStorage after login
+      localStorage.setItem("token", data.token); // Save the JWT token
 
       toast.success("Login successful!", {
         className: "bg-emerald-500 text-white",

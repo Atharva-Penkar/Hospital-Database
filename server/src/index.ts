@@ -4,7 +4,7 @@ import cors from "cors";
 import { PrismaClient } from "@prisma/client";
 
 // Routers
-import authRouter from "./routes/auth.routes";
+import authRouter from "./routes/authPatient/authPatient.routes";
 import patientRouter from "./routes/patient/patientHome.routes";
 import patientInfoRouter from "./routes/patient/patientInfo.routes";
 
