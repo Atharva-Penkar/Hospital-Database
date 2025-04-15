@@ -5,6 +5,7 @@ import PatientInfoFormPage from "./pages/patient/PatientInfoFormPage";
 import LoginPatient from "./pages/login-signup/LoginPatient";
 import SignUpPatient from "./pages/login-signup/SignUpPatient";
 import LoginStaff from "./pages/login-signup/LoginStaff";
+import FrontDeskHomePage from "./pages/frontDeskOperator/homePage";
 
 
 function App() {
@@ -15,9 +16,11 @@ function App() {
         <Route path="/login-staff" element={<LoginStaff />} />
         <Route path="/login-patient" element={<LoginPatient />} />
         <Route path="/signup-patient" element={<SignUpPatient />} />
-        <Route path="/patient-info" element={<PatientInfoFormPage/>}/>
+        <Route path="/patient-info" element={<PatientInfoFormPage />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/patientHome" element={<PatientHomePage />} />
+
+        <Route path="/front-desk-dashboard" element={<FrontDeskHomePage />} />
       </Routes>
     </Router>
   );
