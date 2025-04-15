@@ -24,7 +24,7 @@ model Patient {
 }
 
 model Doctor {
-  D_ID           Int           @id @default(autoincrement())
+  D_ID           Int           @id
   name           String
   specialization String
   mail           String?
