@@ -102,7 +102,7 @@ const PatientHome = () => {
             <p>Loading...</p>
           ) : patient ? (
             <>
-              <p><strong>PID:</strong> {patient.P_ID}</p>
+              <p><strong>User ID:</strong> {patient.P_ID}</p>
               <p><strong>Name:</strong> {patient.name}</p>
               <p><strong>Address:</strong> {patient.address}</p>
               <p><strong>DOB:</strong> {patient.DOB.slice(0, 10)}</p>
