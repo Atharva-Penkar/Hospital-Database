@@ -157,28 +157,30 @@ const PatientHome = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="date">Date</Label>
+                  <Label htmlFor="date" className="mb-2 block">Date</Label>
                   <Input
                     id="date"
                     type="date"
                     name="date"
                     value={appointmentData.date}
                     onChange={handleChange}
+                    className="p-2 border rounded"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="time">Time</Label>
+                  <Label htmlFor="time" className="mb-2 block">Time</Label>
                   <Input
                     id="time"
                     type="time"
                     name="time"
                     value={appointmentData.time}
                     onChange={handleChange}
+                    className="p-2 border rounded"
                   />
                 </div>
               </div>
               <div>
-                <Label htmlFor="message">Symptoms / Message</Label>
+                <Label htmlFor="message" className="mb-2 block">Symptoms / Message</Label>
                 <Textarea
                   id="message"
                   name="message"
@@ -186,6 +188,7 @@ const PatientHome = () => {
                   value={appointmentData.message}
                   onChange={handleChange}
                   placeholder="Briefly describe your symptoms or concerns"
+                  className="p-2 border rounded"
                 />
               </div>
               <Button
