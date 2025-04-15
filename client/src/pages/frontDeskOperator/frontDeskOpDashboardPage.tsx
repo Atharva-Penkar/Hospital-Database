@@ -1,16 +1,18 @@
-// pages/frontDeskOperator/homepage.tsx
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import HomePage from "@/components/frontDeskOperator/frontDeskOpDashboard";
 
 const FrontDeskHomePage = () => {
-  const navigate = useNavigate();
+  const [darkMode, setDarkMode] = useState(false);
 
-  return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      {/* Top Bar */}
-      <HomePage />
-    </div>
-  );
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add("dark");
+    } else {
+      document.body.classList.remove("dark");
+    }
+  }, [darkMode]);
+
+  return <HomePage darkMode={darkMode} toggleDarkMode={() => setDarkMode((prev) => !prev)} />;
 };
 
 export default FrontDeskHomePage;
