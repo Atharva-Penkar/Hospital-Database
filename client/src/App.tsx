@@ -5,7 +5,7 @@ import PatientInfoFormPage from "./pages/patient/PatientInfoFormPage";
 import LoginPatient from "./pages/login-signup/LoginPatient";
 import SignUpPatient from "./pages/login-signup/SignUpPatient";
 import LoginStaff from "./pages/login-signup/LoginStaff";
-import FrontDeskHomePage from "./pages/frontDeskOperator/homePage";
+import FrontDeskHomePage from "./pages/frontDeskOperator/frontDeskOpDashboardPage";
 
 
 function App() {
