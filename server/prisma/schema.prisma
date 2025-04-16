@@ -61,6 +61,7 @@ model Appointment {
   TimeStamp DateTime
   Diagnosis String?
   Attended  Boolean
+  Scheduled Boolean
   doctor    Doctor      @relation(fields: [D_ID], references: [D_ID])
   patient   Patient     @relation(fields: [P_ID], references: [P_ID])
   tests     Test[]
