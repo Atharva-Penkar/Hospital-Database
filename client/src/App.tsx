@@ -8,6 +8,7 @@ import LoginStaff from "./pages/login-signup/LoginStaff";
 import FrontDeskHomePage from "./pages/frontDeskOperator/frontDeskOpDashboardPage";
 import FrontDeskOpAppointments from "./pages/frontDeskOperator/frontDeskOpAppointmentsPage";
 import FrontDeskOpAdmissions from "./pages/frontDeskOperator/frontDeskOpAdmissionsPage"; // Add import here
+import DataEntryOperatorHomePage from "./pages/dataEntryOperator/dataEntryOperatorHomePage";
 
 function App() {
   return (
@@ -22,7 +23,8 @@ function App() {
         <Route path="/patientHome" element={<PatientHomePage />} />
         <Route path="/front-desk-dashboard" element={<FrontDeskHomePage />} />
         <Route path="/front-desk-appointments" element={<FrontDeskOpAppointments />} />
-        <Route path="/front-desk-admissions" element={<FrontDeskOpAdmissions />} /> {/* Add route here */}
+        <Route path="/front-desk-admissions" element={<FrontDeskOpAdmissions />} /> 
+        <Route path="{/data-entry-operator-dashboard}" element={<DataEntryOperatorHomePage />} />
       </Routes>
     </Router>
   );
