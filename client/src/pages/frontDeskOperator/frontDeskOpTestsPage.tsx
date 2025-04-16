@@ -1,7 +1,14 @@
-import FrontDeskOpTests from "@/components/frontDeskOperator/frontDeskOpTests";
+// app/(routes)/front-desk/tests/page.tsx
+"use client";
 
-const FrontDeskOpTestsPage = () => {
-  return <FrontDeskOpTests darkMode={false} />;
+import FrontDeskOpTests from "@/components/frontDeskOperator/frontDeskOpTests";
+import { useState } from "react";
+
+const TestsPage = () => {
+  const [darkMode, setDarkMode] = useState(false);
+  const toggleDarkMode = () => setDarkMode((prev) => !prev);
+
+  return <FrontDeskOpTests darkMode={darkMode} toggleDarkMode={toggleDarkMode} />;
 };
 
-export default FrontDeskOpTestsPage;
+export default TestsPage;
