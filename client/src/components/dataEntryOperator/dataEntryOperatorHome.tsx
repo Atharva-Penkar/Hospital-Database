@@ -14,7 +14,7 @@ const DataEntryOperatorHome = ({ darkMode, toggleDarkMode }: DataEntryOperatorHo
   // const router = useRouter(); // Uncomment for Next.js
 
   const handleNavigateToTests = () => {
-    navigate('/dataEntryOperator/dataEntryOperatorTests');
+    navigate('/data-entry-tests');
     // router.push('/dataoperator/tests'); // Uncomment for Next.js
   };
 
