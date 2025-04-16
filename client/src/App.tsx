@@ -7,7 +7,8 @@ import SignUpPatient from "./pages/login-signup/SignUpPatient";
 import LoginStaff from "./pages/login-signup/LoginStaff";
 import FrontDeskHomePage from "./pages/frontDeskOperator/frontDeskOpDashboardPage";
 import FrontDeskOpAppointments from "./pages/frontDeskOperator/frontDeskOpAppointmentsPage";
-import FrontDeskOpAdmissions from "./pages/frontDeskOperator/frontDeskOpAdmissionsPage"; // Add import here
+import FrontDeskOpAdmissions from "./pages/frontDeskOperator/frontDeskOpAdmissionsPage"; 
+import FrontDeskOpTestsPage from "./pages/frontDeskOperator/frontDeskOpTestsPage";
 import DataEntryOperatorHomePage from "./pages/dataEntryOperator/dataEntryOperatorHomePage";
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
         <Route path="/front-desk-dashboard" element={<FrontDeskHomePage />} />
         <Route path="/front-desk-appointments" element={<FrontDeskOpAppointments />} />
         <Route path="/front-desk-admissions" element={<FrontDeskOpAdmissions />} /> 
+        <Route path="/front-desk-tests" element={<FrontDeskOpTestsPage />} />
         <Route path="{/data-entry-operator-dashboard}" element={<DataEntryOperatorHomePage />} />
       </Routes>
     </Router>
