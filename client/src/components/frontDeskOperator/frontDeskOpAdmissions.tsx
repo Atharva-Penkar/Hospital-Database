@@ -82,9 +82,8 @@ const FrontDeskOpAdmissions = ({ darkMode, toggleDarkMode }: { darkMode: boolean
             onClick={toggleDarkMode}
           >
             <div
-              className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${
-                darkMode ? "translate-x-7" : "translate-x-1"
-              }`}
+              className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${darkMode ? "translate-x-7" : "translate-x-1"
+                }`}
             />
             <div className="absolute inset-0 flex justify-between items-center px-1.5">
               <Sun className="w-4 h-4 text-yellow-500" />
@@ -171,13 +170,21 @@ const FrontDeskOpAdmissions = ({ darkMode, toggleDarkMode }: { darkMode: boolean
               key={roomNumber}
               className={`aspect-square flex items-center justify-center rounded-lg text-center font-semibold transition-colors 
                 ${isOccupied
-                  ? "bg-red-500 text-white cursor-not-allowed"
+                  ? "bg-rose-500 text-white cursor-not-allowed"
                   : isClickable
-                  ? "bg-green-500 hover:bg-green-600 text-white cursor-pointer"
-                  : "bg-green-300 text-white cursor-default"}`}
+                    ? "bg-emerald-500 hover:bg-emerald-600 text-white cursor-pointer"
+                    : "bg-emerald-300 text-white cursor-default"}`}
               onClick={() => isClickable && handleAdmit(roomNumber)}
             >
-              {isOccupied ? `PID: ${occupiedRooms[roomNumber]}` : `Room ${roomNumber}`}
+              {isOccupied ? (
+                <>
+                  Room {roomNumber}
+                  <br />
+                  PID: {occupiedRooms[roomNumber]}
+                </>
+              ) : (
+                `Room ${roomNumber}`
+              )}
             </div>
           );
         })}
