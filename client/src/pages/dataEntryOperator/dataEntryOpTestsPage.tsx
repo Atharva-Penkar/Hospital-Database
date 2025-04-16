@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import DataEntryOperatorTests from "@/components/dataEntryOperator/dataEntryOperatorTests";
+import DataEntryOpTests from "@/components/dataEntryOperator/dataEntryOpTests";
 
-const DataEntryOperatorTestsPage = () => {
+const DataEntryOpHomePage = () => {
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
@@ -35,7 +35,7 @@ const DataEntryOperatorTestsPage = () => {
     }
   };
 
-  return <DataEntryOperatorTests darkMode={darkMode} toggleDarkMode={toggleDarkMode} />;
+  return <DataEntryOpTests darkMode={darkMode} toggleDarkMode={toggleDarkMode} />;
 };
 
-export default DataEntryOperatorTestsPage;
+export default DataEntryOpHomePage;

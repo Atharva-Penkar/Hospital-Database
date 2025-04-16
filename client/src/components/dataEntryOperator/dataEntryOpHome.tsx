@@ -4,12 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LogOut, Sun, Moon, FileText, Clipboard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; // or use Next.js router if applicable
 
-interface DataEntryOperatorHomeProps {
+interface DataEntryOpHomeProps {
   darkMode: boolean;
   toggleDarkMode: () => void;
 }
 
-const DataEntryOperatorHome = ({ darkMode, toggleDarkMode }: DataEntryOperatorHomeProps) => {
+const DataEntryOpHome = ({ darkMode, toggleDarkMode }: DataEntryOpHomeProps) => {
   const navigate = useNavigate(); // For React Router
   // const router = useRouter(); // Uncomment for Next.js
 
@@ -19,7 +19,7 @@ const DataEntryOperatorHome = ({ darkMode, toggleDarkMode }: DataEntryOperatorHo
   };
 
   const handleNavigateToTreatments = () => {
-    navigate('/dataoperator/treatments');
+    navigate('/data-entry-treatments');
     // router.push('/dataoperator/treatments'); // Uncomment for Next.js
   };
 
@@ -105,4 +105,4 @@ const DataEntryOperatorHome = ({ darkMode, toggleDarkMode }: DataEntryOperatorHo
   );
 };
 
-export default DataEntryOperatorHome;
+export default DataEntryOpHome;

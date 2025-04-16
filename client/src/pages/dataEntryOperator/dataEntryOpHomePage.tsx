@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import DataEntryOperatorHome from "@/components/dataEntryOperator/dataEntryOperatorHome";
+import DataEntryOpHome from "@/components/dataEntryOperator/dataEntryOpHome";
 
-const DataEntryOperatorHomePage = () => {
+const DataEntryOpHomePage = () => {
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
@@ -13,11 +13,11 @@ const DataEntryOperatorHomePage = () => {
   }, [darkMode]);
 
   return (
-    <DataEntryOperatorHome
+    <DataEntryOpHome
       darkMode={darkMode}
       toggleDarkMode={() => setDarkMode((prev) => !prev)}
     />
   );
 };
 
-export default DataEntryOperatorHomePage;
+export default DataEntryOpHomePage;
