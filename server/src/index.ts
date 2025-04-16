@@ -8,6 +8,7 @@ import authRouter from "./routes/authPatient/authPatient.routes";
 import patientRouter from "./routes/patient/patientHome.routes";
 import patientInfoRouter from "./routes/patient/patientInfo.routes";
 import createAppointmentsRouter from "./routes/appointments/createAppointments.routes";
+import getRequestedAppointmentsRouter from "./routes/appointments/getRequestedAppointments.routes";
 
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/patient", patientRouter);
 app.use("/api/patient-info", patientInfoRouter)
 app.use("/api/appointments/request", createAppointmentsRouter)
+app.use("/api/appointments", getRequestedAppointmentsRouter)
 
 app.get("/", (req, res) => {
   res.send("Hospital Management API is running");
