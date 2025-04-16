@@ -10,6 +10,7 @@ import FrontDeskOpAppointments from "./pages/frontDeskOperator/frontDeskOpAppoin
 import FrontDeskOpAdmissions from "./pages/frontDeskOperator/frontDeskOpAdmissionsPage"; 
 import FrontDeskOpTestsPage from "./pages/frontDeskOperator/frontDeskOpTestsPage";
 import DataEntryOperatorHomePage from "./pages/dataEntryOperator/dataEntryOperatorHomePage";
+import DataEntryOperatorTestsPage from "./pages/dataEntryOperator/dataEntryOperatorTestsPage";
 
 function App() {
   return (
@@ -26,7 +27,8 @@ function App() {
         <Route path="/front-desk-appointments" element={<FrontDeskOpAppointments />} />
         <Route path="/front-desk-admissions" element={<FrontDeskOpAdmissions />} /> 
         <Route path="/front-desk-tests" element={<FrontDeskOpTestsPage />} />
-        <Route path="/data-entry-operator-dashboard" element={<DataEntryOperatorHomePage />} />
+        <Route path="/data-entry-dashboard" element={<DataEntryOperatorHomePage />} />
+        <Route path="/data-entry-tests" element={<DataEntryOperatorTestsPage />} />
       </Routes>
     </Router>
   );
