@@ -7,7 +7,7 @@ import { PrismaClient } from "@prisma/client";
 import authRouter from "./routes/authPatient/authPatient.routes";
 import patientRouter from "./routes/patient/patientHome.routes";
 import patientInfoRouter from "./routes/patient/patientInfo.routes";
-import appointmentsRouter from "./routes/appointments/appointments.routes";
+import createAppointmentsRouter from "./routes/appointments/createAppointments.routes";
 
 
 dotenv.config();
@@ -33,7 +33,7 @@ app.use(express.json());
 app.use("/api/auth", authRouter);
 app.use("/api/patient", patientRouter);
 app.use("/api/patient-info", patientInfoRouter)
-app.use("/api/appointments", appointmentsRouter)
+app.use("/api/appointments/request", createAppointmentsRouter)
 
 app.get("/", (req, res) => {
   res.send("Hospital Management API is running");
