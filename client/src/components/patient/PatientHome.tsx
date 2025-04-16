@@ -52,24 +52,51 @@ const PatientHome = () => {
 
   const handleSubmit = async () => {
     try {
+      // Log userId and appointment data
       const userId = localStorage.getItem("userId");
+      console.log("User ID from localStorage:", userId);
       if (!userId) throw new Error("User ID not found");
-
+  
+      // Log the appointment data being sent
+      console.log("Appointment data:", appointmentData);
+  
+      // Ensure the TimeStamp is properly formatted
+      const TimeStamp = new Date(`${appointmentData.date}T${appointmentData.time}:00`).toISOString();
+      console.log("Formatted TimeStamp:", TimeStamp);
+  
       const res = await fetch("http://localhost:5000/api/appointments/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, ...appointmentData }),
+        body: JSON.stringify({
+          P_ID: Number(userId),
+          D_ID: 0,
+          TimeStamp,
+          Symptoms: appointmentData.message || null,
+        }),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to request appointment");
-
+  
+      // Log response details
+      const contentType = res.headers.get("content-type");
+      console.log("Response content-type:", contentType);
+  
+      const data = contentType?.includes("application/json") ? await res.json() : null;
+      console.log("Response body:", data);
+  
+      // Log the status of the response
+      console.log("Response status:", res.status);
+  
+      if (!res.ok) throw new Error(data?.message || "Failed to request appointment");
+  
+      // Log success message
       toast.success("Appointment requested successfully!");
       setAppointmentData({ date: "", time: "", message: "" });
     } catch (err: any) {
+      // Log error details
+      console.error("Error occurred:", err);
       toast.error(`Failed: ${err.message}`);
     }
   };
+  
 
   const navigate = useNavigate();
 
@@ -78,7 +105,7 @@ const PatientHome = () => {
       // Retrieve the JWT token from localStorage
       const token = localStorage.getItem("token");
       if (!token) throw new Error("No token found");
-  
+
       // Call the backend API to log out the user
       const res = await fetch("http://localhost:5000/api/auth/logout", {
         method: "POST",
@@ -87,16 +114,16 @@ const PatientHome = () => {
           Authorization: `Bearer ${token}`, // Send the JWT token in Authorization header
         },
       });
-  
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Logout failed");
-  
+
       // Handle successful logout
       toast.success("Logged out successfully");
-  
+
       // Clear the token from localStorage
       localStorage.removeItem("token");
-  
+
       // Redirect to login page
       navigate("/login-patient");
     } catch (err: any) {
