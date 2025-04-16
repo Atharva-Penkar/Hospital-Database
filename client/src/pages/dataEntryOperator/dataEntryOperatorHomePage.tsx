@@ -1,17 +1,22 @@
-import { useState } from "react";
-import DataEntryOperatorHome from "@/components/dataEntryOperator/dataEntryOperatorHome"; // Import your DataEntryOperatorHome component
+import { useEffect, useState } from "react";
+import DataEntryOperatorHome from "@/components/dataEntryOperator/dataEntryOperatorHome";
 
 const DataEntryOperatorHomePage = () => {
   const [darkMode, setDarkMode] = useState(false);
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add("dark");
+    } else {
+      document.body.classList.remove("dark");
+    }
+  }, [darkMode]);
 
   return (
-    <div>
-      <DataEntryOperatorHome darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-    </div>
+    <DataEntryOperatorHome
+      darkMode={darkMode}
+      toggleDarkMode={() => setDarkMode((prev) => !prev)}
+    />
   );
 };
 
