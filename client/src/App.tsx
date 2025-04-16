@@ -7,6 +7,7 @@ import SignUpPatient from "./pages/login-signup/SignUpPatient";
 import LoginStaff from "./pages/login-signup/LoginStaff";
 import FrontDeskHomePage from "./pages/frontDeskOperator/frontDeskOpDashboardPage";
 import FrontDeskOpAppointments from "./pages/frontDeskOperator/frontDeskOpAppointmentsPage"; // 👈 added import
+import DatabaseManager from "./pages/DBmanager"; // Added this import
 
 function App() {
   return (
@@ -20,7 +21,8 @@ function App() {
         <Route path="/home" element={<HomePage />} />
         <Route path="/patientHome" element={<PatientHomePage />} /> 
         <Route path="/front-desk-dashboard" element={<FrontDeskHomePage />} />
-        <Route path="/front-desk-appointments" element={<FrontDeskOpAppointments />} /> {/* 👈 new route added */}
+        <Route path="/front-desk-appointments" element={<FrontDeskOpAppointments />} /> 
+        <Route path="/database-manager" element={<DatabaseManager />} /> {/* Add this route */}
       </Routes>
     </Router>
   );
