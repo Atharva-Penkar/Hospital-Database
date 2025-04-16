@@ -7,7 +7,7 @@ import SignUpPatient from "./pages/login-signup/SignUpPatient";
 import LoginStaff from "./pages/login-signup/LoginStaff";
 import FrontDeskHomePage from "./pages/frontDeskOperator/frontDeskOpDashboardPage";
 import FrontDeskOpAppointments from "./pages/frontDeskOperator/frontDeskOpAppointmentsPage"; // 👈 added import
-import DatabaseManager from "./pages/DBmanager"; // Added this import
+import DatabaseManager from "./pages/dbmanager/dashboard"; // Added this import
 
 function App() {
   return (
