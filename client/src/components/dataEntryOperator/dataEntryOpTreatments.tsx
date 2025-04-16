@@ -133,9 +133,8 @@ const DataEntryOpTreatments = ({
 
   return (
     <div
-      className={`min-h-screen p-6 transition-colors duration-300 ${
-        darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"
-      }`}
+      className={`min-h-screen p-6 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"
+        }`}
     >
       {/* Top Bar */}
       <div className="flex justify-between items-center mb-8">
@@ -149,9 +148,8 @@ const DataEntryOpTreatments = ({
             onClick={toggleDarkMode}
           >
             <div
-              className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${
-                darkMode ? "translate-x-7" : "translate-x-1"
-              }`}
+              className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${darkMode ? "translate-x-7" : "translate-x-1"
+                }`}
             />
             <div className="absolute inset-0 flex justify-between items-center px-1.5">
               <Sun className="w-4 h-4 text-yellow-500" />
@@ -167,11 +165,10 @@ const DataEntryOpTreatments = ({
       {/* Alert Message */}
       {message && (
         <div
-          className={`mb-4 p-3 rounded ${
-            message.type === "success"
+          className={`mb-4 p-3 rounded ${message.type === "success"
               ? "bg-green-200 text-green-800"
               : "bg-red-200 text-red-800"
-          }`}
+            }`}
         >
           {message.text}
         </div>
@@ -190,11 +187,10 @@ const DataEntryOpTreatments = ({
                 <div
                   key={treatment.treatment_id}
                   onClick={() => handleSelectTreatment(treatment)}
-                  className={`p-3 border-b cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 ${
-                    selectedTreatment?.treatment_id === treatment.treatment_id
+                  className={`p-3 border-b cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 ${selectedTreatment?.treatment_id === treatment.treatment_id
                       ? "bg-blue-100 dark:bg-blue-900/30"
                       : ""
-                  }`}
+                    }`}
                 >
                   <div className="font-medium">{treatment.treatmentType.treatment_name}</div>
                   <div className="text-sm">
@@ -241,7 +237,7 @@ const DataEntryOpTreatments = ({
                 />
               </div>
               <div className="flex gap-2">
-                <Button className="flex-1" onClick={handleSaveOutcome} disabled={!outcome.trim()}>
+                <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSaveOutcome} disabled={!outcome.trim()}>
                   Save Outcome
                 </Button>
                 <Button className="flex-1" variant="outline" onClick={() => setSelectedTreatment(null)}>

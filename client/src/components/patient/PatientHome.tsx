@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { format } from "date-fns"; // Importing date-fns
 
 import {
   Card,
@@ -60,7 +61,7 @@ const PatientHome = () => {
       // Log the appointment data being sent
       console.log("Appointment data:", appointmentData);
   
-      // Ensure the TimeStamp is properly formatted
+      // Ensure the TimeStamp is properly formatted using date-fns
       const TimeStamp = new Date(`${appointmentData.date}T${appointmentData.time}:00`).toISOString();
       console.log("Formatted TimeStamp:", TimeStamp);
   
@@ -174,7 +175,7 @@ const PatientHome = () => {
               <p><strong>User ID:</strong> {patient.P_ID}</p>
               <p><strong>Name:</strong> {patient.name}</p>
               <p><strong>Address:</strong> {patient.address}</p>
-              <p><strong>DOB:</strong> {patient.DOB.slice(0, 10)}</p>
+              <p><strong>DOB:</strong> {format(new Date(patient.DOB), "MM/dd/yyyy")}</p> {/* Formatting DOB */}
               <p><strong>Sex:</strong> {patient.sex}</p>
               <p><strong>Email:</strong> {patient.mail}</p>
               <p><strong>Phone:</strong> {patient.phone_no}</p>
