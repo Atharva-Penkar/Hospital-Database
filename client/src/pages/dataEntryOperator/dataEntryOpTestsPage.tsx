@@ -25,7 +25,7 @@ const DataEntryOpHomePage = () => {
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
-    
+
     if (newDarkMode) {
       document.body.classList.add("dark");
       localStorage.setItem('theme', 'dark');
