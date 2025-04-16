@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { LogOut, Moon, Sun } from "lucide-react";
 import { format } from "date-fns";
@@ -22,12 +22,28 @@ const initialSeekingPatients: Patient[] = [
   { id: 101, name: "Riya Sharma", sex: "F", dob: "1998-05-23", reason: "High fever" },
   { id: 102, name: "Aman Gupta", sex: "M", dob: "2000-11-12", reason: "Stomach pain" },
   { id: 103, name: "Neha Mehta", sex: "F", dob: "1985-04-03", reason: "Fracture" },
+  { id: 104, name: "Anjali Verma", sex: "F", dob: "1990-01-15", reason: "Migraine" },
+  { id: 105, name: "Rahul Yadav", sex: "M", dob: "1988-08-22", reason: "Chest pain" },
+  { id: 106, name: "Sneha Joshi", sex: "F", dob: "1995-12-30", reason: "Injury" },
+  { id: 107, name: "Vikram Rao", sex: "M", dob: "1983-03-19", reason: "Fatigue" },
+  { id: 108, name: "Tina Singh", sex: "F", dob: "1997-10-11", reason: "Back pain" },
+  { id: 109, name: "Deepak Roy", sex: "M", dob: "1991-06-07", reason: "Vomiting" },
+  { id: 110, name: "Pooja Das", sex: "F", dob: "1994-09-29", reason: "Cough" }
 ];
 
 const initialAdmittedPatients: AdmittedPatient[] = [
   { id: 201, name: "Rakesh Kumar", ward: 5, admissionDateTime: "2025-04-14T10:00" },
   { id: 202, name: "Priya Desai", ward: 12, admissionDateTime: "2025-04-15T14:30" },
+  { id: 203, name: "Rohan Shetty", ward: 8, admissionDateTime: "2025-04-13T09:15" },
+  { id: 204, name: "Kajal Sinha", ward: 17, admissionDateTime: "2025-04-12T18:45" },
+  { id: 205, name: "Nikhil Mehra", ward: 21, admissionDateTime: "2025-04-10T11:20" },
+  { id: 206, name: "Meena Patil", ward: 3, admissionDateTime: "2025-04-16T08:10" },
+  { id: 207, name: "Suresh Nair", ward: 25, admissionDateTime: "2025-04-13T16:00" },
+  { id: 208, name: "Alok Tripathi", ward: 30, admissionDateTime: "2025-04-14T20:00" },
+  { id: 209, name: "Geeta Rani", ward: 33, admissionDateTime: "2025-04-11T12:45" },
+  { id: 210, name: "Sunil Dube", ward: 37, admissionDateTime: "2025-04-15T07:30" }
 ];
+
 
 const TOTAL_ROOMS = 40;
 
