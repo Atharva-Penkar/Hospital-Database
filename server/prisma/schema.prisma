@@ -55,15 +55,14 @@ model Ward {
 }
 
 model Appointment {
-  A_ID      Int         @id @default(autoincrement())
+  A_ID      Int               @id @default(autoincrement())
   P_ID      Int
   D_ID      Int
   TimeStamp DateTime
   Diagnosis String?
-  Attended  Boolean
-  Scheduled Boolean
-  doctor    Doctor      @relation(fields: [D_ID], references: [D_ID])
-  patient   Patient     @relation(fields: [P_ID], references: [P_ID])
+  Status    AppointmentStatus @default(Requested)
+  doctor    Doctor            @relation(fields: [D_ID], references: [D_ID])
+  patient   Patient           @relation(fields: [P_ID], references: [P_ID])
   tests     Test[]
   Treatment Treatment[]
 }
@@ -144,4 +143,10 @@ enum TestStatus {
   Pending
   Completed
   Cancelled
+}
+
+enum AppointmentStatus {
+  Requested
+  Scheduled
+  Finished
 }
