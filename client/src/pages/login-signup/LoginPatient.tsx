@@ -13,7 +13,7 @@ const LoginPatient = () => {
   ) => {
     try {
       // Decide the API URL based on the type (login or signup)
-      const apiUrl = type === "login" ? "/api/auth/login" : "/api/auth/signup";
+      const apiUrl = type === "login" ? "/api/auth-patient/login" : "/api/auth-patient/signup";
 
       const res = await fetch("http://127.0.0.1:5000" + apiUrl, {
         method: "POST",
@@ -25,8 +25,8 @@ const LoginPatient = () => {
 
       if (!res.ok) throw new Error(data.message || "Login failed");
 
-      // Store JWT token in localStorage after login
-      localStorage.setItem("token", data.token); // Save the JWT token
+
+      localStorage.setItem("userId", data.user.userId);
 
       toast.success("Login successful!", {
         className: "bg-emerald-500 text-white",
