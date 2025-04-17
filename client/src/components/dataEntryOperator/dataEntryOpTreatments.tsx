@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import logo from '@/assets/images/logo.png';
 import { Button } from "@/components/ui/button";
 import { LogOut, Sun, Moon } from "lucide-react";
 
@@ -139,7 +140,7 @@ const DataEntryOpTreatments = ({
       {/* Top Bar */}
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
-          <img src="/hospital-logo.png" alt="Hospital Logo" className="h-12 w-12" />
+          <img src={logo} alt="Hospital Logo" className="h-12 w-12" />
           <h1 className="text-3xl font-bold">Treatments Management</h1>
         </div>
         <div className="flex items-center gap-4">

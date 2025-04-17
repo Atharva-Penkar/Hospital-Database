@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import logo from '@/assets/images/logo.png';
 import { Button } from "@/components/ui/button";
 import { LogOut, Moon, Sun } from "lucide-react";
 import { format } from "date-fns";
@@ -78,7 +79,7 @@ const FrontDeskOpAppointments = ({ darkMode, toggleDarkMode }: { darkMode: boole
     <div className={`min-h-screen p-6 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"}`}>
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
-          <img src="/hospital-logo.png" alt="Hospital Logo" className="h-12 w-12" />
+          <img src={logo} alt="Hospital Logo" className="h-12 w-12" />
           <h1 className="text-3xl font-bold">Appointments</h1>
         </div>
         <div className="flex items-center gap-4">

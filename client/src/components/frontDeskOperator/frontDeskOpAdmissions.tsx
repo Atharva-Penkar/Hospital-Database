@@ -1,4 +1,5 @@
 import { useState} from "react";
+import logo from '@/assets/images/logo.png';
 import { Button } from "@/components/ui/button";
 import { LogOut, Moon, Sun } from "lucide-react";
 import { format } from "date-fns";
@@ -89,7 +90,7 @@ const FrontDeskOpAdmissions = ({ darkMode, toggleDarkMode }: { darkMode: boolean
       {/* Header */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <img src="/hospital-logo.png" alt="Hospital Logo" className="h-10 w-10" />
+          <img src={logo} alt="Hospital Logo" className="h-12 w-12" />
           <h1 className="text-2xl font-bold">Admissions</h1>
         </div>
         <div className="flex items-center gap-4">
