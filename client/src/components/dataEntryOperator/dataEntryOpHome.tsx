@@ -1,4 +1,5 @@
 import React from 'react';
+import logo from '@/assets/images/logo.png';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogOut, Sun, Moon, FileText, Clipboard } from 'lucide-react';
@@ -28,7 +29,7 @@ const DataEntryOpHome = ({ darkMode, toggleDarkMode }: DataEntryOpHomeProps) => 
       {/* Top Bar */}
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
-          <img src="/hospital-logo.png" alt="Hospital Logo" className="h-12 w-12" />
+          <img src={logo} alt="Hospital Logo" className="h-12 w-12" />
           <h1 className="text-3xl font-bold">MediCare Hospital</h1>
         </div>
 
