@@ -9,6 +9,9 @@ import patientRouter from "./routes/patient/patientHome.routes";
 import patientInfoRouter from "./routes/patient/patientInfo.routes";
 import createAppointmentsRouter from "./routes/appointments/createAppointments.routes";
 import getAppointmentsRouter from "./routes/appointments/Appointments.routes";
+import getDoctorsBySpecializationRouter from "./routes/doctors/getDoctors.routes";
+import getSpecializationsRouter from "./routes/doctors/getSpecializations.routes";
+import scheduleAppointmentRouter from "./routes/appointments/updateAppointments.routes";
 
 
 dotenv.config();
@@ -23,7 +26,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://127.0.0.1:5173",
-      // Add your GitHub Codespace preview domain if needed
+      // Add any other URLs you use (e.g., Codespaces)
     ],
     credentials: true,
   })
@@ -34,8 +37,20 @@ app.use(express.json());
 app.use("/api/auth-patient", authRouter);
 app.use("/api/patient", patientRouter);
 app.use("/api/patient-info", patientInfoRouter)
+
 app.use("/api/appointments/request", createAppointmentsRouter)
 app.use("/api/appointments", getAppointmentsRouter)
+app.use("/api/appointments/schedule", scheduleAppointmentRouter)
+
+app.use("/api/doctors/specialization", getDoctorsBySpecializationRouter)
+app.use("/api/doctors/specializations", getSpecializationsRouter)
+
+app.use((req, res) => {
+  console.log("404 Not Found:", req.method, req.originalUrl);
+  res.status(404).send("Route not found");
+});
+
+
 
 app.get("/", (req, res) => {
   res.send("Hospital Management API is running");

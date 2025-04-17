@@ -18,28 +18,20 @@ import {
 import { LogOut, Moon, Sun } from "lucide-react";
 import { format } from "date-fns";
 
-const specializations = [
-  "General Medicine",
-  "Pediatrics",
-  "Cardiology",
-  "Gastroenterology",
-] as const;
-type Specialization = typeof specializations[number];
-
-const doctors: Record<Specialization, string[]> = {
-  "General Medicine": ["Dr. Anil Kumar", "Dr. Sneha Rao"],
-  Pediatrics: ["Dr. Meena Shah"],
-  Cardiology: ["Dr. Rajat Bhargava"],
-  Gastroenterology: ["Dr. Kavita Menon"],
-};
-
 interface AppointmentRequest {
+  A_ID: number; // Ensure this is present for update
   P_ID: number;
   name: string;
   Sex: string;
   DOB: string;
   symptoms: string;
   requestedAt: string;
+}
+
+interface Doctor {
+  D_ID: number;
+  name: string;
+  specialization: string;
 }
 
 interface ScheduledAppointment {
@@ -59,6 +51,7 @@ const FrontDeskOpAppointments = ({
   darkMode: boolean;
   toggleDarkMode: () => void;
 }) => {
+  const [specializations, setSpecializations] = useState<string[]>([]);
   const [selectedRequest, setSelectedRequest] =
     useState<AppointmentRequest | null>(null);
   const [selectedAppointment, setSelectedAppointment] =
@@ -66,8 +59,9 @@ const FrontDeskOpAppointments = ({
   const [selectedScheduledAppointment, setSelectedScheduledAppointment] =
     useState<ScheduledAppointment | null>(null);
   const [selectedSpecialization, setSelectedSpecialization] =
-    useState<Specialization | null>(null);
-  const [selectedDoctor, setSelectedDoctor] = useState<string>("");
+    useState<string>("");
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [scheduledAppointments, setScheduledAppointments] = useState<
@@ -86,6 +80,27 @@ const FrontDeskOpAppointments = ({
     return !isNaN(parsed);
   };
 
+  // Fetch specializations from backend
+  useEffect(() => {
+    const fetchSpecializations = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/doctors/specializations");
+        if (!response.ok) throw new Error("Failed to fetch specializations");
+        const data = await response.json();
+        if (data.specializations) {
+          setSpecializations(data.specializations);
+        } else {
+          setSpecializations([]);
+        }
+      } catch (error) {
+        console.error("Error fetching specializations:", error);
+        setSpecializations([]);
+      }
+    };
+
+    fetchSpecializations();
+  }, []);
+
   // Fetch appointment requests (Requested status)
   useEffect(() => {
     const fetchAppointmentRequests = async () => {
@@ -99,6 +114,7 @@ const FrontDeskOpAppointments = ({
 
         if (Array.isArray(data.appointments)) {
           const transformed = data.appointments.map((item: any) => ({
+            A_ID: item.A_ID, // <-- Make sure to include A_ID
             P_ID: item.patient.P_ID,
             name: item.patient.name,
             Sex: item.patient.Sex,
@@ -151,46 +167,127 @@ const FrontDeskOpAppointments = ({
     fetchScheduledAppointments();
   }, []);
 
-  const handleScheduleAppointment = () => {
-    if (!selectedSpecialization || !selectedRequest) return;
+  // Fetch doctors when specialization changes
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      if (!selectedSpecialization) {
+        setDoctors([]);
+        setSelectedDoctor(null);
+        return;
+      }
 
-    const newScheduledAppointment: ScheduledAppointment = {
-      patientName: selectedRequest.name,
-      patientId: selectedRequest.P_ID,
-      doctorName: selectedDoctor,
-      doctorId: doctors[selectedSpecialization].indexOf(selectedDoctor) + 1, // Placeholder
-      specialization: selectedSpecialization,
-      date,
-      time,
+      try {
+        const response = await fetch(
+          `http://localhost:5000/api/doctors/specialization?specialization=${encodeURIComponent(selectedSpecialization)}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch doctors");
+        const data = await response.json();
+        if (data.doctors) {
+          setDoctors(data.doctors);
+          setSelectedDoctor(null);
+        } else {
+          setDoctors([]);
+          setSelectedDoctor(null);
+        }
+      } catch (error) {
+        console.error("Error fetching doctors:", error);
+        setDoctors([]);
+        setSelectedDoctor(null);
+      }
     };
-    setScheduledAppointments((prev) => [...prev, newScheduledAppointment]);
-    setAppointmentRequests((prev) =>
-      prev.filter((req) => req.P_ID !== selectedRequest.P_ID)
-    );
-    setSelectedAppointment(newScheduledAppointment);
 
-    setSelectedRequest(null);
-    setSelectedSpecialization(null);
-    setSelectedDoctor("");
-    setDate("");
-    setTime("");
+    fetchDoctors();
+  }, [selectedSpecialization]);
+
+  const handleScheduleAppointment = async () => {
+    console.log("[handleScheduleAppointment] Called");
+
+    if (!selectedSpecialization || !selectedRequest || !selectedDoctor || !date || !time) {
+      console.log("[handleScheduleAppointment] Missing required fields", {
+        selectedSpecialization,
+        selectedRequest,
+        selectedDoctor,
+        date,
+        time,
+      });
+      return;
+    }
+
+    // Combine date and time into an ISO string
+    const appointmentDateTime = new Date(`${date}T${time}:00`);
+    console.log("[handleScheduleAppointment] appointmentDateTime:", appointmentDateTime.toISOString());
+
+    try {
+      console.log("[handleScheduleAppointment] Sending API request to /api/appointments/schedule");
+      const res = await fetch("http://localhost:5000/api/appointments/schedule", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          appointmentId: selectedRequest.A_ID,
+          specialization: selectedSpecialization,
+          doctorId: selectedDoctor.D_ID,
+          date: appointmentDateTime.toISOString(),
+        }),
+      });
+
+      console.log("[handleScheduleAppointment] Awaiting response...");
+      const data = await res.json();
+      console.log("[handleScheduleAppointment] API response:", data);
+
+      if (!res.ok) {
+        console.log("[handleScheduleAppointment] API returned error", data.message);
+        alert(data.message || "Failed to schedule appointment");
+        return;
+      }
+
+      // Update local state: move the appointment from requests to scheduled
+      const newScheduledAppointment: ScheduledAppointment = {
+        patientName: selectedRequest.name,
+        patientId: selectedRequest.P_ID,
+        doctorName: selectedDoctor.name,
+        doctorId: selectedDoctor.D_ID,
+        specialization: selectedSpecialization,
+        date,
+        time,
+      };
+
+      console.log("[handleScheduleAppointment] Updating local state with new scheduled appointment:", newScheduledAppointment);
+
+      setScheduledAppointments((prev) => [...prev, newScheduledAppointment]);
+      setAppointmentRequests((prev) =>
+        prev.filter((req) => req.A_ID !== selectedRequest.A_ID)
+      );
+      setSelectedAppointment(newScheduledAppointment);
+
+      // Reset form
+      setSelectedRequest(null);
+      setSelectedSpecialization("");
+      setSelectedDoctor(null);
+      setDate("");
+      setTime("");
+      console.log("[handleScheduleAppointment] Form reset complete");
+    } catch (error) {
+      console.log("[handleScheduleAppointment] Network or unexpected error:", error);
+      alert("Failed to schedule appointment due to network error.");
+      console.error(error);
+    }
   };
+
 
   const clearSelections = () => {
     setSelectedRequest(null);
     setSelectedAppointment(null);
     setSelectedScheduledAppointment(null);
-    setSelectedSpecialization(null);
-    setSelectedDoctor("");
+    setSelectedSpecialization("");
+    setSelectedDoctor(null);
     setDate("");
     setTime("");
   };
 
   return (
     <div
-      className={`min-h-screen p-6 transition-colors duration-300 ${
-        darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"
-      }`}
+      className={`min-h-screen p-6 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"
+        }`}
     >
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
@@ -203,9 +300,8 @@ const FrontDeskOpAppointments = ({
             onClick={toggleDarkMode}
           >
             <div
-              className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${
-                darkMode ? "translate-x-7" : "translate-x-1"
-              }`}
+              className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${darkMode ? "translate-x-7" : "translate-x-1"
+                }`}
             />
             <div className="absolute inset-0 flex justify-between items-center px-1.5">
               <Sun className="w-4 h-4 text-yellow-500" />
@@ -233,7 +329,7 @@ const FrontDeskOpAppointments = ({
                       : "Booked time not provided";
                   return (
                     <Card
-                      key={req.P_ID}
+                      key={req.A_ID}
                       className="mb-2 cursor-pointer hover:bg-muted bg-card text-card-foreground"
                       onClick={() => {
                         clearSelections();
@@ -333,21 +429,27 @@ const FrontDeskOpAppointments = ({
                       Specialization:
                     </label>
                     <Select
-                      value={selectedSpecialization || ""}
+                      value={selectedSpecialization}
                       onValueChange={(value) => {
-                        setSelectedSpecialization(value as Specialization);
-                        setSelectedDoctor("");
+                        setSelectedSpecialization(value);
+                        setSelectedDoctor(null);
                       }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select specialization" />
                       </SelectTrigger>
                       <SelectContent>
-                        {specializations.map((spec) => (
-                          <SelectItem key={spec} value={spec}>
-                            {spec}
+                        {specializations.length === 0 ? (
+                          <SelectItem value="" disabled>
+                            No specializations available
                           </SelectItem>
-                        ))}
+                        ) : (
+                          specializations.map((spec) => (
+                            <SelectItem key={spec} value={spec}>
+                              {spec}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -355,23 +457,26 @@ const FrontDeskOpAppointments = ({
                     <div>
                       <label className="block mb-1 font-medium">Doctor:</label>
                       <Select
-                        value={selectedDoctor}
-                        onValueChange={setSelectedDoctor}
+                        value={selectedDoctor?.D_ID?.toString() || ""}
+                        onValueChange={value => {
+                          const doc = doctors.find(d => d.D_ID.toString() === value);
+                          setSelectedDoctor(doc || null);
+                        }}
+                        disabled={doctors.length === 0}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select doctor" />
+                          <SelectValue placeholder={doctors.length === 0 ? "No doctors available" : "Select doctor"} />
                         </SelectTrigger>
                         <SelectContent>
-                          {doctors[selectedSpecialization].map((doc) => (
-                            <SelectItem key={doc} value={doc}>
-                              {doc}
+                          {doctors.map((doc) => (
+                            <SelectItem key={doc.D_ID} value={doc.D_ID.toString()}>
+                              {doc.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                   )}
-
                   <div className="flex gap-4">
                     <Input
                       type="date"
@@ -384,7 +489,6 @@ const FrontDeskOpAppointments = ({
                       onChange={(e) => setTime(e.target.value)}
                     />
                   </div>
-
                   <Button
                     className="w-full"
                     disabled={!isFormComplete}

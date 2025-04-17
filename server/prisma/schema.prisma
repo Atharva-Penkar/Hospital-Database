@@ -59,9 +59,9 @@ model Appointment {
   P_ID      Int
   D_ID      Int
   TimeStamp DateTime
-  Symptoms  String?
   Diagnosis String?
   Status    AppointmentStatus @default(Requested)
+  Symptoms  String?
   doctor    Doctor            @relation(fields: [D_ID], references: [D_ID])
   patient   Patient           @relation(fields: [P_ID], references: [P_ID])
   tests     Test[]
