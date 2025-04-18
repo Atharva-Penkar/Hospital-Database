@@ -45,7 +45,7 @@ type AdmittedPatient = {
 // --- Component ---
 const DoctorHome: React.FC = () => {
   // Replace with actual doctor ID (from auth or context)
-  const doctorId = 1234;
+  const doctorId = 108;
 
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(true);
