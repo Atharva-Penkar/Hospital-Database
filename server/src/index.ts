@@ -15,6 +15,9 @@ import scheduleAppointmentRouter from "./routes/appointments/updateAppointments.
 import testsAvailableRouter from "./routes/testsAvailable/testsAvailable.routes";
 import treatmentsAvailableRouter from "./routes/treatmentsAvailable/treatmentsAvailable.routes";
 import doctorInfoRouter from "./routes/doctorSnehal/doctorInfo.routes";
+import getAdmitRequestedAdmissionsRouter from "./routes/admissions/getAdmitRequestedAdmissions.routes";
+import getDischargeRequestedAdmissionsRouter from "./routes/admissions/getDischargeRequestedAdmissions.routes";
+import admissionsRouter from "./routes/admissions/admissionsBASIC.routes";
 
 
 dotenv.config();
@@ -54,6 +57,10 @@ app.use("/api/doctors/specializations", getSpecializationsRouter)
 app.use("/api/tests-available", testsAvailableRouter)
 
 app.use("/api/treatments-available", treatmentsAvailableRouter)
+
+app.use("/api/front-desk-operator/admissions", getAdmitRequestedAdmissionsRouter)
+app.use("/api/front-desk-operator/admissions", getDischargeRequestedAdmissionsRouter)
+app.use("/api/access/admissions", admissionsRouter)
 
 app.use("/api/doctor-info", doctorInfoRouter)
 
