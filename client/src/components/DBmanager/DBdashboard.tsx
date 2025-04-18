@@ -3,7 +3,7 @@ import { Database, Users, Calendar, ChevronRight, LogOut, Sun, Moon } from "luci
 import { Button } from "@/components/ui/button"; // <-- Import your custom Button component
 import PatientsTable from "@/components/DBmanager/PatientTable";
 import DoctorsTable from "@/components/DBmanager/DoctorTable";
-import TestsTable from "@/components/DBmanager/TestTable";
+import TestsTable from "@/components/DBmanager/TestTablenew";
 
 interface HomePageProps {
     darkMode: boolean;
