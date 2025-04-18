@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import logo from '@/assets/images/logo.png';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -27,6 +28,7 @@ type Appointment = {
     P_ID: number;
   };
 };
+
 type AdmittedPatient = {
   admit_id: number;
   P_ID: number;
@@ -42,10 +44,11 @@ type AdmittedPatient = {
     Room_Type: string;
   };
 };
-// --- Component ---
+
 const DoctorHome: React.FC = () => {
   // Replace with actual doctor ID (from auth or context)
   const doctorId = 102;
+  const navigate = useNavigate();
 
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -54,16 +57,17 @@ const DoctorHome: React.FC = () => {
   const [pendingAppointments, setPendingAppointments] = useState<Appointment[]>([]);
   const [completedAppointments, setCompletedAppointments] = useState<Appointment[]>([]);
   const [admittedPatients, setAdmittedPatients] = useState<AdmittedPatient[]>([]);
+  const [activeTab, setActiveTab] = useState<"pending" | "completed" | "admitted">("pending");
 
   // Fetch all data in parallel
   useEffect(() => {
     setLoading(true);
-  
+
     const fetchDoctor = fetch(`http://127.0.0.1:5000/api/doctor-info/${doctorId}`).then(res => res.json());
     const fetchPending = fetch(`http://127.0.0.1:5000/api/doctor-pending/${doctorId}`).then(res => res.json());
     const fetchCompleted = fetch(`http://127.0.0.1:5000/api/doctor-completed/${doctorId}`).then(res => res.json());
     const fetchAdmitted = fetch(`http://127.0.0.1:5000/api/doctor-admitted/${doctorId}`).then(res => res.json());
-  
+
     Promise.all([fetchDoctor, fetchPending, fetchCompleted, fetchAdmitted])
       .then(([doctorRes, pendingRes, completedRes, admittedRes]) => {
         setDoctor(doctorRes.doctor);
@@ -73,7 +77,6 @@ const DoctorHome: React.FC = () => {
       })
       .finally(() => setLoading(false));
   }, [doctorId]);
-  
 
   useEffect(() => {
     if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
@@ -103,12 +106,18 @@ const DoctorHome: React.FC = () => {
       // Optionally show an error toast
     }
   };
-  
 
-  // Navigation for appointment details (stub, does nothing here)
-  const goToAppointment = (A_ID: number) => {
-    alert(`Go to appointment details for ID: ${A_ID}`);
+  // Navigation for appointment details
+  const handleAppointmentClick = (A_ID: number) => {
+    localStorage.setItem("appointmentId", String(A_ID));
+    if (activeTab === "pending") {
+      navigate("/doctor-pending");
+    } else if (activeTab === "completed") {
+      navigate("/doctor-complete");
+    }
+    // No navigation for admitted tab
   };
+  
 
   return (
     <div className={`min-h-screen p-6 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"}`}>
@@ -137,7 +146,6 @@ const DoctorHome: React.FC = () => {
           </Button>
         </div>
       </div>
-
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Doctor Profile */}
         <Card className={`rounded-2xl shadow-md ${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
@@ -164,7 +172,11 @@ const DoctorHome: React.FC = () => {
         </Card>
 
         {/* Tabs */}
-        <Tabs defaultValue="pending" className="w-full">
+        <Tabs
+          defaultValue="pending"
+          className="w-full"
+          onValueChange={val => setActiveTab(val as "pending" | "completed" | "admitted")}
+        >
           <TabsList className="mb-4">
             <TabsTrigger value="pending">Pending Appointments</TabsTrigger>
             <TabsTrigger value="completed">Completed Appointments</TabsTrigger>
@@ -188,12 +200,12 @@ const DoctorHome: React.FC = () => {
                       <li
                         key={appt.A_ID}
                         className="py-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition"
-                        onClick={() => goToAppointment(appt.A_ID)}
+                        onClick={() => handleAppointmentClick(appt.A_ID)}
                         tabIndex={0}
                         role="button"
                         onKeyDown={e => {
                           if (e.key === "Enter" || e.key === " ") {
-                            goToAppointment(appt.A_ID);
+                            handleAppointmentClick(appt.A_ID);
                           }
                         }}
                       >
@@ -231,12 +243,12 @@ const DoctorHome: React.FC = () => {
                       <li
                         key={appt.A_ID}
                         className="py-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition"
-                        onClick={() => goToAppointment(appt.A_ID)}
+                        onClick={() => handleAppointmentClick(appt.A_ID)}
                         tabIndex={0}
                         role="button"
                         onKeyDown={e => {
                           if (e.key === "Enter" || e.key === " ") {
-                            goToAppointment(appt.A_ID);
+                            handleAppointmentClick(appt.A_ID);
                           }
                         }}
                       >

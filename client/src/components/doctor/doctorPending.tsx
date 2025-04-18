@@ -1,72 +1,42 @@
 import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import logo from "@/assets/images/logo.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { LogOut, Sun, Moon } from "lucide-react";
 
-// Mock data for dropdowns
-const DIAGNOSIS_OPTIONS = [
-  "Hypertension",
-  "Diabetes",
-  "Common Cold",
-  "Asthma",
-  "Migraine",
-];
-
-const TEST_OPTIONS = [
-  "Blood Test",
-  "X-Ray",
-  "MRI",
-  "ECG",
-  "Urine Test",
-];
-
-const TREATMENT_OPTIONS = [
-  "Paracetamol",
-  "Insulin",
-  "Antibiotics",
-  "Inhaler",
-  "Antihistamine",
-];
-
 const DOSAGE_OPTIONS = [
-  { value: "100", label: "Morning only" },
-  { value: "010", label: "Afternoon only" },
-  { value: "001", label: "Night only" },
-  { value: "110", label: "Morning & Afternoon" },
-  { value: "101", label: "Morning & Night" },
-  { value: "011", label: "Afternoon & Night" },
-  { value: "111", label: "All three times" },
+  { value: "YNN", label: "Morning only" },
+  { value: "NYN", label: "Afternoon only" },
+  { value: "NNY", label: "Night only" },
+  { value: "YYN", label: "Morning & Afternoon" },
+  { value: "YNY", label: "Morning & Night" },
+  { value: "NYY", label: "Afternoon & Night" },
+  { value: "YYY", label: "All three times" },
 ];
-
-// Mock patient and appointment data
-const mockPatient = {
-  name: "John Doe",
-  age: 42,
-  sex: "M",
-  P_ID: 1001,
-  medicalHistory: [
-    "Type 2 Diabetes (2018)",
-    "Allergy: Penicillin",
-    "Hypertension (2021)"
-  ]
-};
-
-const mockAppointment = {
-  date: "2025-04-18",
-  time: "09:30",
-  symptoms: "Fever, headache, body ache",
-  notes: "Patient reports symptoms for last 3 days."
-};
 
 const DoctorPending = () => {
-  // Dark mode state
-  const [darkMode, setDarkMode] = useState(false);
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
 
-  // Form state
+  useEffect(() => {
+    const id = localStorage.getItem("appointmentId");
+    setAppointmentId(id);
+    // Use appointmentId in your fetch logic
+  }, []);
+  
+  const navigate = useNavigate();
+  const [darkMode, setDarkMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Data fetched from backend
+  const [appointment, setAppointment] = useState<any>(null);
+  const [patient, setPatient] = useState<any>(null);
+  const [diagnosisOptions, setDiagnosisOptions] = useState<string[]>([]);
+  const [testOptions, setTestOptions] = useState<string[]>([]);
+  const [treatmentOptions, setTreatmentOptions] = useState<string[]>([]);
+
+  // Form state for doctor's inputs
   const [diagnosis, setDiagnosis] = useState("");
   const [tests, setTests] = useState<string[]>([]);
   const [treatments, setTreatments] = useState<
@@ -87,6 +57,51 @@ const DoctorPending = () => {
     }
   }, [darkMode]);
 
+  useEffect(() => {
+    const fetchAll = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Fetch appointment details
+        const appointmentRes = await fetch(`http://127.0.0.1:5000/api/appointment-details/${appointmentId}`);
+        if (!appointmentRes.ok) throw new Error("Failed to fetch appointment details");
+        const appointmentData = await appointmentRes.json();
+        setAppointment(appointmentData.appointment);
+
+        // Fetch patient details (for medical history, allergies, etc.)
+        if (appointmentData.appointment?.P_ID) {
+          const patientRes = await fetch(`http://127.0.0.1:5000/api/patient/${appointmentData.appointment.P_ID}`);
+          if (!patientRes.ok) throw new Error("Failed to fetch patient details");
+          const patientData = await patientRes.json();
+          setPatient(patientData.patient);
+        }
+
+        // Fetch available diagnoses
+        const diagnosisRes = await fetch("http://127.0.0.1:5000/api/diagnoses");
+        if (!diagnosisRes.ok) throw new Error("Failed to fetch diagnoses");
+        const diagnosisData = await diagnosisRes.json();
+        setDiagnosisOptions(diagnosisData.diagnoses?.map((d: any) => d.diagnosis_Name) || []);
+
+        // Fetch available tests
+        const testRes = await fetch("http://127.0.0.1:5000/api/tests-available");
+        if (!testRes.ok) throw new Error("Failed to fetch tests");
+        const testData = await testRes.json();
+        setTestOptions(testData.tests?.map((t: any) => t.test_name) || []);
+
+        // Fetch available treatments
+        const treatmentRes = await fetch("http://127.0.0.1:5000/api/treatments-available");
+        if (!treatmentRes.ok) throw new Error("Failed to fetch treatments");
+        const treatmentData = await treatmentRes.json();
+        setTreatmentOptions(treatmentData.treatments?.map((t: any) => t.treatment_name) || []);
+      } catch (err: any) {
+        setError(err.message || "Error fetching data");
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (appointmentId) fetchAll();
+  }, [appointmentId]);
+
   const handleAddTreatment = () => {
     if (selectedTreatment && selectedDosage && selectedDuration) {
       setTreatments((prev) => [
@@ -105,6 +120,31 @@ const DoctorPending = () => {
 
   const handleRemoveTreatment = (idx: number) => {
     setTreatments((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // --- POST request to complete the appointment ---
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch(`http://127.0.0.1:5000/api/finish-appointment/${appointmentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          diagnosis,
+          tests,
+          treatments,
+          admit,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to submit doctor's orders");
+      // Optionally show a success message or redirect
+      navigate("/doctor-home"); // or wherever you want to go after submission
+    } catch (err: any) {
+      setError(err.message || "Error submitting doctor's orders");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -136,161 +176,185 @@ const DoctorPending = () => {
         </div>
       </div>
 
+      {/* Loading/Error */}
+      {loading && <div className="text-center py-8">Loading...</div>}
+      {error && <div className="text-center py-8 text-red-500">{error}</div>}
+
       {/* Patient Info & Medical History */}
-      <Card className={`mb-8 ${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
-        <CardHeader>
-          <CardTitle>Patient Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-8">
-            <div className="flex-1 space-y-2">
-              <div><b>Name:</b> {mockPatient.name}</div>
-              <div><b>Patient ID:</b> {mockPatient.P_ID}</div>
-              <div><b>Age:</b> {mockPatient.age}</div>
-              <div><b>Sex:</b> {mockPatient.sex}</div>
-            </div>
-            <div className="flex-1">
-              <b>Medical History:</b>
-              <ul className="list-disc ml-6">
-                {mockPatient.medicalHistory.map((h, i) => (
-                  <li key={i}>{h}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Main Content */}
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Left: Appointment Request Details & Actions */}
-        <div className="flex-1 space-y-6">
-          <Card className={`${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
-            <CardHeader>
-              <CardTitle>Appointment Request Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div><b>Date:</b> {mockAppointment.date}</div>
-              <div><b>Time:</b> {mockAppointment.time}</div>
-              <div><b>Symptoms:</b> {mockAppointment.symptoms}</div>
-              <div><b>Notes:</b> {mockAppointment.notes}</div>
-            </CardContent>
-          </Card>
-
-          {/* Actions */}
-          <Card className={`${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
-            <CardHeader>
-              <CardTitle>Doctor Actions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {/* Diagnosis */}
-              <div className="mb-4">
-                <label className="font-semibold block mb-1">Diagnosis</label>
-                <select
-                  className="w-full p-2 rounded border dark:bg-gray-700 dark:text-white"
-                  value={diagnosis}
-                  onChange={e => setDiagnosis(e.target.value)}
-                >
-                  <option value="">Select diagnosis</option>
-                  {DIAGNOSIS_OPTIONS.map((diag) => (
-                    <option key={diag} value={diag}>{diag}</option>
-                  ))}
-                </select>
+      {!loading && appointment && patient && (
+        <Card className={`mb-8 ${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
+          <CardHeader>
+            <CardTitle>Patient Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row gap-8">
+              <div className="flex-1 space-y-2">
+                <div><b>Name:</b> {patient.name}</div>
+                <div><b>Patient ID:</b> {patient.P_ID}</div>
+                <div><b>DOB:</b> {patient.DOB ? new Date(patient.DOB).toLocaleDateString() : "N/A"}</div>
+                <div><b>Sex:</b> {patient.Sex}</div>
+                <div><b>Phone:</b> {patient.phone_no}</div>
+                <div><b>Emergency Contact:</b> {patient.emergency_phone_no}</div>
               </div>
-
-              {/* Tests */}
-              <div className="mb-4">
-                <label className="font-semibold block mb-1">Tests to Prescribe</label>
-                <select
-                  multiple
-                  className="w-full p-2 rounded border dark:bg-gray-700 dark:text-white"
-                  value={tests}
-                  onChange={e =>
-                    setTests(Array.from(e.target.selectedOptions, o => o.value))
+              <div className="flex-1">
+                <b>Medical History:</b>
+                <ul className="list-disc ml-6">
+                  {patient.medicalHistory?.length
+                    ? patient.medicalHistory.map((mh: any, i: number) =>
+                        <li key={i}>{mh.disease?.Disease_Name || "Unknown"}</li>
+                      )
+                    : <li>None</li>
                   }
-                >
-                  {TEST_OPTIONS.map((test) => (
-                    <option key={test} value={test}>{test}</option>
-                  ))}
-                </select>
-                <div className="text-xs mt-1 text-gray-500">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</div>
-              </div>
-
-              {/* Treatments */}
-              <div className="mb-4">
-                <label className="font-semibold block mb-1">Treatments to Prescribe</label>
-                <div className="flex flex-col md:flex-row gap-2 mb-2">
-                  <select
-                    className="flex-1 p-2 rounded border dark:bg-gray-700 dark:text-white"
-                    value={selectedTreatment}
-                    onChange={e => setSelectedTreatment(e.target.value)}
-                  >
-                    <option value="">Select treatment</option>
-                    {TREATMENT_OPTIONS.map((treat) => (
-                      <option key={treat} value={treat}>{treat}</option>
-                    ))}
-                  </select>
-                  <select
-                    className="flex-1 p-2 rounded border dark:bg-gray-700 dark:text-white"
-                    value={selectedDosage}
-                    onChange={e => setSelectedDosage(e.target.value)}
-                  >
-                    <option value="">Dosage</option>
-                    {DOSAGE_OPTIONS.map((d) => (
-                      <option key={d.value} value={d.value}>{d.label}</option>
-                    ))}
-                  </select>
-                  <input
-                    type="number"
-                    min={1}
-                    placeholder="Duration (days)"
-                    className="flex-1 p-2 rounded border dark:bg-gray-700 dark:text-white"
-                    value={selectedDuration}
-                    onChange={e => setSelectedDuration(e.target.value)}
-                  />
-                  <Button
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                    onClick={handleAddTreatment}
-                    disabled={!selectedTreatment || !selectedDosage || !selectedDuration}
-                  >
-                    Add
-                  </Button>
-                </div>
-                {/* List of added treatments */}
-                <ul>
-                  {treatments.map((t, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-sm mb-1">
-                      <span>
-                        {t.name} | Dosage: {t.dosage} | Duration: {t.duration} days
-                      </span>
-                      <Button size="sm" variant="outline" onClick={() => handleRemoveTreatment(idx)}>
-                        Remove
-                      </Button>
-                    </li>
-                  ))}
+                </ul>
+                <b>Allergies:</b>
+                <ul className="list-disc ml-6">
+                  {patient.allergies?.length
+                    ? patient.allergies.map((a: any, i: number) =>
+                        <li key={i}>{a.name || "Unknown"}</li>
+                      )
+                    : <li>None</li>
+                  }
                 </ul>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-              {/* Admit */}
-              <div className="mb-4 flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="admit"
-                  checked={admit}
-                  onChange={e => setAdmit(e.target.checked)}
-                  className="h-5 w-5"
-                />
-                <label htmlFor="admit" className="font-semibold">Admit Patient</label>
-              </div>
+      {/* Main Content */}
+      {!loading && appointment && (
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Left: Appointment Request Details & Actions */}
+          <div className="flex-1 space-y-6">
+            <Card className={`${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
+              <CardHeader>
+                <CardTitle>Appointment Request Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div><b>Date:</b> {appointment.TimeStamp ? new Date(appointment.TimeStamp).toLocaleDateString() : ""}</div>
+                <div><b>Time:</b> {appointment.TimeStamp ? new Date(appointment.TimeStamp).toLocaleTimeString() : ""}</div>
+                <div><b>Symptoms:</b> {appointment.Symptoms || "N/A"}</div>
+              </CardContent>
+            </Card>
 
-              {/* Submit Button */}
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full mt-4">
-                Submit Doctor's Orders
-              </Button>
-            </CardContent>
-          </Card>
+            {/* Actions */}
+            <Card className={`${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
+              <CardHeader>
+                <CardTitle>Doctor Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Diagnosis */}
+                <div className="mb-4">
+                  <label className="font-semibold block mb-1">Diagnosis</label>
+                  <select
+                    className="w-full p-2 rounded border dark:bg-gray-700 dark:text-white"
+                    value={diagnosis}
+                    onChange={e => setDiagnosis(e.target.value)}
+                  >
+                    <option value="">Select diagnosis</option>
+                    {diagnosisOptions.map((diag) => (
+                      <option key={diag} value={diag}>{diag}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Tests */}
+                <div className="mb-4">
+                  <label className="font-semibold block mb-1">Tests to Prescribe</label>
+                  <select
+                    multiple
+                    className="w-full p-2 rounded border dark:bg-gray-700 dark:text-white"
+                    value={tests}
+                    onChange={e =>
+                      setTests(Array.from(e.target.selectedOptions, o => o.value))
+                    }
+                  >
+                    {testOptions.map((test) => (
+                      <option key={test} value={test}>{test}</option>
+                    ))}
+                  </select>
+                  <div className="text-xs mt-1 text-gray-500">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</div>
+                </div>
+
+                {/* Treatments */}
+                <div className="mb-4">
+                  <label className="font-semibold block mb-1">Treatments to Prescribe</label>
+                  <div className="flex flex-col md:flex-row gap-2 mb-2">
+                    <select
+                      className="flex-1 p-2 rounded border dark:bg-gray-700 dark:text-white"
+                      value={selectedTreatment}
+                      onChange={e => setSelectedTreatment(e.target.value)}
+                    >
+                      <option value="">Select treatment</option>
+                      {treatmentOptions.map((treat) => (
+                        <option key={treat} value={treat}>{treat}</option>
+                      ))}
+                    </select>
+                    <select
+                      className="flex-1 p-2 rounded border dark:bg-gray-700 dark:text-white"
+                      value={selectedDosage}
+                      onChange={e => setSelectedDosage(e.target.value)}
+                    >
+                      <option value="">Dosage</option>
+                      {DOSAGE_OPTIONS.map((d) => (
+                        <option key={d.value} value={d.value}>{d.label}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      min={1}
+                      placeholder="Duration (days)"
+                      className="flex-1 p-2 rounded border dark:bg-gray-700 dark:text-white"
+                      value={selectedDuration}
+                      onChange={e => setSelectedDuration(e.target.value)}
+                    />
+                    <Button
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={handleAddTreatment}
+                      disabled={!selectedTreatment || !selectedDosage || !selectedDuration}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  {/* List of added treatments */}
+                  <ul>
+                    {treatments.map((t, idx) => (
+                      <li key={idx} className="flex items-center gap-2 text-sm mb-1">
+                        <span>
+                          {t.name} | Dosage: {t.dosage} | Duration: {t.duration} days
+                        </span>
+                        <Button size="sm" variant="outline" onClick={() => handleRemoveTreatment(idx)}>
+                          Remove
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Admit */}
+                <div className="mb-4 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="admit"
+                    checked={admit}
+                    onChange={e => setAdmit(e.target.checked)}
+                    className="h-5 w-5"
+                  />
+                  <label htmlFor="admit" className="font-semibold">Admit Patient</label>
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white w-full mt-4"
+                  onClick={handleSubmit}
+                >
+                  Submit Doctor's Orders
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -1,52 +1,34 @@
 import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import logo from "@/assets/images/logo.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { LogOut, Sun, Moon } from "lucide-react";
 
-// Mock data
-const mockPatient = {
-  name: "John Doe",
-  age: 42,
-  sex: "M",
-  P_ID: 1001,
-  medicalHistory: [
-    "Type 2 Diabetes (2018)",
-    "Allergy: Penicillin",
-    "Hypertension (2021)"
-  ]
-};
-
-const mockAppointment = {
-  date: "2025-04-17",
-  time: "10:30",
-  symptoms: "Fever, headache, body ache",
-  notes: "Patient reports symptoms for last 3 days.",
-  diagnosis: "Common Cold",
-  admit: false,
-  prescribedTests: [
-    { name: "Blood Test", status: "Completed", result: "Normal CBC, no infection." },
-    { name: "X-Ray", status: "Pending" },
-    { name: "ECG", status: "Cancelled" }
-  ],
-  prescribedTreatments: [
-    { name: "Paracetamol", dosage: "101", duration: "5" },
-    { name: "Antihistamine", dosage: "111", duration: "3" }
-  ]
-};
-
 const dosageLabels: Record<string, string> = {
-  "100": "Morning only",
-  "010": "Afternoon only",
-  "001": "Night only",
-  "110": "Morning & Afternoon",
-  "101": "Morning & Night",
-  "011": "Afternoon & Night",
-  "111": "All three times"
+  "NNN": "None",
+  "YNN": "Morning only",
+  "NYN": "Afternoon only",
+  "NNY": "Night only",
+  "YYN": "Morning & Afternoon",
+  "YNY": "Morning & Night",
+  "NYY": "Afternoon & Night",
+  "YYY": "All three times"
 };
 
 const DoctorComplete: React.FC = () => {
+  const [appointmentId, setAppointmentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = localStorage.getItem("appointmentId");
+    setAppointmentId(id);
+    // Use appointmentId in your fetch logic
+  }, []);
+  
   const [darkMode, setDarkMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [appointment, setAppointment] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (darkMode) {
@@ -55,6 +37,24 @@ const DoctorComplete: React.FC = () => {
       document.body.classList.remove("dark");
     }
   }, [darkMode]);
+
+  useEffect(() => {
+    const fetchAppointment = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`http://127.0.0.1:5000/api/appointment-details/${appointmentId}`);
+        if (!res.ok) throw new Error("Failed to fetch appointment details");
+        const data = await res.json();
+        setAppointment(data.appointment);
+      } catch (err: any) {
+        setError(err.message || "Error fetching appointment details");
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (appointmentId) fetchAppointment();
+  }, [appointmentId]);
 
   return (
     <div className={`min-h-screen p-6 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"}`}>
@@ -84,108 +84,114 @@ const DoctorComplete: React.FC = () => {
         </div>
       </div>
 
-      {/* Patient Info & Medical History */}
-      <Card className={`mb-8 ${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
-        <CardHeader>
-          <CardTitle>Patient Information</CardTitle>
-        </CardHeader>
-        <CardContent>
+      {/* Loading/Error */}
+      {loading && <div className="text-center py-8">Loading...</div>}
+      {error && <div className="text-center py-8 text-red-500">{error}</div>}
+
+      {/* Show only after loading and if appointment exists */}
+      {!loading && appointment && (
+        <>
+          {/* Patient Info & Medical History */}
+          <Card className={`mb-8 ${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
+            <CardHeader>
+              <CardTitle>Patient Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row gap-8">
+                <div className="flex-1 space-y-2">
+                  <div><b>Name:</b> {appointment.patient?.name}</div>
+                  <div><b>Patient ID:</b> {appointment.P_ID}</div>
+                  {/* Add age/sex if available in your backend response */}
+                </div>
+                {/* If you want to show medical history, you can add another fetch or expand your backend */}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Appointment Summary */}
           <div className="flex flex-col md:flex-row gap-8">
-            <div className="flex-1 space-y-2">
-              <div><b>Name:</b> {mockPatient.name}</div>
-              <div><b>Patient ID:</b> {mockPatient.P_ID}</div>
-              <div><b>Age:</b> {mockPatient.age}</div>
-              <div><b>Sex:</b> {mockPatient.sex}</div>
+            <div className="flex-1 space-y-6">
+              <Card className={`${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
+                <CardHeader>
+                  <CardTitle>Appointment Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div><b>Date:</b> {appointment.TimeStamp ? new Date(appointment.TimeStamp).toLocaleDateString() : ""}</div>
+                  <div><b>Time:</b> {appointment.TimeStamp ? new Date(appointment.TimeStamp).toLocaleTimeString() : ""}</div>
+                  <div><b>Symptoms:</b> {appointment.Symptoms || "N/A"}</div>
+                  <div>
+                    <b>Diagnosis:</b>{" "}
+                    {appointment.diagnosis?.length
+                      ? appointment.diagnosis.map((d: any) => d.diagnosis_Name).join(", ")
+                      : "N/A"}
+                  </div>
+                  <div><b>Doctor:</b> {appointment.doctor?.name}</div>
+                  <div><b>Admit:</b> {appointment.admit ? "Yes" : "No"}</div>
+                </CardContent>
+              </Card>
+
+              {/* Prescribed Treatments */}
+              <Card className={`${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
+                <CardHeader>
+                  <CardTitle>Prescribed Treatments</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {appointment.Treatment?.length === 0 ? (
+                    <div>No treatments prescribed.</div>
+                  ) : (
+                    <ul>
+                      {appointment.Treatment.map((t: any, i: number) => (
+                        <li key={i} className="mb-2">
+                          <b>{t.treatment?.treatment_name}</b> | Dosage: {dosageLabels[t.dosage] || t.dosage} | Duration: {t.duration} days
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
             </div>
+
+            {/* Prescribed Tests & Results */}
             <div className="flex-1">
-              <b>Medical History:</b>
-              <ul className="list-disc ml-6">
-                {mockPatient.medicalHistory.map((h, i) => (
-                  <li key={i}>{h}</li>
-                ))}
-              </ul>
+              <Card className={`${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
+                <CardHeader>
+                  <CardTitle>Prescribed Tests & Results</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {appointment.tests?.length === 0 ? (
+                    <div>No tests prescribed.</div>
+                  ) : (
+                    <ul>
+                      {appointment.tests.map((test: any, i: number) => (
+                        <li key={i} className="mb-3">
+                          <b>{test.test?.test_name}</b> <br />
+                          Status:{" "}
+                          <span
+                            className={
+                              test.Status === "Completed"
+                                ? "text-green-600"
+                                : test.Status === "Pending"
+                                ? "text-yellow-600"
+                                : "text-red-600"
+                            }
+                          >
+                            {test.Status}
+                          </span>
+                          {test.Status === "Completed" && test.result && (
+                            <div>
+                              <b>Result:</b> {test.result}
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Appointment Summary */}
-      <div className="flex flex-col md:flex-row gap-8">
-        <div className="flex-1 space-y-6">
-          <Card className={`${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
-            <CardHeader>
-              <CardTitle>Appointment Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div><b>Date:</b> {mockAppointment.date}</div>
-              <div><b>Time:</b> {mockAppointment.time}</div>
-              <div><b>Symptoms:</b> {mockAppointment.symptoms}</div>
-              <div><b>Notes:</b> {mockAppointment.notes}</div>
-              <div><b>Diagnosis:</b> {mockAppointment.diagnosis}</div>
-              <div><b>Admit:</b> {mockAppointment.admit ? "Yes" : "No"}</div>
-            </CardContent>
-          </Card>
-
-          {/* Prescribed Treatments */}
-          <Card className={`${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
-            <CardHeader>
-              <CardTitle>Prescribed Treatments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {mockAppointment.prescribedTreatments.length === 0 ? (
-                <div>No treatments prescribed.</div>
-              ) : (
-                <ul>
-                  {mockAppointment.prescribedTreatments.map((t, i) => (
-                    <li key={i} className="mb-2">
-                      <b>{t.name}</b> | Dosage: {dosageLabels[t.dosage] || t.dosage} | Duration: {t.duration} days
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Prescribed Tests & Results */}
-        <div className="flex-1">
-          <Card className={`${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
-            <CardHeader>
-              <CardTitle>Prescribed Tests & Results</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {mockAppointment.prescribedTests.length === 0 ? (
-                <div>No tests prescribed.</div>
-              ) : (
-                <ul>
-                  {mockAppointment.prescribedTests.map((test, i) => (
-                    <li key={i} className="mb-3">
-                      <b>{test.name}</b> <br />
-                      Status:{" "}
-                      <span
-                        className={
-                          test.status === "Completed"
-                            ? "text-green-600"
-                            : test.status === "Pending"
-                            ? "text-yellow-600"
-                            : "text-red-600"
-                        }
-                      >
-                        {test.status}
-                      </span>
-                      {test.status === "Completed" && test.result && (
-                        <div>
-                          <b>Result:</b> {test.result}
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };
