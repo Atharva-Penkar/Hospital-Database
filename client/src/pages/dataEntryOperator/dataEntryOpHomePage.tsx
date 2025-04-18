@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import DataEntryOpHome from "@/components/dataEntryOperator/dataEntryOpHome";
 
-const DataEntryOpHomePage = () => {
+const DataEntryOpHomePage: React.FC = () => {
   const [darkMode, setDarkMode] = useState(false);
 
+  // Keep <body> in sync with darkMode state
   useEffect(() => {
     if (darkMode) {
       document.body.classList.add("dark");
@@ -12,12 +13,7 @@ const DataEntryOpHomePage = () => {
     }
   }, [darkMode]);
 
-  return (
-    <DataEntryOpHome
-      darkMode={darkMode}
-      toggleDarkMode={() => setDarkMode((prev) => !prev)}
-    />
-  );
+  return <DataEntryOpHome />;
 };
 
 export default DataEntryOpHomePage;
