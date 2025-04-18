@@ -12,6 +12,7 @@ import getAppointmentsRouter from "./routes/appointments/Appointments.routes";
 import getDoctorsBySpecializationRouter from "./routes/doctors/getDoctors.routes";
 import getSpecializationsRouter from "./routes/doctors/getSpecializations.routes";
 import scheduleAppointmentRouter from "./routes/appointments/updateAppointments.routes";
+import testsAvailableRouter from "./routes/testsAvailable/testsAvailable.routes";
 
 
 dotenv.config();
@@ -44,6 +45,8 @@ app.use("/api/appointments/schedule", scheduleAppointmentRouter)
 
 app.use("/api/doctors/specialization", getDoctorsBySpecializationRouter)
 app.use("/api/doctors/specializations", getSpecializationsRouter)
+
+app.use("/api/tests-available", testsAvailableRouter)
 
 app.use((req, res) => {
   console.log("404 Not Found:", req.method, req.originalUrl);
