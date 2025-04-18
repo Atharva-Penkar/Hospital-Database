@@ -11,12 +11,10 @@ import FrontDeskOpAdmissions from "./pages/frontDeskOperator/frontDeskOpAdmissio
 import FrontDeskOpTestsPage from "./pages/frontDeskOperator/frontDeskOpTestsPage";
 import FrontDeskOpTreatmentsPage from "./pages/frontDeskOperator/frontDeskOpTreatmentsPage";
 import DataEntryOpHomePage from "./pages/dataEntryOperator/dataEntryOpHomePage";
-import DataEntryOpTestsPage from "./pages/dataEntryOperator/dataEntryOpTestsPage";
-import DataEntryOpTreatmentsPage from "./pages/dataEntryOperator/dataEntryOpTreatmentsPage";
 import DoctorHomePage from "./pages/doctor/doctorHomePage";
 import DoctorPendingPage from "./pages/doctor/doctorPendingPage"
 import DoctorCompletePage from "./pages/doctor/doctorCompletePage";
-import DatabaseManager from "./pages/dbmanager/dashboard"; // Added this import
+import DatabaseManager from "./pages/dbmanager/dashboard";
 
 
 function App() {
@@ -30,19 +28,17 @@ function App() {
         <Route path="/patient-info" element={<PatientInfoFormPage />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/patientHome" element={<PatientHomePage />} />
-        <Route path="/front-desk-dashboard" element={<FrontDeskHomePage />} />
+        <Route path="/front-desk-home" element={<FrontDeskHomePage />} />
         <Route path="/front-desk-appointments" element={<FrontDeskOpAppointments />} />
         <Route path="/front-desk-appointments" element={<FrontDeskOpAppointments />} />
         <Route path="/front-desk-admissions" element={<FrontDeskOpAdmissions />} />
         <Route path="/front-desk-tests" element={<FrontDeskOpTestsPage />} />
         <Route path="/front-desk-treatments" element={<FrontDeskOpTreatmentsPage />} />
-        <Route path="/data-entry-dashboard" element={<DataEntryOpHomePage />} />
-        <Route path="/data-entry-tests" element={<DataEntryOpTestsPage />} />
-        <Route path="/data-entry-treatments" element={<DataEntryOpTreatmentsPage />} />
+        <Route path="/data-entry-home" element={<DataEntryOpHomePage />} />
         <Route path="/doctor-home" element={<DoctorHomePage />} />
         <Route path="/doctor-pending" element={<DoctorPendingPage />} />
         <Route path="/doctor-complete" element={<DoctorCompletePage />} />
-        <Route path="/database-manager" element={<DatabaseManager />} /> {/* Add this route */}
+        <Route path="/database-manager" element={<DatabaseManager />} />
       </Routes>
     </Router>
   );
