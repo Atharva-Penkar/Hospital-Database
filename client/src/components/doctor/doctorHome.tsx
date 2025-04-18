@@ -5,98 +5,77 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LogOut, Sun, Moon } from "lucide-react";
 
+// --- Types ---
 type Doctor = {
   D_ID: number;
   name: string;
-  department: string;
-  email: string;
-  phone_no: string;
+  specialization: string;
+  mail?: string;
+  phone: string;
+  shift?: string;
+  available: boolean;
 };
 
 type Appointment = {
-  appointment_id: number;
-  patient_name: string;
-  patient_id: number;
-  time: string;
-  status: "Pending" | "Completed";
+  A_ID: number;
+  P_ID: number;
+  TimeStamp: string;
+  Status: string;
+  Symptoms?: string;
+  patient: {
+    name: string;
+    P_ID: number;
+  };
 };
-
 type AdmittedPatient = {
-  admission_id: number;
-  patient_name: string;
-  patient_id: number;
-  ward: string;
-  admitted_on: string;
+  admit_id: number;
+  P_ID: number;
+  admit_time: string;
+  R_no: number;
+  status: string;
+  patient: {
+    name: string;
+    P_ID: number;
+  };
+  room: {
+    Room_No: number;
+    Room_Type: string;
+  };
 };
-
-const mockDoctor: Doctor = {
-  D_ID: 1234,
-  name: "Dr. Gregory House",
-  department: "Diagnostics",
-  email: "house@masahospital.com",
-  phone_no: "1234567890",
-};
-
-const mockPendingAppointments: Appointment[] = [
-  {
-    appointment_id: 1,
-    patient_name: "John Doe",
-    patient_id: 1001,
-    time: "2025-04-20 10:00:00",
-    status: "Pending",
-  },
-  {
-    appointment_id: 2,
-    patient_name: "Jane Smith",
-    patient_id: 1002,
-    time: "2025-04-20 11:30:00",
-    status: "Pending",
-  },
-];
-
-const mockCompletedAppointments: Appointment[] = [
-  {
-    appointment_id: 3,
-    patient_name: "Michael Scott",
-    patient_id: 1003,
-    time: "2025-04-19 09:00:00",
-    status: "Completed",
-  },
-];
-
-const mockAdmittedPatients: AdmittedPatient[] = [
-  {
-    admission_id: 1,
-    patient_name: "Pam Beesly",
-    patient_id: 1004,
-    ward: "Ward A",
-    admitted_on: "2025-04-18 14:00:00",
-  },
-  {
-    admission_id: 2,
-    patient_name: "Jim Halpert",
-    patient_id: 1005,
-    ward: "Ward B",
-    admitted_on: "2025-04-17 16:30:00",
-  },
-];
-
+// --- Component ---
 const DoctorHome: React.FC = () => {
+  // Replace with actual doctor ID (from auth or context)
+  const doctorId = 1234;
+
   const [darkMode, setDarkMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [pendingAppointments, setPendingAppointments] = useState<Appointment[]>([]);
   const [completedAppointments, setCompletedAppointments] = useState<Appointment[]>([]);
   const [admittedPatients, setAdmittedPatients] = useState<AdmittedPatient[]>([]);
 
+  // Fetch all data in parallel
   useEffect(() => {
-    setDoctor(mockDoctor);
-    setPendingAppointments(mockPendingAppointments);
-    setCompletedAppointments(mockCompletedAppointments);
-    setAdmittedPatients(mockAdmittedPatients);
-  }, []);
+    setLoading(true);
+  
+    const fetchDoctor = fetch(`/api/doctor-info/${doctorId}`).then(res => res.json());
+    const fetchPending = fetch(`/api/doctor-pending/${doctorId}`).then(res => res.json());
+    const fetchCompleted = fetch(`/api/doctor-completed/${doctorId}`).then(res => res.json());
+    const fetchAdmitted = fetch(`/api/doctor-admitted/${doctorId}`).then(res => res.json());
+  
+    Promise.all([fetchDoctor, fetchPending, fetchCompleted, fetchAdmitted])
+      .then(([doctorRes, pendingRes, completedRes, admittedRes]) => {
+        setDoctor(doctorRes.doctor);
+        setPendingAppointments(pendingRes.appointments || []);
+        setCompletedAppointments(completedRes.appointments || []);
+        setAdmittedPatients(admittedRes.admitted || []);
+      })
+      .finally(() => setLoading(false));
+  }, [doctorId]);
+  
 
   useEffect(() => {
-    // Optional: Set initial dark mode based on system preference
     if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
       setDarkMode(true);
       document.body.classList.add("dark");
@@ -113,16 +92,22 @@ const DoctorHome: React.FC = () => {
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
 
-  // Remove the patient from admitted list on discharge
-  const handleRequestDischarge = (admission_id: number) => {
-    setAdmittedPatients((prev) =>
-      prev.filter((p) => p.admission_id !== admission_id)
-    );
+  // Request discharge for a patient
+  const handleRequestDischarge = async (admit_id: number) => {
+    try {
+      await fetch(`/api/doctor-admitted/${doctorId}/discharge/${admit_id}/`, { method: "PUT" });
+      setAdmittedPatients((prev) =>
+        prev.filter((p) => p.admit_id !== admit_id)
+      );
+    } catch {
+      // Optionally show an error toast
+    }
   };
+  
 
   // Navigation for appointment details (stub, does nothing here)
-  const goToAppointment = (appointment_id: number) => {
-    alert(`Go to appointment details for ID: ${appointment_id}`);
+  const goToAppointment = (A_ID: number) => {
+    alert(`Go to appointment details for ID: ${A_ID}`);
   };
 
   return (
@@ -134,7 +119,6 @@ const DoctorHome: React.FC = () => {
           <h1 className="text-3xl font-bold">MASA Hospital</h1>
         </div>
         <div className="flex items-center gap-4">
-          {/* Toggle Switch */}
           <div
             className="relative w-14 h-7 bg-gray-300 dark:bg-gray-700 rounded-full cursor-pointer transition"
             onClick={toggleDarkMode}
@@ -161,16 +145,20 @@ const DoctorHome: React.FC = () => {
             <CardTitle className="text-xl">Doctor Profile</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4 text-sm">
-            {doctor ? (
+            {loading ? (
+              <p>Loading...</p>
+            ) : doctor ? (
               <>
                 <p><strong>Doctor ID:</strong> {doctor.D_ID}</p>
                 <p><strong>Name:</strong> {doctor.name}</p>
-                <p><strong>Department:</strong> {doctor.department}</p>
-                <p><strong>Email:</strong> {doctor.email}</p>
-                <p><strong>Phone:</strong> {doctor.phone_no}</p>
+                <p><strong>Specialization:</strong> {doctor.specialization}</p>
+                <p><strong>Email:</strong> {doctor.mail || "N/A"}</p>
+                <p><strong>Phone:</strong> {doctor.phone}</p>
+                <p><strong>Shift:</strong> {doctor.shift || "N/A"}</p>
+                <p><strong>Available:</strong> {doctor.available ? "Yes" : "No"}</p>
               </>
             ) : (
-              <p>Loading doctor info...</p>
+              <p>Doctor not found.</p>
             )}
           </CardContent>
         </Card>
@@ -190,31 +178,33 @@ const DoctorHome: React.FC = () => {
                 <CardTitle>Pending Appointments</CardTitle>
               </CardHeader>
               <CardContent>
-                {pendingAppointments.length === 0 ? (
+                {loading ? (
+                  <p>Loading...</p>
+                ) : pendingAppointments.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No pending appointments.</p>
                 ) : (
                   <ul className="divide-y">
                     {pendingAppointments.map((appt) => (
                       <li
-                        key={appt.appointment_id}
+                        key={appt.A_ID}
                         className="py-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition"
-                        onClick={() => goToAppointment(appt.appointment_id)}
+                        onClick={() => goToAppointment(appt.A_ID)}
                         tabIndex={0}
                         role="button"
                         onKeyDown={e => {
                           if (e.key === "Enter" || e.key === " ") {
-                            goToAppointment(appt.appointment_id);
+                            goToAppointment(appt.A_ID);
                           }
                         }}
                       >
                         <div className="flex justify-between items-center">
                           <div>
-                            <div className="font-semibold">{appt.patient_name} (ID: {appt.patient_id})</div>
+                            <div className="font-semibold">{appt.patient.name} (ID: {appt.patient.P_ID})</div>
                             <div className="text-xs">
-                              {new Date(appt.time).toLocaleString()}
+                              {new Date(appt.TimeStamp).toLocaleString()}
                             </div>
                           </div>
-                          <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">Scheduled</span>
+                          <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">{appt.Status}</span>
                         </div>
                       </li>
                     ))}
@@ -231,31 +221,33 @@ const DoctorHome: React.FC = () => {
                 <CardTitle>Completed Appointments</CardTitle>
               </CardHeader>
               <CardContent>
-                {completedAppointments.length === 0 ? (
+                {loading ? (
+                  <p>Loading...</p>
+                ) : completedAppointments.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No completed appointments.</p>
                 ) : (
                   <ul className="divide-y">
                     {completedAppointments.map((appt) => (
                       <li
-                        key={appt.appointment_id}
+                        key={appt.A_ID}
                         className="py-3 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition"
-                        onClick={() => goToAppointment(appt.appointment_id)}
+                        onClick={() => goToAppointment(appt.A_ID)}
                         tabIndex={0}
                         role="button"
                         onKeyDown={e => {
                           if (e.key === "Enter" || e.key === " ") {
-                            goToAppointment(appt.appointment_id);
+                            goToAppointment(appt.A_ID);
                           }
                         }}
                       >
                         <div className="flex justify-between items-center">
                           <div>
-                            <div className="font-semibold">{appt.patient_name} (ID: {appt.patient_id})</div>
+                            <div className="font-semibold">{appt.patient.name} (ID: {appt.patient.P_ID})</div>
                             <div className="text-xs">
-                              {new Date(appt.time).toLocaleString()}
+                              {new Date(appt.TimeStamp).toLocaleString()}
                             </div>
                           </div>
-                          <span className="px-2 py-1 rounded bg-green-100 text-green-800 text-xs">Completed</span>
+                          <span className="px-2 py-1 rounded bg-green-100 text-green-800 text-xs">{appt.Status}</span>
                         </div>
                       </li>
                     ))}
@@ -272,23 +264,25 @@ const DoctorHome: React.FC = () => {
                 <CardTitle>Admitted Patients</CardTitle>
               </CardHeader>
               <CardContent>
-                {admittedPatients.length === 0 ? (
+                {loading ? (
+                  <p>Loading...</p>
+                ) : admittedPatients.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No admitted patients.</p>
                 ) : (
                   <ul className="divide-y">
                     {admittedPatients.map((patient) => (
-                      <li key={patient.admission_id} className="py-3">
+                      <li key={patient.admit_id} className="py-3">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                           <div>
-                            <div className="font-semibold">{patient.patient_name} (ID: {patient.patient_id})</div>
+                            <div className="font-semibold">{patient.patient.name} (ID: {patient.patient.P_ID})</div>
                             <div className="text-xs">
-                              Ward: {patient.ward} &nbsp;|&nbsp; Admitted on: {new Date(patient.admitted_on).toLocaleString()}
+                              Room: {patient.room.Room_No} ({patient.room.Room_Type}) &nbsp;|&nbsp; Admitted on: {new Date(patient.admit_time).toLocaleString()}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
                             <Button
                               className="bg-blue-600 hover:bg-blue-700 text-white"
-                              onClick={() => handleRequestDischarge(patient.admission_id)}
+                              onClick={() => handleRequestDischarge(patient.admit_id)}
                             >
                               Request Discharge
                             </Button>
