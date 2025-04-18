@@ -40,7 +40,7 @@ export const getPatientById = async (req: Request, res: Response) => {
         allergies: true,
         admissions: {
           include: {
-            ward: true,
+            room: true,
           },
         },
       },
