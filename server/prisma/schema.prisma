@@ -48,10 +48,10 @@ model TreatmentsAvailable {
 }
 
 model Room {
-  Room_No           Int      @id @default(autoincrement())
-  Room_Type      RoomType
-  beds_available Int
-  Admit          Admit[]
+  Room_No   Int      @id @default(autoincrement())
+  Room_Type RoomType
+  Available Boolean
+  Admit     Admit[]
 }
 
 model Appointment {
@@ -91,7 +91,7 @@ model Test {
 model Admit {
   admit_id       Int       @id @default(autoincrement())
   P_ID           Int
-  R_no        Int
+  R_no           Int
   admit_time     DateTime
   discharge_time DateTime?
   patient        Patient   @relation(fields: [P_ID], references: [P_ID])
