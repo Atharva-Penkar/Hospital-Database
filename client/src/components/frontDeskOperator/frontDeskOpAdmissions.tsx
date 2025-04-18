@@ -1,4 +1,4 @@
-import { useState} from "react";
+import { useState } from "react";
 import logo from '@/assets/images/logo.png';
 import { Button } from "@/components/ui/button";
 import { LogOut, Moon, Sun } from "lucide-react";
@@ -18,6 +18,8 @@ type AdmittedPatient = {
   ward: number;
   admissionDateTime: string;
 };
+
+type WardType = "General" | "Maternity" | "ICU" | "";
 
 const initialSeekingPatients: Patient[] = [
   { id: 101, name: "Riya Sharma", sex: "F", dob: "1998-05-23", reason: "High fever" },
@@ -45,88 +47,105 @@ const initialAdmittedPatients: AdmittedPatient[] = [
   { id: 210, name: "Sunil Dube", ward: 37, admissionDateTime: "2025-04-15T07:30" }
 ];
 
-
 const TOTAL_ROOMS = 40;
 
-const FrontDeskOpAdmissions = ({ darkMode, toggleDarkMode }: { darkMode: boolean; toggleDarkMode: () => void }) => {
+const getWardTypeForRoom = (room: number): WardType => {
+  if (room >= 1 && room <= 20) return "General";
+  if (room >= 21 && room <= 30) return "Maternity";
+  if (room >= 31 && room <= 40) return "ICU";
+  return "";
+};
+
+const wardTypeRanges: Record<WardType, [number, number]> = {
+  General: [1, 20],
+  Maternity: [21, 30],
+  ICU: [31, 40],
+  "": [1, 40]
+};
+
+// Track all occupied rooms, including those admitted via this UI
+const FrontDeskOpAdmissions = ({
+  darkMode,
+  toggleDarkMode
+}: {
+  darkMode: boolean;
+  toggleDarkMode: () => void;
+}) => {
   const [seekingPatients, setSeekingPatients] = useState<Patient[]>(initialSeekingPatients);
   const [admittedPatients, setAdmittedPatients] = useState<AdmittedPatient[]>(initialAdmittedPatients);
   const [selectedSeek, setSelectedSeek] = useState<Patient | null>(null);
   const [selectedDischarge, setSelectedDischarge] = useState<AdmittedPatient | null>(null);
+  const [selectedWardType, setSelectedWardType] = useState<WardType>("");
 
-  const getOccupiedRooms = () => {
-    return admittedPatients.reduce((acc, p) => {
-      acc[p.ward] = p.id;
-      return acc;
-    }, {} as Record<number, number>);
-  };
+  const [occupiedRooms, setOccupiedRooms] = useState<Record<number, number>>(() => {
+    const occ: Record<number, number> = {};
+    for (const p of initialAdmittedPatients) {
+      occ[p.ward] = p.id;
+    }
+    return occ;
+  });
 
   const handleAdmit = (ward: number) => {
     if (!selectedSeek) return;
-
-    const now = new Date().toISOString();
-    const newAdmitted: AdmittedPatient = {
-      id: selectedSeek.id,
-      name: selectedSeek.name,
-      ward,
-      admissionDateTime: now,
-    };
-
-    setAdmittedPatients((prev) => [...prev, newAdmitted]);
-    setSeekingPatients((prev) => prev.filter((p) => p.id !== selectedSeek.id));
+    setOccupiedRooms(prev => ({ ...prev, [ward]: selectedSeek.id }));
+    setSeekingPatients(prev => prev.filter((p) => p.id !== selectedSeek.id));
     setSelectedSeek(null);
+    setSelectedWardType("");
   };
 
   const handleDischarge = () => {
     if (!selectedDischarge) return;
     setAdmittedPatients((prev) => prev.filter((p) => p.id !== selectedDischarge.id));
+    setOccupiedRooms(prev => {
+      const updated = { ...prev };
+      const room = selectedDischarge.ward;
+      delete updated[room];
+      return updated;
+    });
     setSelectedDischarge(null);
   };
 
-  const occupiedRooms = getOccupiedRooms();
-
   return (
-    <div className={`min-h-screen p-4 grid grid-rows-[auto_1fr_auto] gap-4 ${darkMode ? "bg-gray-900 text-blue-400" : ""}`}>
+    <div className={`min-h-screen p-2 sm:p-4 grid grid-rows-[auto_1fr_auto] gap-2 sm:gap-4 ${darkMode ? "bg-gray-900 text-blue-400" : ""}`}>
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <img src={logo} alt="Hospital Logo" className="h-12 w-12" />
-          <h1 className="text-2xl font-bold">Admissions</h1>
+      <div className="flex justify-between items-center py-1 sm:py-2">
+        <div className="flex items-center gap-2">
+          <img src={logo} alt="Hospital Logo" className="h-7 w-7 sm:h-8 sm:w-8" />
+          <h1 className="text-base sm:text-lg font-bold">MASA Admissions</h1>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <div
-            className="relative w-14 h-7 bg-gray-300 dark:bg-gray-700 rounded-full cursor-pointer transition"
+            className="relative w-10 h-5 bg-gray-300 dark:bg-gray-700 rounded-full cursor-pointer transition"
             onClick={toggleDarkMode}
           >
             <div
-              className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${darkMode ? "translate-x-7" : "translate-x-1"
-                }`}
+              className={`absolute top-0.5 h-4 w-4 bg-white rounded-full shadow-md transition-transform duration-300 ${darkMode ? "translate-x-5" : "translate-x-1"}`}
             />
-            <div className="absolute inset-0 flex justify-between items-center px-1.5">
-              <Sun className="w-4 h-4 text-yellow-500" />
-              <Moon className="w-4 h-4 text-blue-400" />
+            <div className="absolute inset-0 flex justify-between items-center px-1">
+              <Sun className="w-3 h-3 text-yellow-500" />
+              <Moon className="w-3 h-3 text-blue-400" />
             </div>
           </div>
-
-          <Button variant="destructive" className="flex items-center gap-2">
-            <LogOut className="w-4 h-4" /> Logout
+          <Button variant="destructive" className="flex items-center gap-1 text-xs sm:text-sm px-2 py-1">
+            <LogOut className="w-3 h-3" /> Logout
           </Button>
         </div>
       </div>
 
       {/* Upper Section */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
         {/* Seeking Admissions */}
-        <div className={`p-4 rounded-lg shadow ${darkMode ? "bg-gray-800" : "bg-white"}`}>
-          <h2 className="text-xl font-semibold mb-2">Seeking Admission</h2>
-          <div className="max-h-72 overflow-y-auto pr-2 space-y-2">
+        <div className={`p-2 sm:p-3 rounded-lg shadow ${darkMode ? "bg-gray-800" : "bg-white"}`}>
+          <h2 className="text-sm sm:text-base font-semibold mb-1">Seeking Admission</h2>
+          <div className="max-h-40 sm:max-h-48 overflow-y-auto pr-1 space-y-1">
             {seekingPatients.map((p) => (
               <div
                 key={p.id}
-                className="p-2 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-1 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm"
                 onClick={() => {
                   setSelectedSeek(p);
                   setSelectedDischarge(null);
+                  setSelectedWardType("");
                 }}
               >
                 {p.name} (ID: {p.id})
@@ -134,28 +153,41 @@ const FrontDeskOpAdmissions = ({ darkMode, toggleDarkMode }: { darkMode: boolean
             ))}
           </div>
           {selectedSeek && (
-            <div className="mt-4 border-t pt-4 space-y-2 text-sm">
+            <div className="mt-2 border-t pt-2 space-y-1 text-xs sm:text-sm">
               <p><strong>Name:</strong> {selectedSeek.name}</p>
               <p><strong>ID:</strong> {selectedSeek.id}</p>
               <p><strong>Sex:</strong> {selectedSeek.sex}</p>
               <p><strong>DOB:</strong> {format(new Date(selectedSeek.dob), "PPP")}</p>
               <p><strong>Reason:</strong> {selectedSeek.reason}</p>
-              <p><strong>Select an available ward:</strong></p>
+              <div className="mt-1">
+                <label className="block text-xs font-medium mb-1">Select Ward Type:</label>
+                <select
+                  className="w-full p-1 border rounded text-xs"
+                  value={selectedWardType}
+                  onChange={e => setSelectedWardType(e.target.value as WardType)}
+                >
+                  <option value="">-- Select --</option>
+                  <option value="General">General (1-20)</option>
+                  <option value="Maternity">Maternity (21-30)</option>
+                  <option value="ICU">ICU (31-40)</option>
+                </select>
+              </div>
             </div>
           )}
         </div>
 
         {/* Discharge Requests */}
-        <div className={`p-4 rounded-lg shadow ${darkMode ? "bg-gray-800" : "bg-white"}`}>
-          <h2 className="text-xl font-semibold mb-2">Discharge Requests</h2>
-          <div className="max-h-72 overflow-y-auto pr-2 space-y-2">
+        <div className={`p-2 sm:p-3 rounded-lg shadow ${darkMode ? "bg-gray-800" : "bg-white"}`}>
+          <h2 className="text-sm sm:text-base font-semibold mb-1">Discharge Requests</h2>
+          <div className="max-h-40 sm:max-h-48 overflow-y-auto pr-1 space-y-1">
             {admittedPatients.map((p) => (
               <div
                 key={p.id}
-                className="p-2 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-1 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm"
                 onClick={() => {
                   setSelectedDischarge(p);
                   setSelectedSeek(null);
+                  setSelectedWardType("");
                 }}
               >
                 {p.name} (ID: {p.id})
@@ -163,11 +195,11 @@ const FrontDeskOpAdmissions = ({ darkMode, toggleDarkMode }: { darkMode: boolean
             ))}
           </div>
           {selectedDischarge && (
-            <div className="mt-4 border-t pt-4 space-y-2 text-sm">
+            <div className="mt-2 border-t pt-2 space-y-1 text-xs sm:text-sm">
               <p><strong>Name:</strong> {selectedDischarge.name}</p>
               <p><strong>ID:</strong> {selectedDischarge.id}</p>
               <p><strong>Admitted on:</strong> {format(new Date(selectedDischarge.admissionDateTime), "PPPp")}</p>
-              <Button variant="destructive" onClick={handleDischarge}>
+              <Button variant="destructive" className="text-xs sm:text-sm px-2 py-1" onClick={handleDischarge}>
                 Discharge Patient
               </Button>
             </div>
@@ -176,31 +208,47 @@ const FrontDeskOpAdmissions = ({ darkMode, toggleDarkMode }: { darkMode: boolean
       </div>
 
       {/* Bottom Section - Ward Grid */}
-      <div className="grid grid-cols-10 gap-2">
+      <div className="grid grid-cols-10 gap-2 mt-2">
         {Array.from({ length: TOTAL_ROOMS }, (_, i) => {
           const roomNumber = i + 1;
           const isOccupied = roomNumber in occupiedRooms;
-          const isClickable = !isOccupied && !!selectedSeek;
+          const wardType = getWardTypeForRoom(roomNumber);
+
+          const isInSelectedWardType = selectedWardType
+            ? roomNumber >= wardTypeRanges[selectedWardType][0] && roomNumber <= wardTypeRanges[selectedWardType][1]
+            : false;
+
+          const isClickable =
+            !!selectedSeek &&
+            !!selectedWardType &&
+            isInSelectedWardType &&
+            !isOccupied;
+
+          const highlight =
+            selectedWardType && isInSelectedWardType
+              ? isOccupied
+                ? "bg-rose-500 text-white cursor-not-allowed"
+                : isClickable
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                  : "bg-emerald-400 text-white cursor-default"
+              : isOccupied
+                ? "bg-rose-500 text-white cursor-not-allowed"
+                : "bg-emerald-300 text-white cursor-default opacity-60";
 
           return (
             <div
               key={roomNumber}
-              className={`aspect-square flex items-center justify-center rounded-lg text-center font-semibold transition-colors 
-                ${isOccupied
-                  ? "bg-rose-500 text-white cursor-not-allowed"
-                  : isClickable
-                    ? "bg-emerald-500 hover:bg-emerald-600 text-white cursor-pointer"
-                    : "bg-emerald-300 text-white cursor-default"}`}
+              className={`aspect-square flex items-center justify-center rounded-lg text-center font-semibold transition-colors text-xs sm:text-sm ${highlight}`}
               onClick={() => isClickable && handleAdmit(roomNumber)}
             >
               {isOccupied ? (
                 <>
-                  Room {roomNumber}
+                  {wardType} {roomNumber}
                   <br />
                   PID: {occupiedRooms[roomNumber]}
                 </>
               ) : (
-                `Room ${roomNumber}`
+                `${wardType} ${roomNumber}`
               )}
             </div>
           );
