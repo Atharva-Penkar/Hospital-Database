@@ -28,6 +28,7 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://127.0.0.1:5173",
+      "https://effective-enigma-6jx7j47vvj635gqv-5173.app.github.dev/",
       // Add any other URLs you use (e.g., Codespaces)
     ],
     credentials: true,
