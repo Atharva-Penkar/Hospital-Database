@@ -2,6 +2,12 @@ import { useNavigate } from "react-router-dom";
 import AuthFormPatient from "../../components/auth/AuthFormPatient";
 import { toast } from "sonner";
 
+// Try Codespace URL first, then localhost
+const BACKEND_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev",
+  "http://127.0.0.1:5000"
+];
+
 const LoginPatient = () => {
   const navigate = useNavigate();
 
@@ -11,34 +17,38 @@ const LoginPatient = () => {
     role: "patient", // You can keep this for future use if needed
     type: "login" | "signup"
   ) => {
-    try {
-      // Decide the API URL based on the type (login or signup)
-      const apiUrl = type === "login" ? "/api/auth-patient/login" : "/api/auth-patient/signup";
+    let lastError: any = null;
+    for (const baseUrl of BACKEND_URLS) {
+      try {
+        const apiUrl = type === "login" ? "/api/auth-patient/login" : "/api/auth-patient/signup";
+        const res = await fetch(baseUrl + apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, password }),
+        });
 
-      const res = await fetch("http://127.0.0.1:5000" + apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, password }),
-      });
+        const data = await res.json();
 
-      const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Login failed");
 
-      if (!res.ok) throw new Error(data.message || "Login failed");
+        localStorage.setItem("userId", data.user.userId);
 
+        toast.success("Login successful!", {
+          className: "bg-emerald-500 text-white",
+        });
 
-      localStorage.setItem("userId", data.user.userId);
-
-      toast.success("Login successful!", {
-        className: "bg-emerald-500 text-white",
-      });
-
-      navigate("/patientHome");
-    } catch (err: any) {
-      console.error("Login error:", err);
-      toast.error("Login failed: " + err.message, {
-        className: "bg-rose-500 text-white",
-      });
+        navigate("/patientHome");
+        return; // Stop after successful login
+      } catch (err: any) {
+        lastError = err;
+        console.error(`Login error with ${baseUrl}:`, err);
+        // Try next URL
+      }
     }
+    // If both failed:
+    toast.error("Login failed: " + (lastError?.message || "Unknown error"), {
+      className: "bg-rose-500 text-white",
+    });
   };
 
   return (
