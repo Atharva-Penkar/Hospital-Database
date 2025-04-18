@@ -66,6 +66,7 @@ model Appointment {
   patient   Patient           @relation(fields: [P_ID], references: [P_ID])
   tests     Test[]
   Treatment Treatment[]
+  admit     Admit?            // 1-1 optional relation, no fields/references here
 }
 
 model Treatment {
@@ -96,6 +97,8 @@ model Admit {
   discharge_time DateTime?
   patient        Patient   @relation(fields: [P_ID], references: [P_ID])
   room           Room      @relation(fields: [R_no], references: [Room_No])
+  A_ID           Int       @unique
+  appointment    Appointment @relation(fields: [A_ID], references: [A_ID])
 }
 
 model Disease {
