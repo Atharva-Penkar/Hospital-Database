@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logo from '@/assets/images/logo.png';
 import { Button } from "@/components/ui/button";
 import { LogOut, Moon, Sun } from "lucide-react";
@@ -21,32 +21,6 @@ type AdmittedPatient = {
 
 type WardType = "General" | "Maternity" | "ICU" | "";
 
-const initialSeekingPatients: Patient[] = [
-  { id: 101, name: "Riya Sharma", sex: "F", dob: "1998-05-23", reason: "High fever" },
-  { id: 102, name: "Aman Gupta", sex: "M", dob: "2000-11-12", reason: "Stomach pain" },
-  { id: 103, name: "Neha Mehta", sex: "F", dob: "1985-04-03", reason: "Fracture" },
-  { id: 104, name: "Anjali Verma", sex: "F", dob: "1990-01-15", reason: "Migraine" },
-  { id: 105, name: "Rahul Yadav", sex: "M", dob: "1988-08-22", reason: "Chest pain" },
-  { id: 106, name: "Sneha Joshi", sex: "F", dob: "1995-12-30", reason: "Injury" },
-  { id: 107, name: "Vikram Rao", sex: "M", dob: "1983-03-19", reason: "Fatigue" },
-  { id: 108, name: "Tina Singh", sex: "F", dob: "1997-10-11", reason: "Back pain" },
-  { id: 109, name: "Deepak Roy", sex: "M", dob: "1991-06-07", reason: "Vomiting" },
-  { id: 110, name: "Pooja Das", sex: "F", dob: "1994-09-29", reason: "Cough" }
-];
-
-const initialAdmittedPatients: AdmittedPatient[] = [
-  { id: 201, name: "Rakesh Kumar", ward: 5, admissionDateTime: "2025-04-14T10:00" },
-  { id: 202, name: "Priya Desai", ward: 12, admissionDateTime: "2025-04-15T14:30" },
-  { id: 203, name: "Rohan Shetty", ward: 8, admissionDateTime: "2025-04-13T09:15" },
-  { id: 204, name: "Kajal Sinha", ward: 17, admissionDateTime: "2025-04-12T18:45" },
-  { id: 205, name: "Nikhil Mehra", ward: 21, admissionDateTime: "2025-04-10T11:20" },
-  { id: 206, name: "Meena Patil", ward: 3, admissionDateTime: "2025-04-16T08:10" },
-  { id: 207, name: "Suresh Nair", ward: 25, admissionDateTime: "2025-04-13T16:00" },
-  { id: 208, name: "Alok Tripathi", ward: 30, admissionDateTime: "2025-04-14T20:00" },
-  { id: 209, name: "Geeta Rani", ward: 33, admissionDateTime: "2025-04-11T12:45" },
-  { id: 210, name: "Sunil Dube", ward: 37, admissionDateTime: "2025-04-15T07:30" }
-];
-
 const TOTAL_ROOMS = 40;
 
 const getWardTypeForRoom = (room: number): WardType => {
@@ -63,7 +37,16 @@ const wardTypeRanges: Record<WardType, [number, number]> = {
   "": [1, 40]
 };
 
-// Track all occupied rooms, including those admitted via this UI
+const ADMIT_REQUESTED_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/admit-requested",
+  "http://localhost:5000/api/front-desk-operator/admissions/admit-requested"
+];
+
+const DISCHARGE_REQUESTED_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/discharge-requested",
+  "http://localhost:5000/api/front-desk-operator/admissions/discharge-requested"
+];
+
 const FrontDeskOpAdmissions = ({
   darkMode,
   toggleDarkMode
@@ -71,19 +54,74 @@ const FrontDeskOpAdmissions = ({
   darkMode: boolean;
   toggleDarkMode: () => void;
 }) => {
-  const [seekingPatients, setSeekingPatients] = useState<Patient[]>(initialSeekingPatients);
-  const [admittedPatients, setAdmittedPatients] = useState<AdmittedPatient[]>(initialAdmittedPatients);
+  const [seekingPatients, setSeekingPatients] = useState<Patient[]>([]);
+  const [admittedPatients, setAdmittedPatients] = useState<AdmittedPatient[]>([]);
   const [selectedSeek, setSelectedSeek] = useState<Patient | null>(null);
   const [selectedDischarge, setSelectedDischarge] = useState<AdmittedPatient | null>(null);
   const [selectedWardType, setSelectedWardType] = useState<WardType>("");
 
-  const [occupiedRooms, setOccupiedRooms] = useState<Record<number, number>>(() => {
-    const occ: Record<number, number> = {};
-    for (const p of initialAdmittedPatients) {
-      occ[p.ward] = p.id;
-    }
-    return occ;
-  });
+  const [occupiedRooms, setOccupiedRooms] = useState<Record<number, number>>({});
+
+  // Fetch admissions with Admit_Requested status
+  useEffect(() => {
+    let cancelled = false;
+    const fetchSeekingPatients = async () => {
+      for (const url of ADMIT_REQUESTED_URLS) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+          const data = await res.json();
+          const patients: Patient[] = Array.isArray(data.admits)
+            ? data.admits.map((admit: any) => ({
+                id: admit.patient?.P_ID ?? admit.P_ID,
+                name: admit.patient?.name ?? "Unknown",
+                sex: admit.patient?.Sex ?? "N/A",
+                dob: admit.patient?.DOB ?? "",
+                reason: admit.appointment?.Symptoms ?? "N/A"
+              }))
+            : [];
+          if (!cancelled) setSeekingPatients(patients);
+          break;
+        } catch (err) {
+          if (url === ADMIT_REQUESTED_URLS[ADMIT_REQUESTED_URLS.length - 1]) {
+            if (!cancelled) setSeekingPatients([]);
+          }
+        }
+      }
+    };
+    fetchSeekingPatients();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fetch admissions with Discharge_Requested status
+  useEffect(() => {
+    let cancelled = false;
+    const fetchAdmittedPatients = async () => {
+      for (const url of DISCHARGE_REQUESTED_URLS) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+          const data = await res.json();
+          const patients: AdmittedPatient[] = Array.isArray(data.admits)
+            ? data.admits.map((admit: any) => ({
+                id: admit.patient?.P_ID ?? admit.P_ID,
+                name: admit.patient?.name ?? "Unknown",
+                ward: admit.room?.Room_No ?? admit.R_no ?? 0,
+                admissionDateTime: admit.admit_time ?? ""
+              }))
+            : [];
+          if (!cancelled) setAdmittedPatients(patients);
+          break;
+        } catch (err) {
+          if (url === DISCHARGE_REQUESTED_URLS[DISCHARGE_REQUESTED_URLS.length - 1]) {
+            if (!cancelled) setAdmittedPatients([]);
+          }
+        }
+      }
+    };
+    fetchAdmittedPatients();
+    return () => { cancelled = true; };
+  }, []);
 
   const handleAdmit = (ward: number) => {
     if (!selectedSeek) return;
@@ -131,33 +169,36 @@ const FrontDeskOpAdmissions = ({
           </Button>
         </div>
       </div>
-
       {/* Upper Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
         {/* Seeking Admissions */}
         <div className={`p-2 sm:p-3 rounded-lg shadow ${darkMode ? "bg-gray-800" : "bg-white"}`}>
           <h2 className="text-sm sm:text-base font-semibold mb-1">Seeking Admission</h2>
           <div className="max-h-40 sm:max-h-48 overflow-y-auto pr-1 space-y-1">
-            {seekingPatients.map((p) => (
-              <div
-                key={p.id}
-                className="p-1 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm"
-                onClick={() => {
-                  setSelectedSeek(p);
-                  setSelectedDischarge(null);
-                  setSelectedWardType("");
-                }}
-              >
-                {p.name} (ID: {p.id})
-              </div>
-            ))}
+            {seekingPatients.length === 0 ? (
+              <div className="text-xs text-gray-400">No patients seeking admission.</div>
+            ) : (
+              seekingPatients.map((p) => (
+                <div
+                  key={p.id}
+                  className="p-1 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm"
+                  onClick={() => {
+                    setSelectedSeek(p);
+                    setSelectedDischarge(null);
+                    setSelectedWardType("");
+                  }}
+                >
+                  {p.name} (ID: {p.id})
+                </div>
+              ))
+            )}
           </div>
           {selectedSeek && (
             <div className="mt-2 border-t pt-2 space-y-1 text-xs sm:text-sm">
               <p><strong>Name:</strong> {selectedSeek.name}</p>
               <p><strong>ID:</strong> {selectedSeek.id}</p>
               <p><strong>Sex:</strong> {selectedSeek.sex}</p>
-              <p><strong>DOB:</strong> {format(new Date(selectedSeek.dob), "PPP")}</p>
+              <p><strong>DOB:</strong> {selectedSeek.dob ? format(new Date(selectedSeek.dob), "PPP") : "N/A"}</p>
               <p><strong>Reason:</strong> {selectedSeek.reason}</p>
               <div className="mt-1">
                 <label className="block text-xs font-medium mb-1">Select Ward Type:</label>
@@ -175,30 +216,33 @@ const FrontDeskOpAdmissions = ({
             </div>
           )}
         </div>
-
         {/* Discharge Requests */}
         <div className={`p-2 sm:p-3 rounded-lg shadow ${darkMode ? "bg-gray-800" : "bg-white"}`}>
           <h2 className="text-sm sm:text-base font-semibold mb-1">Discharge Requests</h2>
           <div className="max-h-40 sm:max-h-48 overflow-y-auto pr-1 space-y-1">
-            {admittedPatients.map((p) => (
-              <div
-                key={p.id}
-                className="p-1 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm"
-                onClick={() => {
-                  setSelectedDischarge(p);
-                  setSelectedSeek(null);
-                  setSelectedWardType("");
-                }}
-              >
-                {p.name} (ID: {p.id})
-              </div>
-            ))}
+            {admittedPatients.length === 0 ? (
+              <div className="text-xs text-gray-400">No discharge requests.</div>
+            ) : (
+              admittedPatients.map((p) => (
+                <div
+                  key={p.id}
+                  className="p-1 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm"
+                  onClick={() => {
+                    setSelectedDischarge(p);
+                    setSelectedSeek(null);
+                    setSelectedWardType("");
+                  }}
+                >
+                  {p.name} (ID: {p.id})
+                </div>
+              ))
+            )}
           </div>
           {selectedDischarge && (
             <div className="mt-2 border-t pt-2 space-y-1 text-xs sm:text-sm">
               <p><strong>Name:</strong> {selectedDischarge.name}</p>
               <p><strong>ID:</strong> {selectedDischarge.id}</p>
-              <p><strong>Admitted on:</strong> {format(new Date(selectedDischarge.admissionDateTime), "PPPp")}</p>
+              <p><strong>Admitted on:</strong> {selectedDischarge.admissionDateTime ? format(new Date(selectedDischarge.admissionDateTime), "PPPp") : "N/A"}</p>
               <Button variant="destructive" className="text-xs sm:text-sm px-2 py-1" onClick={handleDischarge}>
                 Discharge Patient
               </Button>
@@ -206,7 +250,6 @@ const FrontDeskOpAdmissions = ({
           )}
         </div>
       </div>
-
       {/* Bottom Section - Ward Grid */}
       <div className="grid grid-cols-10 gap-2 mt-2">
         {Array.from({ length: TOTAL_ROOMS }, (_, i) => {
