@@ -32,12 +32,13 @@ model Doctor {
   shift          String?
   available      Boolean       @default(true)
   appointments   Appointment[]
+  ad_id          Int?
+  admit          Admit[]
 }
 
 model TestsAvailable {
   T_ID            Int    @id @default(autoincrement())
   test_name       String
-  count_available Int
   Test            Test[]
 }
 
@@ -47,11 +48,11 @@ model TreatmentsAvailable {
   Treatment      Treatment[]
 }
 
-model Ward {
-  W_No           Int      @id @default(autoincrement())
-  Room_Type      RoomType
-  beds_available Int
-  Admit          Admit[]
+model Room {
+  Room_No   Int      @id @default(autoincrement())
+  Room_Type RoomType
+  Available Boolean
+  Admit     Admit[]
 }
 
 model Appointment {
@@ -59,21 +60,22 @@ model Appointment {
   P_ID      Int
   D_ID      Int
   TimeStamp DateTime
-  Diagnosis String?
+  Diagnosis String? //should refer to predefined list (Diagnosis_Avl) (placeholdername)
   Status    AppointmentStatus @default(Requested)
   Symptoms  String?
   doctor    Doctor            @relation(fields: [D_ID], references: [D_ID])
   patient   Patient           @relation(fields: [P_ID], references: [P_ID])
   tests     Test[]
   Treatment Treatment[]
+  admit     Admit? 
 }
 
 model Treatment {
   treatment_id Int                 @id @default(autoincrement())
   A_ID         Int
   Tr_ID        Int
-  Dosage       String?
-  Duration     String?
+  Dosage       String  //will be put by doctor (predefined list of bool bool bool)
+  Duration     String  //will be put my doctor (number of days)
   appointment  Appointment         @relation(fields: [A_ID], references: [A_ID])
   treatment    TreatmentsAvailable @relation(fields: [Tr_ID], references: [Tr_ID])
 }
@@ -83,27 +85,31 @@ model Test {
   A_ID        Int
   T_ID        Int
   TimeStamp   DateTime
-  Status      TestStatus
+  Status      TestStatus    //add cancelled
   appointment Appointment    @relation(fields: [A_ID], references: [A_ID])
   test        TestsAvailable @relation(fields: [T_ID], references: [T_ID])
 }
 
 model Admit {
-  admit_id       Int       @id @default(autoincrement())
+  admit_id       Int         @id @default(autoincrement())
   P_ID           Int
-  Ward_No        Int
+  D_ID           Int
+  R_no           Int
   admit_time     DateTime
   discharge_time DateTime?
-  patient        Patient   @relation(fields: [P_ID], references: [P_ID])
-  ward           Ward      @relation(fields: [Ward_No], references: [W_No])
-}
+  patient        Patient     @relation(fields: [P_ID], references: [P_ID])
+  room           Room        @relation(fields: [R_no], references: [Room_No])
+  A_ID           Int         @unique
+  appointment    Appointment @relation(fields: [A_ID], references: [A_ID])
+  doctor         Doctor      @relation(fields: [D_ID], references: [D_ID])
+}// add status {requested,admitted,discharge requested,discharged}
 
 model Disease {
   disease_id     Int              @id @default(autoincrement())
   Disease_Name   String
   Description    String?
   MedicalHistory MedicalHistory[]
-}
+}// change to diagnosis'
 
 model MedicalHistory {
   history_id Int     @id @default(autoincrement())
