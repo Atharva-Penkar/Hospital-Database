@@ -6,8 +6,15 @@ import LoginPatient from "./pages/login-signup/LoginPatient";
 import SignUpPatient from "./pages/login-signup/SignUpPatient";
 import LoginStaff from "./pages/login-signup/LoginStaff";
 import FrontDeskHomePage from "./pages/frontDeskOperator/frontDeskOpDashboardPage";
-import FrontDeskOpAppointments from "./pages/frontDeskOperator/frontDeskOpAppointmentsPage"; // 👈 added import
+import FrontDeskOpAppointments from "./pages/frontDeskOperator/frontDeskOpAppointmentsPage";
+import FrontDeskOpAdmissions from "./pages/frontDeskOperator/frontDeskOpAdmissionsPage"; 
+import FrontDeskOpTestsPage from "./pages/frontDeskOperator/frontDeskOpTestsPage";
+import FrontDeskOpTreatmentsPage from "./pages/frontDeskOperator/frontDeskOpTreatmentsPage";
+import DataEntryOpHomePage from "./pages/dataEntryOperator/dataEntryOpHomePage";
+import DataEntryOpTestsPage from "./pages/dataEntryOperator/dataEntryOpTestsPage";
+import DataEntryOpTreatmentsPage from "./pages/dataEntryOperator/dataEntryOpTreatmentsPage";
 import DatabaseManager from "./pages/dbmanager/dashboard"; // Added this import
+
 
 function App() {
   return (
@@ -19,9 +26,16 @@ function App() {
         <Route path="/signup-patient" element={<SignUpPatient />} />
         <Route path="/patient-info" element={<PatientInfoFormPage />} />
         <Route path="/home" element={<HomePage />} />
-        <Route path="/patientHome" element={<PatientHomePage />} /> 
+        <Route path="/patientHome" element={<PatientHomePage />} />
         <Route path="/front-desk-dashboard" element={<FrontDeskHomePage />} />
         <Route path="/front-desk-appointments" element={<FrontDeskOpAppointments />} /> 
+        <Route path="/front-desk-appointments" element={<FrontDeskOpAppointments />} />
+        <Route path="/front-desk-admissions" element={<FrontDeskOpAdmissions />} /> 
+        <Route path="/front-desk-tests" element={<FrontDeskOpTestsPage />} />
+        <Route path="/front-desk-treatments" element={<FrontDeskOpTreatmentsPage />} />
+        <Route path="/data-entry-dashboard" element={<DataEntryOpHomePage />} />
+        <Route path="/data-entry-tests" element={<DataEntryOpTestsPage />} />
+        <Route path="/data-entry-treatments" element={<DataEntryOpTreatmentsPage />} />
         <Route path="/database-manager" element={<DatabaseManager />} /> {/* Add this route */}
       </Routes>
     </Router>

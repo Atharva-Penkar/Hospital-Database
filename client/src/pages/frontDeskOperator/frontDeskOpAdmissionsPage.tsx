@@ -2,12 +2,12 @@
 "use client";
 
 import { useState } from "react";
-import FrontDeskOpAppointments from "@/components/frontDeskOperator/frontDeskOpAppointments";
+import FrontDeskOpAdmissions from "@/components/frontDeskOperator/frontDeskOpAdmissions";
 
 export default function FrontDeskOpAppointmentsPage() {
   const [darkMode, setDarkMode] = useState(false);
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
 
-  return <FrontDeskOpAppointments darkMode={darkMode} toggleDarkMode={toggleDarkMode} />;
+  return <FrontDeskOpAdmissions darkMode={darkMode} toggleDarkMode={toggleDarkMode} />;
 }
