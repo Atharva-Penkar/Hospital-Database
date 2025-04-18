@@ -48,13 +48,6 @@ app.use("/api/doctors/specializations", getSpecializationsRouter)
 
 app.use("/api/tests-available", testsAvailableRouter)
 
-app.use((req, res) => {
-  console.log("404 Not Found:", req.method, req.originalUrl);
-  res.status(404).send("Route not found");
-});
-
-
-
 app.get("/", (req, res) => {
   res.send("Hospital Management API is running");
 });

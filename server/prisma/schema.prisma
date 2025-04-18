@@ -31,9 +31,9 @@ model Doctor {
   phone          String
   shift          String?
   available      Boolean       @default(true)
-  appointments   Appointment[]
   ad_id          Int?
   admit          Admit[]
+  appointments   Appointment[]
 }
 
 model TestsAvailable {
@@ -62,12 +62,12 @@ model Appointment {
   TimeStamp DateTime
   Status    AppointmentStatus @default(Requested)
   Symptoms  String?
+  admit     Admit?
   doctor    Doctor            @relation(fields: [D_ID], references: [D_ID])
   patient   Patient           @relation(fields: [P_ID], references: [P_ID])
+  diagnosis Diagnosis[]
   tests     Test[]
   Treatment Treatment[]
-  admit     Admit?
-  diagnosis Diagnosis[]
 }
 
 model Treatment {
@@ -93,16 +93,16 @@ model Test {
 model Admit {
   admit_id       Int         @id @default(autoincrement())
   P_ID           Int
-  D_ID           Int
-  R_no           Int
   admit_time     DateTime?
   discharge_time DateTime?
-  status         AdmitStatus @default(Admit_Requested)
-  patient        Patient     @relation(fields: [P_ID], references: [P_ID])
-  room           Room        @relation(fields: [R_no], references: [Room_No])
+  R_no           Int
   A_ID           Int         @unique
+  D_ID           Int
+  status         AdmitStatus @default(Admit_Requested)
   appointment    Appointment @relation(fields: [A_ID], references: [A_ID])
   doctor         Doctor      @relation(fields: [D_ID], references: [D_ID])
+  patient        Patient     @relation(fields: [P_ID], references: [P_ID])
+  room           Room        @relation(fields: [R_no], references: [Room_No])
 }
 
 model Disease {
@@ -115,7 +115,7 @@ model Disease {
 model Diagnosis {
   diagnosis_id   Int         @id @default(autoincrement())
   diagnosis_Name String
-  A_ID           Int         // <-- foreign key to Appointment
+  A_ID           Int
   appointment    Appointment @relation(fields: [A_ID], references: [A_ID])
 }
 
