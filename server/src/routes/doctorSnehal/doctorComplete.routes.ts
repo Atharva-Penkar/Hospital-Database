@@ -4,6 +4,6 @@ import asyncHandler from "../../middlewares/RouteErrorHandler";
 
 const doctorCompletedAppointmentsRouter = Router();
 
-doctorCompletedAppointmentsRouter.get("/:id/completed-appointments", asyncHandler(getCompletedAppointmentsForDoctor));
+doctorCompletedAppointmentsRouter.get("/:id", asyncHandler(getCompletedAppointmentsForDoctor));
 
 export default doctorCompletedAppointmentsRouter;

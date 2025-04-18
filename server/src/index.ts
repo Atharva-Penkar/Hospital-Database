@@ -17,6 +17,7 @@ import treatmentsAvailableRouter from "./routes/treatmentsAvailable/treatmentsAv
 import doctorInfoRouter from "./routes/doctorSnehal/doctorInfo.routes";
 import getDoctorPendingAppointmentsRouter from "./routes/doctorSnehal/doctorPending.routes";
 import getDoctorCompletedAppointmentsRouter from "./routes/doctorSnehal/doctorComplete.routes";
+import getDoctorAdmittedPatientsRouter from "./routes/doctorSnehal/doctorAdmitted.routes";
 
 
 dotenv.config();
@@ -58,8 +59,9 @@ app.use("/api/tests-available", testsAvailableRouter)
 app.use("/api/treatments-available", treatmentsAvailableRouter)
 
 app.use("/api/doctor-info", doctorInfoRouter)
-app.use("/api/doctor-pending-appointments", getDoctorPendingAppointmentsRouter)
-app.use("/api/doctor-completed-appointments", getDoctorCompletedAppointmentsRouter)
+app.use("/api/doctor-pending", getDoctorPendingAppointmentsRouter)
+app.use("/api/doctor-completed", getDoctorCompletedAppointmentsRouter)
+app.use("/api/doctor-admitted", getDoctorAdmittedPatientsRouter)
 
 app.get("/", (req, res) => {
   res.send("Hospital Management API is running");

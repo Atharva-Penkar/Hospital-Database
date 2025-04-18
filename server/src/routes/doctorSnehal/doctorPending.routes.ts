@@ -4,6 +4,6 @@ import asyncHandler from "../../middlewares/RouteErrorHandler";
 
 const doctorPendingAppointmentsRouter = Router();
 
-doctorPendingAppointmentsRouter.get("/:id/pending-appointments", asyncHandler(getPendingAppointmentsForDoctor));
+doctorPendingAppointmentsRouter.get("/:id", asyncHandler(getPendingAppointmentsForDoctor));
 
 export default doctorPendingAppointmentsRouter;
