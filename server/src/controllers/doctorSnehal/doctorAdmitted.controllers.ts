@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const getAdmittedPatientsForDoctor = async (req: Request, res: Response) => {
-  const doctorId = Number(req.params.id);
+  const doctorId = parseInt(req.params.id);
   if (isNaN(doctorId)) {
     return res.status(400).json({ error: "Invalid doctor ID" });
   }
@@ -48,7 +48,7 @@ export const getAdmittedPatientsForDoctor = async (req: Request, res: Response) 
 };
 // controllers/doctor/doctorAdmittedPatients.controller.ts (add this to the same file)
 export const requestDischargeForAdmittedPatient = async (req: Request, res: Response) => {
-    const admitId = Number(req.params.admitId);
+    const admitId = parseInt(req.params.admitId);
     if (isNaN(admitId)) {
       return res.status(400).json({ error: "Invalid admit ID" });
     }

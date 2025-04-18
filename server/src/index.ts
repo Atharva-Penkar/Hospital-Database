@@ -15,9 +15,10 @@ import scheduleAppointmentRouter from "./routes/appointments/updateAppointments.
 import testsAvailableRouter from "./routes/testsAvailable/testsAvailable.routes";
 import treatmentsAvailableRouter from "./routes/treatmentsAvailable/treatmentsAvailable.routes";
 import doctorInfoRouter from "./routes/doctorSnehal/doctorInfo.routes";
-import getDoctorPendingAppointmentsRouter from "./routes/doctorSnehal/doctorPending.routes";
-import getDoctorCompletedAppointmentsRouter from "./routes/doctorSnehal/doctorComplete.routes";
-import getDoctorAdmittedPatientsRouter from "./routes/doctorSnehal/doctorAdmitted.routes";
+import doctorPendingAppointmentsRouter from "./routes/doctorSnehal/doctorPending.routes";
+import doctorCompletedAppointmentsRouter from "./routes/doctorSnehal/doctorComplete.routes";
+import doctorAdmittedPatientsRouter from "./routes/doctorSnehal/doctorAdmitted.routes";
+import appointmentDetailsRouter from "./routes/appointments/getAppointmentDetails.routes";
 
 
 dotenv.config();
@@ -59,9 +60,10 @@ app.use("/api/tests-available", testsAvailableRouter)
 app.use("/api/treatments-available", treatmentsAvailableRouter)
 
 app.use("/api/doctor-info", doctorInfoRouter)
-app.use("/api/doctor-pending", getDoctorPendingAppointmentsRouter)
-app.use("/api/doctor-completed", getDoctorCompletedAppointmentsRouter)
-app.use("/api/doctor-admitted", getDoctorAdmittedPatientsRouter)
+app.use("/api/doctor-pending", doctorPendingAppointmentsRouter)
+app.use("/api/doctor-completed", doctorCompletedAppointmentsRouter)
+app.use("/api/doctor-admitted", doctorAdmittedPatientsRouter)
+app.use("/api/appointment-details", appointmentDetailsRouter)
 
 app.get("/", (req, res) => {
   res.send("Hospital Management API is running");

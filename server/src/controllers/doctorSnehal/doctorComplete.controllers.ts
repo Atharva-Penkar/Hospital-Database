@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const getCompletedAppointmentsForDoctor = async (req: Request, res: Response) => {
-  const doctorId = Number(req.params.id);
+  const doctorId = parseInt(req.params.id);
   if (isNaN(doctorId)) {
     return res.status(400).json({ error: "Invalid doctor ID" });
   }

@@ -45,7 +45,7 @@ type AdmittedPatient = {
 // --- Component ---
 const DoctorHome: React.FC = () => {
   // Replace with actual doctor ID (from auth or context)
-  const doctorId = 108;
+  const doctorId = 102;
 
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -59,10 +59,10 @@ const DoctorHome: React.FC = () => {
   useEffect(() => {
     setLoading(true);
   
-    const fetchDoctor = fetch(`/api/doctor-info/${doctorId}`).then(res => res.json());
-    const fetchPending = fetch(`/api/doctor-pending/${doctorId}`).then(res => res.json());
-    const fetchCompleted = fetch(`/api/doctor-completed/${doctorId}`).then(res => res.json());
-    const fetchAdmitted = fetch(`/api/doctor-admitted/${doctorId}`).then(res => res.json());
+    const fetchDoctor = fetch(`http://127.0.0.1:5000/api/doctor-info/${doctorId}`).then(res => res.json());
+    const fetchPending = fetch(`http://127.0.0.1:5000/api/doctor-pending/${doctorId}`).then(res => res.json());
+    const fetchCompleted = fetch(`http://127.0.0.1:5000/api/doctor-completed/${doctorId}`).then(res => res.json());
+    const fetchAdmitted = fetch(`http://127.0.0.1:5000/api/doctor-admitted/${doctorId}`).then(res => res.json());
   
     Promise.all([fetchDoctor, fetchPending, fetchCompleted, fetchAdmitted])
       .then(([doctorRes, pendingRes, completedRes, admittedRes]) => {
@@ -95,7 +95,7 @@ const DoctorHome: React.FC = () => {
   // Request discharge for a patient
   const handleRequestDischarge = async (admit_id: number) => {
     try {
-      await fetch(`/api/doctor-admitted/${doctorId}/discharge/${admit_id}/`, { method: "PUT" });
+      await fetch(`http://127.0.0.1:5000/api/doctor-admitted/${doctorId}/discharge/${admit_id}/`, { method: "PUT" });
       setAdmittedPatients((prev) =>
         prev.filter((p) => p.admit_id !== admit_id)
       );
