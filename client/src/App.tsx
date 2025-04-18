@@ -15,6 +15,7 @@ import DataEntryOpTestsPage from "./pages/dataEntryOperator/dataEntryOpTestsPage
 import DataEntryOpTreatmentsPage from "./pages/dataEntryOperator/dataEntryOpTreatmentsPage";
 import DoctorHomePage from "./pages/doctor/doctorHomePage";
 import DoctorPendingPage from "./pages/doctor/doctorPendingPage"
+import DoctorCompletePage from "./pages/doctor/doctorCompletePage";
 import DatabaseManager from "./pages/dbmanager/dashboard"; // Added this import
 
 
@@ -40,6 +41,7 @@ function App() {
         <Route path="/data-entry-treatments" element={<DataEntryOpTreatmentsPage />} />
         <Route path="/doctor-home" element={<DoctorHomePage />} />
         <Route path="/doctor-pending" element={<DoctorPendingPage />} />
+        <Route path="/doctor-complete" element={<DoctorCompletePage />} />
         <Route path="/database-manager" element={<DatabaseManager />} /> {/* Add this route */}
       </Routes>
     </Router>
