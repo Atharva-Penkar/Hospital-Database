@@ -47,8 +47,8 @@ model TreatmentsAvailable {
   Treatment      Treatment[]
 }
 
-model Ward {
-  W_No           Int      @id @default(autoincrement())
+model Room {
+  Room_No           Int      @id @default(autoincrement())
   Room_Type      RoomType
   beds_available Int
   Admit          Admit[]
@@ -91,11 +91,11 @@ model Test {
 model Admit {
   admit_id       Int       @id @default(autoincrement())
   P_ID           Int
-  Ward_No        Int
+  R_no        Int
   admit_time     DateTime
   discharge_time DateTime?
   patient        Patient   @relation(fields: [P_ID], references: [P_ID])
-  ward           Ward      @relation(fields: [Ward_No], references: [W_No])
+  room           Room      @relation(fields: [R_no], references: [Room_No])
 }
 
 model Disease {
