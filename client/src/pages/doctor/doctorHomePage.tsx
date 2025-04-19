@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import DoctorHome from "@/components/doctor/doctorHome";
 
 const DoctorHomePage: React.FC = () => {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode] = useState(false);
 
   // Set or remove the dark class on the body based on darkMode state
   useEffect(() => {
