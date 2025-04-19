@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
 import logo from "@/assets/images/logo.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -42,16 +41,28 @@ const DoctorComplete: React.FC = () => {
     const fetchAppointment = async () => {
       setLoading(true);
       setError(null);
-      try {
-        const res = await fetch(`http://127.0.0.1:5000/api/appointment-details/${appointmentId}`);
-        if (!res.ok) throw new Error("Failed to fetch appointment details");
-        const data = await res.json();
-        setAppointment(data.appointment);
-      } catch (err: any) {
-        setError(err.message || "Error fetching appointment details");
-      } finally {
-        setLoading(false);
+      const urls = [
+        "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
+        "http://127.0.0.1:5000"
+      ];
+      let lastError: any = null;
+      for (let base of urls) {
+        try {
+          const res = await fetch(`${base}/api/appointment-details/${appointmentId}`);
+          if (res.ok) {
+            const data = await res.json();
+            setAppointment(data.appointment);
+            setLoading(false);
+            return;
+          } else {
+            lastError = new Error(`HTTP error ${res.status} from ${base}`);
+          }
+        } catch (err) {
+          lastError = err;
+        }
       }
+      setError(lastError?.message || "Error fetching appointment details");
+      setLoading(false);
     };
     if (appointmentId) fetchAppointment();
   }, [appointmentId]);
