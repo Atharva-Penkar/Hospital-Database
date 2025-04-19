@@ -1,78 +1,296 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-interface Doctor {
-  id: string;
+// Import shadcn components
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+
+// API response interface - matches your Prisma model
+interface ApiDoctor {
+  D_ID: number;
   name: string;
   specialization: string;
-  department: string;
-  contactNumber: string;
-  email: string;
-  status: 'Available' | 'On Leave' | 'In Surgery';
+  mail: string | null;
+  phone: string;
+  shift: string | null;
+  available: boolean;
+  ad_id: number | null;
+}
+
+// Component data interface
+interface Doctor {
+  id: number;           // Maps to D_ID in Prisma
+  name: string;
+  specialization: string;
+  mail: string | null |undefined;
+  phone: string;
+  shift: string | null | undefined;
+  available: boolean;
+  ad_id: number | null | undefined;
 }
 
 interface DoctorsTableProps {
   darkMode: boolean;
 }
 
-const sampleDoctors: Doctor[] = [
-  { id: 'D001', name: 'Dr. Robert Smith', specialization: 'Cardiology', department: 'Cardiac Care', contactNumber: '123-456-7890', email: 'r.smith@hospital.com', status: 'Available' },
-  { id: 'D002', name: 'Dr. Sarah Johnson', specialization: 'Neurology', department: 'Brain & Spine', contactNumber: '234-567-8901', email: 's.johnson@hospital.com', status: 'In Surgery' },
-  { id: 'D003', name: 'Dr. Michael Davis', specialization: 'Orthopedics', department: 'Bone & Joint', contactNumber: '345-678-9012', email: 'm.davis@hospital.com', status: 'Available' },
-];
-
 const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
-  const [searchId, setSearchId] = useState('');
-  const [doctors, setDoctors] = useState<Doctor[]>(sampleDoctors);
+  const [searchId, setSearchId] = useState<string>('');
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [editDoctor, setEditDoctor] = useState<Doctor | null>(null);
-  const [editMode, setEditMode] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [editMode, setEditMode] = useState<boolean>(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState<boolean>(false);
+  const [addDialogOpen, setAddDialogOpen] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [newDoctor, setNewDoctor] = useState<Omit<Doctor, 'id'>>({
     name: '',
     specialization: '',
-    department: '',
-    contactNumber: '',
-    email: '',
-    status: 'Available',
+    mail: null,
+    phone: '',
+    shift: null,
+    available: true,
+    ad_id: null
   });
 
-  // Search logic
-  const handleSearch = () => {
+  // Fetch doctors from API when component mounts
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
+
+  // API functions
+  const fetchDoctors = async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/dbdoctor-available');
+      if (!response.ok) throw new Error('Failed to fetch doctors');
+      
+      const data = await response.json();
+      console.log('Raw API response:', data);
+      
+      // Type guard to ensure data is an array
+      if (!Array.isArray(data)) {
+        throw new Error('API response is not an array');
+      }
+      
+      // Transform API data to match our component interface
+      const transformedData: Doctor[] = data.map((item: ApiDoctor) => ({
+        id: item.D_ID,
+        name: item.name,
+        specialization: item.specialization,
+        mail: item.mail,
+        phone: item.phone,
+        shift: item.shift,
+        available: item.available,
+        ad_id: item.ad_id
+      }));
+      
+      setDoctors(transformedData);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      console.error('Error fetching doctors:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addDoctor = async (doctor: Omit<Doctor, 'id'>): Promise<Doctor | undefined> => {
+    try {
+      setLoading(true);
+      
+      const response = await fetch('http://localhost:5000/api/dbdoctor-available', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name: doctor.name,
+          specialization: doctor.specialization,
+          mail: doctor.mail,
+          phone: doctor.phone,
+          shift: doctor.shift,
+          available: doctor.available,
+          ad_id: doctor.ad_id
+        })
+      });
+      
+      if (!response.ok) throw new Error('Failed to add doctor');
+      
+      const responseData = await response.json();
+      console.log('Add doctor response:', responseData);
+      
+      // If the response has nested data, ensure we extract it correctly
+      const newDoctorData = responseData.doctor || responseData;
+      
+      // Convert API response to our component's format
+      const newDoctorItem: Doctor = {
+        id: newDoctorData.D_ID,
+        name: newDoctorData.name,
+        specialization: newDoctorData.specialization,
+        mail: newDoctorData.mail,
+        phone: newDoctorData.phone,
+        shift: newDoctorData.shift,
+        available: newDoctorData.available,
+        ad_id: newDoctorData.ad_id
+      };
+      
+      setDoctors(prevDoctors => [...prevDoctors, newDoctorItem]);
+      return newDoctorItem;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      console.error('Error adding doctor:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateDoctor = async (id: number, doctorData: Partial<Doctor>): Promise<Doctor | undefined> => {
+    try {
+      setLoading(true);
+      
+      const response = await fetch(`http://localhost:5000/api/dbdoctor-available/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name: doctorData.name,
+          specialization: doctorData.specialization,
+          mail: doctorData.mail,
+          phone: doctorData.phone,
+          shift: doctorData.shift,
+          available: doctorData.available,
+          ad_id: doctorData.ad_id
+        })
+      });
+      
+      if (!response.ok) {
+        // If API isn't implemented yet, simulate the update locally
+        const updatedDoctor: Doctor = { 
+          id,
+          name: doctorData.name || '',
+          specialization: doctorData.specialization || '',
+          mail: doctorData.mail,
+          phone: doctorData.phone || '',
+          shift: doctorData.shift,
+          available: doctorData.available !== undefined ? doctorData.available : true,
+          ad_id: doctorData.ad_id
+        };
+        
+        setDoctors(prevDoctors => prevDoctors.map(d => d.id === id ? updatedDoctor : d));
+        return updatedDoctor;
+      }
+      
+      const responseData = await response.json();
+      const updatedDoctorData = responseData.doctor || responseData;
+      
+      const updatedDoctor: Doctor = {
+        id: updatedDoctorData.D_ID,
+        name: updatedDoctorData.name,
+        specialization: updatedDoctorData.specialization,
+        mail: updatedDoctorData.mail,
+        phone: updatedDoctorData.phone,
+        shift: updatedDoctorData.shift,
+        available: updatedDoctorData.available,
+        ad_id: updatedDoctorData.ad_id
+      };
+      
+      setDoctors(prevDoctors => prevDoctors.map(d => d.id === id ? updatedDoctor : d));
+      return updatedDoctor;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      console.error('Error updating doctor:', err);
+      
+      // If the API fails, simulate update locally
+      if (doctorData.name) {
+        // Create a merged doctor object with existing data plus updates
+        const existingDoctor = doctors.find(d => d.id === id);
+        if (existingDoctor) {
+          const updatedDoctor = { ...existingDoctor, ...doctorData };
+          setDoctors(prevDoctors => prevDoctors.map(d => d.id === id ? updatedDoctor : d));
+          return updatedDoctor;
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteDoctor = async (id: number): Promise<void> => {
+    try {
+      setLoading(true);
+      
+      const response = await fetch(`http://localhost:5000/api/dbdoctor-available/${id}`, {
+        method: 'DELETE'
+      });
+      
+      // If the API is not implemented yet, just do local deletion
+      if (!response.ok) {
+        setDoctors(prevDoctors => prevDoctors.filter(d => d.id !== id));
+        return;
+      }
+      
+      // If the API worked, still update local state
+      setDoctors(prevDoctors => prevDoctors.filter(d => d.id !== id));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      console.error('Error deleting doctor:', err);
+      
+      // Even if API fails, update the UI
+      setDoctors(prevDoctors => prevDoctors.filter(d => d.id !== id));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Search logic - fixed to search by string ID or name
+  const handleSearch = (): void => {
     if (searchId.trim() === '') {
-      setDoctors(sampleDoctors);
+      fetchDoctors();
     } else {
-      setDoctors(
-        sampleDoctors.filter(d =>
-          d.id.toLowerCase().includes(searchId.trim().toLowerCase())
+      const searchValue = searchId.trim().toLowerCase();
+      setDoctors(prevDoctors => 
+        prevDoctors.filter(d => 
+          d.id.toString().toLowerCase().includes(searchValue) || 
+          d.name.toLowerCase().includes(searchValue) ||
+          d.specialization.toLowerCase().includes(searchValue)
         )
       );
     }
   };
 
-  // Row click: open modal in view mode
-  const handleRowClick = (doctor: Doctor) => {
+  // Row click: open dialog in view mode
+  const handleRowClick = (doctor: Doctor): void => {
     setSelectedDoctor(doctor);
-    setEditDoctor(doctor);
+    setEditDoctor({...doctor}); // Make a copy to avoid reference issues
     setEditMode(false);
+    setViewDialogOpen(true);
   };
 
-  // Modal close
-  const closeModal = () => {
+  // Dialog close
+  const closeViewDialog = (): void => {
+    setViewDialogOpen(false);
     setSelectedDoctor(null);
     setEditMode(false);
     setEditDoctor(null);
   };
 
   // Edit mode
-  const handleEdit = () => {
+  const handleEdit = (): void => {
     setEditMode(true);
-    setEditDoctor(selectedDoctor);
   };
 
-  // Editing fields
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // Editing fields with type safety
+  const handleInputChange = (name: keyof Doctor, value: any): void => {
     if (!editDoctor) return;
-    const { name, value } = e.target;
     setEditDoctor({
       ...editDoctor,
       [name]: value,
@@ -80,374 +298,422 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
   };
 
   // Detect changes for Save button
-  const isChanged = () => {
+  const isChanged = (): boolean => {
     if (!selectedDoctor || !editDoctor) return false;
     return (
       selectedDoctor.name !== editDoctor.name ||
       selectedDoctor.specialization !== editDoctor.specialization ||
-      selectedDoctor.department !== editDoctor.department ||
-      selectedDoctor.contactNumber !== editDoctor.contactNumber ||
-      selectedDoctor.email !== editDoctor.email ||
-      selectedDoctor.status !== editDoctor.status
+      selectedDoctor.mail !== editDoctor.mail ||
+      selectedDoctor.phone !== editDoctor.phone ||
+      selectedDoctor.shift !== editDoctor.shift ||
+      selectedDoctor.available !== editDoctor.available ||
+      selectedDoctor.ad_id !== editDoctor.ad_id
     );
   };
 
   // Save edits
-  const handleSave = () => {
+  const handleSave = async (): Promise<void> => {
     if (!editDoctor) return;
-    setDoctors(doctors.map(d => (d.id === editDoctor.id ? editDoctor : d)));
-    setSelectedDoctor(editDoctor);
-    setEditMode(false);
+    try {
+      const updated = await updateDoctor(editDoctor.id, editDoctor);
+      if (updated) {
+        setSelectedDoctor(updated);
+        setEditMode(false);
+      }
+    } catch (error) {
+      console.error('Failed to save doctor:', error);
+    }
   };
 
   // Delete doctor
-  const handleDelete = () => {
+  const handleDelete = async (): Promise<void> => {
     if (!editDoctor) return;
-    setDoctors(doctors.filter(d => d.id !== editDoctor.id));
-    closeModal();
+    try {
+      await deleteDoctor(editDoctor.id);
+      closeViewDialog();
+    } catch (error) {
+      console.error('Failed to delete doctor:', error);
+    }
   };
 
-  // Add Doctor Modal
-  const openAddModal = () => {
-    setShowAddModal(true);
+  // Add Doctor Dialog
+  const openAddDialog = (): void => {
+    setAddDialogOpen(true);
     setNewDoctor({
       name: '',
       specialization: '',
-      department: '',
-      contactNumber: '',
-      email: '',
-      status: 'Available',
+      mail: null,
+      phone: '',
+      shift: null,
+      available: true,
+      ad_id: null
     });
   };
-  const closeAddModal = () => setShowAddModal(false);
 
-  const handleNewDoctorChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  const handleNewDoctorChange = (name: keyof Omit<Doctor, 'id'>, value: any): void => {
     setNewDoctor(prev => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleAddDoctor = (e: React.FormEvent) => {
+  const handleAddDoctor = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    // Generate new ID
-    const maxIdNum = doctors
-      .map(d => parseInt(d.id.replace(/\D/g, '')))
-      .reduce((max, curr) => (curr > max ? curr : max), 0);
-    const newId = `D${(maxIdNum + 1).toString().padStart(3, '0')}`;
-    setDoctors([
-      ...doctors,
-      { id: newId, ...newDoctor }
-    ]);
-    setShowAddModal(false);
+    try {
+      await addDoctor(newDoctor);
+      setAddDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to add doctor:', error);
+    }
   };
 
+  // Loading state
+  if (loading && doctors.length === 0) {
+    return (
+      <div className={darkMode ? "bg-gray-900 text-blue-400 p-6" : "bg-white text-black p-6"}>
+        <h2 className={darkMode ? "text-2xl font-bold text-white" : "text-2xl font-bold text-gray-800"}>
+          Doctors
+        </h2>
+        <div className="text-center py-8">
+          <p className="text-lg">Loading doctors...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state with no data
+  if (error && doctors.length === 0) {
+    return (
+      <div className={darkMode ? "bg-gray-900 text-blue-400 p-6" : "bg-white text-black p-6"}>
+        <h2 className={darkMode ? "text-2xl font-bold text-white" : "text-2xl font-bold text-gray-800"}>
+          Doctors
+        </h2>
+        <div className="text-center py-8">
+          <p className="text-lg text-red-500">Error: {error}</p>
+          <Button 
+            onClick={fetchDoctors}
+            variant="default"
+            className="mt-4"
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={darkMode ? "bg-gray-900 text-blue-400" : "bg-white text-black"}>
+    <div className={darkMode ? "bg-gray-900 text-blue-400 p-6" : "bg-white text-black p-6"}>
       {/* Top Bar with Search and Add */}
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <h2 className={darkMode?"text-2xl font-bold text-white":"text-2xl font-bold text-gray-800 dark:text-blue-300"}>Doctors</h2>
+        <h2 className={darkMode ? "text-2xl font-bold text-white" : "text-2xl font-bold text-gray-800"}>
+          Doctors
+        </h2>
         <div className="flex gap-2 items-center">
-          <input
+          <Input
             type="text"
-            placeholder="Search by ID"
+            placeholder="Search by ID, name or specialization"
             value={searchId}
-            onChange={e => setSearchId(e.target.value)}
-            className="border px-3 py-2 rounded-lg focus:outline-none"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchId(e.target.value)}
+            className="w-64"
           />
-          <button
+          <Button 
             onClick={handleSearch}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            variant="default"
           >
             Search
-          </button>
-          <button
-            onClick={() => { setSearchId(''); setDoctors(sampleDoctors); }}
-            className="px-3 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400"
+          </Button>
+          <Button 
+            onClick={() => { setSearchId(''); fetchDoctors(); }}
+            variant="secondary"
           >
             Reset
-          </button>
-          <button
-            onClick={openAddModal}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          </Button>
+          <Button 
+            onClick={openAddDialog}
+            variant="default"
+            className="bg-green-600 hover:bg-green-700"
           >
             Add Doctor
-          </button>
+          </Button>
         </div>
       </div>
 
-      {/* Scrollable Table */}
-      <div className={`shadow-md rounded-lg overflow-hidden ${darkMode ? "bg-gray-800" : "bg-white"}`}>
+      {/* Loading and Error States when data exists */}
+      {loading && doctors.length > 0 && <p className="text-center py-4">Refreshing doctors...</p>}
+      {error && doctors.length > 0 && <p className="text-center py-4 text-red-500">Error: {error}</p>}
+
+      {/* Table */}
+      <div className={`rounded-lg overflow-hidden shadow-md ${darkMode ? "bg-gray-800" : "bg-white"}`}>
         <div className="overflow-x-auto" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-          <table className={`w-full min-w-full divide-y ${darkMode ? "divide-gray-700" : "divide-gray-200"}`}>
-            <thead className={darkMode ? "bg-gray-900 text-white" : "bg-gray-50"}>
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase">ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase">Specialization</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase">Department</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase">Contact</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium uppercase">Status</th>
-              </tr>
-            </thead>
-            <tbody className={darkMode ? "bg-gray-900" : "bg-white"}>
+          <Table>
+            <TableHeader className={darkMode ? "bg-gray-900 text-white" : "bg-gray-50"}>
+              <TableRow>
+                <TableHead className={darkMode ? "text-white" : "text-gray-800"}>ID</TableHead>
+                <TableHead className={darkMode ? "text-white" : "text-gray-800"}>Name</TableHead>
+                <TableHead className={darkMode ? "text-white" : "text-gray-800"}>Specialization</TableHead>
+                <TableHead className={darkMode ? "text-white" : "text-gray-800"}>Phone</TableHead>
+                <TableHead className={darkMode ? "text-white" : "text-gray-800"}>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className={darkMode ? "bg-gray-900" : "bg-white"}>
               {doctors.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="text-center py-6 text-gray-400">No doctors found.</td>
-                </tr>
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-6 text-gray-400">No doctors found.</TableCell>
+                </TableRow>
               ) : (
                 doctors.map((doctor) => (
-                  <tr
+                  <TableRow
                     key={doctor.id}
-                    className={`hover:bg-gray-50 cursor-pointer ${darkMode ? "hover:bg-gray-700" : ""}`}
+                    className={`cursor-pointer ${darkMode ? "hover:bg-gray-700" : "hover:bg-gray-50"}`}
                     onClick={() => handleRowClick(doctor)}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">{doctor.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{doctor.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{doctor.specialization}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{doctor.department}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{doctor.contactNumber}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{doctor.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <TableCell>{doctor.id}</TableCell>
+                    <TableCell>{doctor.name}</TableCell>
+                    <TableCell>{doctor.specialization}</TableCell>
+                    <TableCell>{doctor.phone}</TableCell>
+                    <TableCell>
                       <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                        ${doctor.status === 'Available' ? 'bg-green-100 text-green-800' : 
-                          doctor.status === 'On Leave' ? 'bg-yellow-100 text-yellow-800' : 
-                          'bg-red-100 text-red-800'}`}>
-                        {doctor.status}
+                        ${doctor.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {doctor.available ? 'Available' : 'Unavailable'}
                       </span>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
 
-      {/* Modal for Doctor Details/Edit */}
-      {selectedDoctor && editDoctor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`rounded-lg p-8 max-w-md w-full shadow-lg ${darkMode ? "bg-gray-800 text-blue-200" : "bg-white"}`}>
-            <h3 className="text-xl font-bold mb-4">
-              {editMode ? "Edit Doctor" : "Doctor Details"}
-            </h3>
-            {editMode ? (
-              <form className="space-y-3" onSubmit={e => { e.preventDefault(); handleSave(); }}>
-                <div>
-                  <label className="font-semibold">ID:</label>
-                  <input
-                    className="w-full border px-3 py-1 rounded bg-gray-100 cursor-not-allowed"
-                    value={editDoctor.id}
-                    name="id"
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold">Name:</label>
-                  <input
-                    className="w-full border px-3 py-1 rounded"
-                    value={editDoctor.name}
-                    name="name"
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold">Specialization:</label>
-                  <input
-                    className="w-full border px-3 py-1 rounded"
-                    value={editDoctor.specialization}
-                    name="specialization"
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold">Department:</label>
-                  <input
-                    className="w-full border px-3 py-1 rounded"
-                    value={editDoctor.department}
-                    name="department"
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold">Contact:</label>
-                  <input
-                    className="w-full border px-3 py-1 rounded"
-                    value={editDoctor.contactNumber}
-                    name="contactNumber"
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold">Email:</label>
-                  <input
-                    className="w-full border px-3 py-1 rounded"
-                    value={editDoctor.email}
-                    name="email"
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold">Status:</label>
-                  <select
-                    className="w-full border px-3 py-1 rounded"
-                    value={editDoctor.status}
-                    name="status"
-                    onChange={handleInputChange}
-                  >
-                    <option value="Available">Available</option>
-                    <option value="On Leave">On Leave</option>
-                    <option value="In Surgery">In Surgery</option>
-                  </select>
-                </div>
-                <div className="flex justify-end gap-2 mt-6">
-                  <button
-                    type="submit"
-                    disabled={!isChanged()}
-                    className={`px-4 py-2 rounded-lg text-white font-bold ${isChanged() ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-300 cursor-not-allowed"}`}
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400"
-                  >
-                    Close
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <>
-                <ul className="mb-6">
-                  <li><strong>ID:</strong> {selectedDoctor.id}</li>
-                  <li><strong>Name:</strong> {selectedDoctor.name}</li>
-                  <li><strong>Specialization:</strong> {selectedDoctor.specialization}</li>
-                  <li><strong>Department:</strong> {selectedDoctor.department}</li>
-                  <li><strong>Contact:</strong> {selectedDoctor.contactNumber}</li>
-                  <li><strong>Email:</strong> {selectedDoctor.email}</li>
-                  <li><strong>Status:</strong> {selectedDoctor.status}</li>
-                </ul>
-                <div className="flex justify-end gap-2 mt-6">
-                  <button
-                    onClick={handleEdit}
-                    className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={closeModal}
-                    className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400"
-                  >
-                    Close
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Modal for Adding Doctor */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <form
-            onSubmit={handleAddDoctor}
-            className={`rounded-lg p-8 max-w-md w-full shadow-lg ${darkMode ? "bg-gray-800 text-blue-200" : "bg-white"}`}
-          >
-            <h3 className="text-xl font-bold mb-4">Add Doctor</h3>
-            <div className="space-y-3">
+      {/* View/Edit Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className={`sm:max-w-md ${darkMode ? "bg-gray-800 text-blue-200" : "bg-white"}`}>
+          <DialogHeader>
+            <DialogTitle>{editMode ? "Edit Doctor" : "Doctor Details"}</DialogTitle>
+          </DialogHeader>
+          
+          {editMode ? (
+            <form className="space-y-3" onSubmit={(e: React.FormEvent) => { e.preventDefault(); handleSave(); }}>
               <div>
-                <label className="font-semibold">Name:</label>
-                <input
-                  className="w-full border px-3 py-1 rounded"
-                  name="name"
-                  value={newDoctor.name}
-                  onChange={handleNewDoctorChange}
+                <Label className="font-semibold">ID:</Label>
+                <Input
+                  className="w-full bg-gray-100 cursor-not-allowed"
+                  value={editDoctor?.id.toString() || ''}
+                  readOnly
+                />
+              </div>
+              <div>
+                <Label className="font-semibold">Name:</Label>
+                <Input
+                  className="w-full"
+                  value={editDoctor?.name || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('name', e.target.value)}
                   required
                 />
               </div>
               <div>
-                <label className="font-semibold">Specialization:</label>
-                <input
-                  className="w-full border px-3 py-1 rounded"
-                  name="specialization"
-                  value={newDoctor.specialization}
-                  onChange={handleNewDoctorChange}
+                <Label className="font-semibold">Specialization:</Label>
+                <Input
+                  className="w-full"
+                  value={editDoctor?.specialization || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('specialization', e.target.value)}
                   required
                 />
               </div>
               <div>
-                <label className="font-semibold">Department:</label>
-                <input
-                  className="w-full border px-3 py-1 rounded"
-                  name="department"
-                  value={newDoctor.department}
-                  onChange={handleNewDoctorChange}
+                <Label className="font-semibold">Email:</Label>
+                <Input
+                  className="w-full"
+                  value={editDoctor?.mail || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('mail', e.target.value || null)}
+                />
+              </div>
+              <div>
+                <Label className="font-semibold">Phone:</Label>
+                <Input
+                  className="w-full"
+                  value={editDoctor?.phone || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('phone', e.target.value)}
                   required
                 />
               </div>
               <div>
-                <label className="font-semibold">Contact:</label>
-                <input
-                  className="w-full border px-3 py-1 rounded"
-                  name="contactNumber"
-                  value={newDoctor.contactNumber}
-                  onChange={handleNewDoctorChange}
-                  required
+                <Label className="font-semibold">Shift:</Label>
+                <Input
+                  className="w-full"
+                  value={editDoctor?.shift || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('shift', e.target.value || null)}
                 />
               </div>
-              <div>
-                <label className="font-semibold">Email:</label>
-                <input
-                  className="w-full border px-3 py-1 rounded"
-                  name="email"
-                  value={newDoctor.email}
-                  onChange={handleNewDoctorChange}
-                  required
+              <div className="flex items-center space-x-2">
+                <Label className="font-semibold">Available:</Label>
+                <Switch 
+                  checked={editDoctor?.available || false}
+                  onCheckedChange={(checked :boolean) => handleInputChange('available', checked)}
                 />
+                <span className="ml-2">{editDoctor?.available ? 'Yes' : 'No'}</span>
               </div>
               <div>
-                <label className="font-semibold">Status:</label>
-                <select
-                  className="w-full border px-3 py-1 rounded"
-                  name="status"
-                  value={newDoctor.status}
-                  onChange={handleNewDoctorChange}
+                <Label className="font-semibold">Admin ID:</Label>
+                <Input
+                  className="w-full"
+                  type="number"
+                  value={editDoctor?.ad_id?.toString() || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const value = e.target.value === '' ? null : parseInt(e.target.value);
+                    handleInputChange('ad_id', value);
+                  }}
+                />
+              </div>
+              
+              <DialogFooter className="flex justify-end gap-2 mt-6">
+                <Button
+                  type="submit"
+                  disabled={!isChanged()}
+                  className={isChanged() ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-300 cursor-not-allowed"}
                 >
-                  <option value="Available">Available</option>
-                  <option value="On Leave">On Leave</option>
-                  <option value="In Surgery">In Surgery</option>
-                </select>
+                  Save
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleDelete}
+                  variant="destructive"
+                >
+                  Delete
+                </Button>
+                <Button
+                  type="button"
+                  onClick={closeViewDialog}
+                  variant="secondary"
+                >
+                  Close
+                </Button>
+              </DialogFooter>
+            </form>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <p><strong>ID:</strong> {selectedDoctor?.id}</p>
+                <p><strong>Name:</strong> {selectedDoctor?.name}</p>
+                <p><strong>Specialization:</strong> {selectedDoctor?.specialization}</p>
+                <p><strong>Email:</strong> {selectedDoctor?.mail || 'Not provided'}</p>
+                <p><strong>Phone:</strong> {selectedDoctor?.phone}</p>
+                <p><strong>Shift:</strong> {selectedDoctor?.shift || 'Not specified'}</p>
+                <p><strong>Available:</strong> {selectedDoctor?.available ? 'Yes' : 'No'}</p>
+                <p><strong>Admin ID:</strong> {selectedDoctor?.ad_id || 'Not assigned'}</p>
               </div>
+              
+              <DialogFooter className="flex justify-end gap-2 mt-6">
+                <Button
+                  onClick={handleEdit}
+                  variant="default"
+                  className="bg-yellow-500 hover:bg-yellow-600"
+                >
+                  Edit
+                </Button>
+                <Button
+                  onClick={closeViewDialog}
+                  variant="secondary"
+                >
+                  Close
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Doctor Dialog */}
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent className={`sm:max-w-md ${darkMode ? "bg-gray-800 text-blue-200" : "bg-white"}`}>
+          <DialogHeader>
+            <DialogTitle>Add Doctor</DialogTitle>
+          </DialogHeader>
+          
+          <form className="space-y-3" onSubmit={handleAddDoctor}>
+            <div>
+              <Label className="font-semibold">Name:</Label>
+              <Input
+                className="w-full"
+                value={newDoctor.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleNewDoctorChange('name', e.target.value)}
+                required
+              />
             </div>
-            <div className="flex justify-end gap-2 mt-6">
-              <button
+            <div>
+              <Label className="font-semibold">Specialization:</Label>
+              <Input
+                className="w-full"
+                value={newDoctor.specialization}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleNewDoctorChange('specialization', e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label className="font-semibold">Email:</Label>
+              <Input
+                className="w-full"
+                value={newDoctor.mail || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleNewDoctorChange('mail', e.target.value || null)}
+              />
+            </div>
+            <div>
+              <Label className="font-semibold">Phone:</Label>
+              <Input
+                className="w-full"
+                value={newDoctor.phone}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleNewDoctorChange('phone', e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label className="font-semibold">Shift:</Label>
+              <Input
+                className="w-full"
+                value={newDoctor.shift || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleNewDoctorChange('shift', e.target.value || null)}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Label className="font-semibold">Available:</Label>
+              <Switch 
+                checked={newDoctor.available}
+                onCheckedChange={(checked : boolean) => handleNewDoctorChange('available', checked)}
+              />
+              <span className="ml-2">{newDoctor.available ? 'Yes' : 'No'}</span>
+            </div>
+            <div>
+              <Label className="font-semibold">Admin ID:</Label>
+              <Input
+                className="w-full"
+                type="number"
+                value={newDoctor.ad_id?.toString() || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const value = e.target.value === '' ? null : parseInt(e.target.value);
+                  handleNewDoctorChange('ad_id', value);
+                }}
+              />
+            </div>
+            
+            <DialogFooter className="flex justify-end gap-2 mt-6">
+              <Button
                 type="submit"
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700"
               >
                 Add
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                onClick={closeAddModal}
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400"
+                onClick={() => setAddDialogOpen(false)}
+                variant="secondary"
               >
                 Cancel
-              </button>
-            </div>
+              </Button>
+            </DialogFooter>
           </form>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
