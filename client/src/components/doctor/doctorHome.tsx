@@ -45,6 +45,21 @@ type AdmittedPatient = {
   };
 };
 
+// Helper: try all base URLs in order for a given endpoint
+async function fetchFromAllBases(bases: string[], endpoint: string) {
+  let lastError;
+  for (let base of bases) {
+    try {
+      const res = await fetch(`${base}${endpoint}`);
+      if (res.ok) return await res.json();
+      lastError = new Error(`HTTP error ${res.status} from ${base}${endpoint}`);
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError || new Error("All fetch attempts failed");
+}
+
 const DoctorHome: React.FC = () => {
   // Replace with actual doctor ID (from auth or context)
   const doctorId = 102;
@@ -52,6 +67,7 @@ const DoctorHome: React.FC = () => {
 
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [pendingAppointments, setPendingAppointments] = useState<Appointment[]>([]);
@@ -59,23 +75,39 @@ const DoctorHome: React.FC = () => {
   const [admittedPatients, setAdmittedPatients] = useState<AdmittedPatient[]>([]);
   const [activeTab, setActiveTab] = useState<"pending" | "completed" | "admitted">("pending");
 
-  // Fetch all data in parallel
+  // Array of base URLs to try in order
+  const baseUrls = [
+    "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
+    "http://127.0.0.1:5000"
+  ];
+
+  // Fetch all data in parallel using for-loop fallback logic
   useEffect(() => {
     setLoading(true);
+    setFetchError(null);
 
-    const fetchDoctor = fetch(`http://127.0.0.1:5000/api/doctor-info/${doctorId}`).then(res => res.json());
-    const fetchPending = fetch(`http://127.0.0.1:5000/api/doctor-pending/${doctorId}`).then(res => res.json());
-    const fetchCompleted = fetch(`http://127.0.0.1:5000/api/doctor-completed/${doctorId}`).then(res => res.json());
-    const fetchAdmitted = fetch(`http://127.0.0.1:5000/api/doctor-admitted/${doctorId}`).then(res => res.json());
+    const endpoints = [
+      `/api/doctor-info/${doctorId}`,
+      `/api/doctor-pending/${doctorId}`,
+      `/api/doctor-completed/${doctorId}`,
+      `/api/doctor-admitted/${doctorId}`,
+    ];
 
-    Promise.all([fetchDoctor, fetchPending, fetchCompleted, fetchAdmitted])
-      .then(([doctorRes, pendingRes, completedRes, admittedRes]) => {
+    (async () => {
+      try {
+        const [doctorRes, pendingRes, completedRes, admittedRes] = await Promise.all(
+          endpoints.map(ep => fetchFromAllBases(baseUrls, ep))
+        );
         setDoctor(doctorRes.doctor);
         setPendingAppointments(pendingRes.appointments || []);
         setCompletedAppointments(completedRes.appointments || []);
         setAdmittedPatients(admittedRes.admitted || []);
-      })
-      .finally(() => setLoading(false));
+      } catch (err: any) {
+        setFetchError("Unable to fetch data from any available server.");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [doctorId]);
 
   useEffect(() => {
@@ -117,7 +149,6 @@ const DoctorHome: React.FC = () => {
     }
     // No navigation for admitted tab
   };
-  
 
   return (
     <div className={`min-h-screen p-6 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"}`}>
@@ -155,6 +186,8 @@ const DoctorHome: React.FC = () => {
           <CardContent className="grid grid-cols-2 gap-4 text-sm">
             {loading ? (
               <p>Loading...</p>
+            ) : fetchError ? (
+              <p className="text-red-500">{fetchError}</p>
             ) : doctor ? (
               <>
                 <p><strong>Doctor ID:</strong> {doctor.D_ID}</p>
@@ -192,6 +225,8 @@ const DoctorHome: React.FC = () => {
               <CardContent>
                 {loading ? (
                   <p>Loading...</p>
+                ) : fetchError ? (
+                  <p className="text-red-500">{fetchError}</p>
                 ) : pendingAppointments.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No pending appointments.</p>
                 ) : (
@@ -235,6 +270,8 @@ const DoctorHome: React.FC = () => {
               <CardContent>
                 {loading ? (
                   <p>Loading...</p>
+                ) : fetchError ? (
+                  <p className="text-red-500">{fetchError}</p>
                 ) : completedAppointments.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No completed appointments.</p>
                 ) : (
@@ -278,6 +315,8 @@ const DoctorHome: React.FC = () => {
               <CardContent>
                 {loading ? (
                   <p>Loading...</p>
+                ) : fetchError ? (
+                  <p className="text-red-500">{fetchError}</p>
                 ) : admittedPatients.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No admitted patients.</p>
                 ) : (
