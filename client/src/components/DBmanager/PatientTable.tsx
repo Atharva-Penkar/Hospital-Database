@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { CalendarIcon } from "@/../../node_modules/@radix-ui/react-icons";
+import { CalendarIcon } from "@radix-ui/react-icons";
 
 // API response interface - matches your Prisma model
 interface ApiPatient {
@@ -72,8 +72,10 @@ const PatientsTable: React.FC<PatientsTableProps> = ({ darkMode }) => {
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:5000/api/patients');
-      if (!response.ok) throw new Error('Failed to fetch patients');
+      const response = await fetch('http://localhost:5000/api/dbpatient-available');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch patients: ${response.status} ${response.statusText}`);
+      }
       
       const data = await response.json();
       console.log('Raw API response:', data);
@@ -104,7 +106,7 @@ const PatientsTable: React.FC<PatientsTableProps> = ({ darkMode }) => {
     try {
       setLoading(true);
       
-      const response = await fetch('http://localhost:5000/api/patients', {
+      const response = await fetch('http://localhost:5000/api/dbpatient-available', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -163,7 +165,7 @@ const PatientsTable: React.FC<PatientsTableProps> = ({ darkMode }) => {
       if (patientData.phoneNo !== undefined) apiData.phone_no = patientData.phoneNo;
       if (patientData.emergencyPhoneNo !== undefined) apiData.emergency_phone_no = patientData.emergencyPhoneNo;
       
-      const response = await fetch(`http://localhost:5000/api/patients/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/dbpatient-available/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(apiData)
@@ -222,7 +224,7 @@ const PatientsTable: React.FC<PatientsTableProps> = ({ darkMode }) => {
     try {
       setLoading(true);
       
-      const response = await fetch(`http://localhost:5000/api/patients/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/dbpatient-available/${id}`, {
         method: 'DELETE'
       });
       

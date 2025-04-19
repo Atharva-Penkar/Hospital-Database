@@ -29,6 +29,7 @@ import addAppointmentDetailsRouter from "./routes/appointments/addAppointmentDet
 
 import dbmanagerdoctor from "./routes/DBmanager/doctor.routes";
 import dbtestavailable from "./routes/DBmanager/testavailable.routes";
+import dbmanagerpatient from "./routes/DBmanager/patient.routes";
 
 dotenv.config();
 const app = express();
@@ -88,6 +89,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/dbtest-available",dbtestavailable)
 app.use("/api/dbdoctor-available",dbmanagerdoctor)
+app.use("/api/dbpatient-available",dbmanagerpatient)
 
 async function startServer() {
   try {
