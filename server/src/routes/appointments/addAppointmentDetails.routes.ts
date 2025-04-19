@@ -6,6 +6,6 @@ import asyncHandler from "../../middlewares/RouteErrorHandler";
 const router = Router();
 
 // POST /api/appointments/:appointmentId/details
-router.post("/:appointmentId/details", asyncHandler(addAppointmentDetails));
+router.post("/:appointmentId", asyncHandler(addAppointmentDetails));
 
 export default router;

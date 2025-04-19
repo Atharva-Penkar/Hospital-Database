@@ -24,7 +24,8 @@ import doctorPendingAppointmentsRouter from "./routes/doctorSnehal/doctorPending
 import doctorCompletedAppointmentsRouter from "./routes/doctorSnehal/doctorComplete.routes";
 import doctorAdmittedPatientsRouter from "./routes/doctorSnehal/doctorAdmitted.routes";
 import getAppointmentDetailsRouter from "./routes/appointments/getAppointmentDetails.routes";
-
+import setAppointmentDetailsRouter from "./routes/appointments/setAppointmentDetails.routes";
+import addAppointmentDetailsRouter from "./routes/appointments/addAppointmentDetails.routes";
 
 dotenv.config();
 const app = express();
@@ -76,7 +77,8 @@ app.use("/api/doctor-info", doctorInfoRouter)
 app.use("/api/doctor-pending", doctorPendingAppointmentsRouter)
 app.use("/api/doctor-completed", doctorCompletedAppointmentsRouter)
 app.use("/api/doctor-admitted", doctorAdmittedPatientsRouter)
-
+app.use("/api/appointment-details/set/:appointmentId", setAppointmentDetailsRouter)
+app.use("/api/appointment-details/add/:appointmentId", addAppointmentDetailsRouter)
 app.get("/", (req, res) => {
   res.send("Hospital Management API is running");
 });

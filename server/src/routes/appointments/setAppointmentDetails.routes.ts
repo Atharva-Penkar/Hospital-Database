@@ -6,6 +6,6 @@ import asyncHandler from "../../middlewares/RouteErrorHandler";
 const router = Router();
 
 // PUT /api/appointments/:appointmentId/details
-router.put("/:appointmentId/details", asyncHandler(setAppointmentDetails));
+router.put("/:appointmentId", asyncHandler(setAppointmentDetails));
 
 export default router;
