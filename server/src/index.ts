@@ -27,6 +27,8 @@ import getAppointmentDetailsRouter from "./routes/appointments/getAppointmentDet
 import setAppointmentDetailsRouter from "./routes/appointments/setAppointmentDetails.routes";
 import addAppointmentDetailsRouter from "./routes/appointments/addAppointmentDetails.routes";
 
+import dbmanagerdoctor from "./routes/DBmanager/doctor.routes";
+
 dotenv.config();
 const app = express();
 
@@ -82,6 +84,8 @@ app.use("/api/appointment-details/add/:appointmentId", addAppointmentDetailsRout
 app.get("/", (req, res) => {
   res.send("Hospital Management API is running");
 });
+
+app.use("/api/dbdoctor-available",dbmanagerdoctor)
 
 async function startServer() {
   try {
