@@ -1,8 +1,6 @@
 // controllers/doctorController.ts
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../../utils/prisma"
 
 export const getDoctorById = async (req: Request, res: Response) => {
   const doctorId = parseInt(req.params.id);

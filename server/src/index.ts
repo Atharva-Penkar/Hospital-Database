@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import { PrismaClient } from "@prisma/client";
+import prisma from "./utils/prisma"
 
 // Routers
 import authRouter from "./routes/authPatient/authPatient.routes";
@@ -28,7 +28,6 @@ import getAppointmentDetailsRouter from "./routes/appointments/getAppointmentDet
 
 dotenv.config();
 const app = express();
-const prisma = new PrismaClient();
 
 const PORT = parseInt(process.env.PORT || "5000", 10);
 
@@ -40,7 +39,8 @@ app.use(
       "http://127.0.0.1:5173",
       "https://effective-enigma-6jx7j47vvj635gqv-5173.app.github.dev",
       "https://probable-parakeet-9vw4979p6q5c4x4-5173.app.github.dev",
-      "https://improved-umbrella-6997vv74rqgpc59gx-5173.app.github.dev"
+      "https://improved-umbrella-6997vv74rqgpc59gx-5173.app.github.dev",
+      "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5173.app.github.dev",
       // Add any other URLs you use (e.g., Codespaces)
     ],
     credentials: true,
@@ -102,3 +102,14 @@ async function startServer() {
 }
 
 startServer();
+
+// Graceful shutdown: disconnect Prisma on SIGINT (Ctrl+C) or SIGTERM (kill)
+process.on('SIGINT', async () => {
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  await prisma.$disconnect();
+  process.exit(0);
+});

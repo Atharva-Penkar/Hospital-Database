@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
-import { PrismaClient, AdmitStatus } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { AdmitStatus } from "@prisma/client";
+import prisma from "../../utils/prisma"
 
 // Update admission: Admit_Requested -> Admitted, set admit_time, update room number
 export const admitPatient = async (req: Request, res: Response) => {

@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
-import { PrismaClient, AdmitStatus } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import {AdmitStatus } from "@prisma/client";
+import prisma from "../../utils/prisma"
 
 // Get all admits with status Admit_Requested
 export const getAllAdmitRequestedAdmissions = async (req: Request, res: Response) => {

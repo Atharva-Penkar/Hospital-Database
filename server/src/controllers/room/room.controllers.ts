@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
-import { PrismaClient, RoomType } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { RoomType } from "@prisma/client";
+import prisma from "../../utils/prisma"
 
 export const getAllRooms = async (req: Request, res: Response) => {
   console.log("[getAllRooms] Called with params:", req.params);

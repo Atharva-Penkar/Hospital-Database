@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../../utils/prisma"
 
 // Controller to fetch all unique specializations from the Doctor table
 export const getAllSpecializations = async (req: Request, res: Response) => {
