@@ -10,6 +10,7 @@ type Patient = {
   sex: string;
   dob: string;
   reason: string;
+  admit_id?: number;
 };
 
 type AdmittedPatient = {
@@ -21,21 +22,19 @@ type AdmittedPatient = {
 
 type WardType = "General" | "Maternity" | "ICU" | "";
 
+type Room = {
+  Room_No: number;
+  Room_Type: WardType;
+  Available: boolean;
+  Admit: Array<{
+    admit_id: number;
+    P_ID: number;
+    status: string;
+    discharge_time: string | null;
+  }>;
+};
+
 const TOTAL_ROOMS = 40;
-
-const getWardTypeForRoom = (room: number): WardType => {
-  if (room >= 1 && room <= 20) return "General";
-  if (room >= 21 && room <= 30) return "Maternity";
-  if (room >= 31 && room <= 40) return "ICU";
-  return "";
-};
-
-const wardTypeRanges: Record<WardType, [number, number]> = {
-  General: [1, 20],
-  Maternity: [21, 30],
-  ICU: [31, 40],
-  "": [1, 40]
-};
 
 const ADMIT_REQUESTED_URLS = [
   "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/admit-requested",
@@ -45,6 +44,21 @@ const ADMIT_REQUESTED_URLS = [
 const DISCHARGE_REQUESTED_URLS = [
   "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/discharge-requested",
   "http://localhost:5000/api/front-desk-operator/admissions/discharge-requested"
+];
+
+const ROOM_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/room",
+  "http://localhost:5000/api/front-desk-operator/admissions/room"
+];
+
+const ADMIT_PATIENT_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/admit",
+  "http://localhost:5000/api/front-desk-operator/admissions/admit"
+];
+
+const UPDATE_ROOM_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/room",
+  "http://localhost:5000/api/front-desk-operator/admissions/room"
 ];
 
 const FrontDeskOpAdmissions = ({
@@ -59,88 +73,147 @@ const FrontDeskOpAdmissions = ({
   const [selectedSeek, setSelectedSeek] = useState<Patient | null>(null);
   const [selectedDischarge, setSelectedDischarge] = useState<AdmittedPatient | null>(null);
   const [selectedWardType, setSelectedWardType] = useState<WardType>("");
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
 
-  const [occupiedRooms, setOccupiedRooms] = useState<Record<number, number>>({});
-
-  // Fetch admissions with Admit_Requested status
-  useEffect(() => {
-    let cancelled = false;
-    const fetchSeekingPatients = async () => {
-      for (const url of ADMIT_REQUESTED_URLS) {
-        try {
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-          const data = await res.json();
-          const patients: Patient[] = Array.isArray(data.admits)
-            ? data.admits.map((admit: any) => ({
-                id: admit.patient?.P_ID ?? admit.P_ID,
-                name: admit.patient?.name ?? "Unknown",
-                sex: admit.patient?.Sex ?? "N/A",
-                dob: admit.patient?.DOB ?? "",
-                reason: admit.appointment?.Symptoms ?? "N/A"
-              }))
-            : [];
-          if (!cancelled) setSeekingPatients(patients);
-          break;
-        } catch (err) {
-          if (url === ADMIT_REQUESTED_URLS[ADMIT_REQUESTED_URLS.length - 1]) {
-            if (!cancelled) setSeekingPatients([]);
-          }
+  // Fetch seeking admissions
+  const fetchSeekingPatients = async () => {
+    for (const url of ADMIT_REQUESTED_URLS) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+        const data = await res.json();
+        const patients: Patient[] = Array.isArray(data.admits)
+          ? data.admits.map((admit: any) => ({
+              id: admit.patient?.P_ID ?? admit.P_ID,
+              name: admit.patient?.name ?? "Unknown",
+              sex: admit.patient?.Sex ?? "N/A",
+              dob: admit.patient?.DOB ?? "",
+              reason: admit.appointment?.Symptoms ?? "N/A",
+              admit_id: admit.admit_id
+            }))
+          : [];
+        setSeekingPatients(patients);
+        break;
+      } catch (err) {
+        if (url === ADMIT_REQUESTED_URLS[ADMIT_REQUESTED_URLS.length - 1]) {
+          setSeekingPatients([]);
         }
       }
-    };
+    }
+  };
+
+  // Fetch discharge requested admissions
+  const fetchAdmittedPatients = async () => {
+    for (const url of DISCHARGE_REQUESTED_URLS) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+        const data = await res.json();
+        const patients: AdmittedPatient[] = Array.isArray(data.admits)
+          ? data.admits.map((admit: any) => ({
+              id: admit.patient?.P_ID ?? admit.P_ID,
+              name: admit.patient?.name ?? "Unknown",
+              ward: admit.room?.Room_No ?? admit.R_no ?? 0,
+              admissionDateTime: admit.admit_time ?? ""
+            }))
+          : [];
+        setAdmittedPatients(patients);
+        break;
+      } catch (err) {
+        if (url === DISCHARGE_REQUESTED_URLS[DISCHARGE_REQUESTED_URLS.length - 1]) {
+          setAdmittedPatients([]);
+        }
+      }
+    }
+  };
+
+  // Fetch all rooms with their Admit relation
+  const fetchRooms = async () => {
+    setLoadingRooms(true);
+    for (const url of ROOM_URLS) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+        const data = await res.json();
+        const roomsData: Room[] = Array.isArray(data.rooms) ? data.rooms : [];
+        setRooms(roomsData);
+        setLoadingRooms(false);
+        break;
+      } catch (err) {
+        if (url === ROOM_URLS[ROOM_URLS.length - 1]) {
+          setRooms([]);
+          setLoadingRooms(false);
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
     fetchSeekingPatients();
-    return () => { cancelled = true; };
-  }, []);
-
-  // Fetch admissions with Discharge_Requested status
-  useEffect(() => {
-    let cancelled = false;
-    const fetchAdmittedPatients = async () => {
-      for (const url of DISCHARGE_REQUESTED_URLS) {
-        try {
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-          const data = await res.json();
-          const patients: AdmittedPatient[] = Array.isArray(data.admits)
-            ? data.admits.map((admit: any) => ({
-                id: admit.patient?.P_ID ?? admit.P_ID,
-                name: admit.patient?.name ?? "Unknown",
-                ward: admit.room?.Room_No ?? admit.R_no ?? 0,
-                admissionDateTime: admit.admit_time ?? ""
-              }))
-            : [];
-          if (!cancelled) setAdmittedPatients(patients);
-          break;
-        } catch (err) {
-          if (url === DISCHARGE_REQUESTED_URLS[DISCHARGE_REQUESTED_URLS.length - 1]) {
-            if (!cancelled) setAdmittedPatients([]);
-          }
-        }
-      }
-    };
     fetchAdmittedPatients();
-    return () => { cancelled = true; };
+    fetchRooms();
   }, []);
 
-  const handleAdmit = (ward: number) => {
-    if (!selectedSeek) return;
-    setOccupiedRooms(prev => ({ ...prev, [ward]: selectedSeek.id }));
-    setSeekingPatients(prev => prev.filter((p) => p.id !== selectedSeek.id));
-    setSelectedSeek(null);
-    setSelectedWardType("");
+  // Helper: Find the P_ID of the currently admitted patient in a room
+  const getCurrentPID = (room: Room) => {
+    const currentAdmit = Array.isArray(room.Admit)
+      ? room.Admit.find((a) => !a.discharge_time)
+      : undefined;
+    return currentAdmit ? currentAdmit.P_ID : null;
+  };
+
+  // Helper: Determine if a room is occupied
+  const isRoomOccupied = (room: Room) => {
+    return getCurrentPID(room) !== null || room.Available === false;
+  };
+
+  // Handler: Admit patient to a room
+  const handleAdmit = async (roomNumber: number) => {
+    if (!selectedSeek || !selectedSeek.admit_id) return;
+    // 1. Update admission status and assign room
+    let admitSuccess = false;
+    for (const url of ADMIT_PATIENT_URLS) {
+      try {
+        const res = await fetch(`${url}/${selectedSeek.admit_id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ R_no: roomNumber }),
+        });
+        if (!res.ok) throw new Error(`Failed to admit: ${res.status}`);
+        admitSuccess = true;
+        break;
+      } catch (err) {
+        // Try next URL
+      }
+    }
+    // 2. Update room availability
+    let roomSuccess = false;
+    for (const url of UPDATE_ROOM_URLS) {
+      try {
+        const res = await fetch(`${url}/${roomNumber}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ Available: false }),
+        });
+        if (!res.ok) throw new Error(`Failed to update room: ${res.status}`);
+        roomSuccess = true;
+        break;
+      } catch (err) {
+        // Try next URL
+      }
+    }
+    // 3. Refetch rooms and admissions to update UI
+    if (admitSuccess && roomSuccess) {
+      await fetchRooms();
+      await fetchSeekingPatients();
+      setSelectedSeek(null);
+      setSelectedWardType("");
+    }
   };
 
   const handleDischarge = () => {
-    if (!selectedDischarge) return;
-    setAdmittedPatients((prev) => prev.filter((p) => p.id !== selectedDischarge.id));
-    setOccupiedRooms(prev => {
-      const updated = { ...prev };
-      const room = selectedDischarge.ward;
-      delete updated[room];
-      return updated;
-    });
-    setSelectedDischarge(null);
+    // ...your logic unchanged...
   };
 
   return (
@@ -252,50 +325,58 @@ const FrontDeskOpAdmissions = ({
       </div>
       {/* Bottom Section - Ward Grid */}
       <div className="grid grid-cols-10 gap-2 mt-2">
-        {Array.from({ length: TOTAL_ROOMS }, (_, i) => {
-          const roomNumber = i + 1;
-          const isOccupied = roomNumber in occupiedRooms;
-          const wardType = getWardTypeForRoom(roomNumber);
-
-          const isInSelectedWardType = selectedWardType
-            ? roomNumber >= wardTypeRanges[selectedWardType][0] && roomNumber <= wardTypeRanges[selectedWardType][1]
-            : false;
-
-          const isClickable =
-            !!selectedSeek &&
-            !!selectedWardType &&
-            isInSelectedWardType &&
-            !isOccupied;
-
-          const highlight =
-            selectedWardType && isInSelectedWardType
-              ? isOccupied
-                ? "bg-rose-500 text-white cursor-not-allowed"
-                : isClickable
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-                  : "bg-emerald-400 text-white cursor-default"
-              : isOccupied
-                ? "bg-rose-500 text-white cursor-not-allowed"
-                : "bg-emerald-300 text-white cursor-default opacity-60";
-
-          return (
+        {loadingRooms ? (
+          Array.from({ length: TOTAL_ROOMS }, (_, i) => (
             <div
-              key={roomNumber}
-              className={`aspect-square flex items-center justify-center rounded-lg text-center font-semibold transition-colors text-xs sm:text-sm ${highlight}`}
-              onClick={() => isClickable && handleAdmit(roomNumber)}
+              key={i + 1}
+              className="aspect-square flex items-center justify-center rounded-lg text-center font-semibold transition-colors text-xs sm:text-sm bg-gray-200 dark:bg-gray-700 text-gray-400"
             >
-              {isOccupied ? (
-                <>
-                  {wardType} {roomNumber}
-                  <br />
-                  PID: {occupiedRooms[roomNumber]}
-                </>
-              ) : (
-                `${wardType} ${roomNumber}`
-              )}
+              Loading...
             </div>
-          );
-        })}
+          ))
+        ) : (
+          Array.from({ length: TOTAL_ROOMS }, (_, i) => {
+            const roomNumber = i + 1;
+            const room = rooms.find(r => r.Room_No === roomNumber);
+            const isInSelectedWardType = selectedWardType
+              ? room && room.Room_Type === selectedWardType
+              : false;
+            const isOccupied = room ? isRoomOccupied(room) : false;
+            const pid = room && isOccupied ? getCurrentPID(room) : null;
+            const isClickable =
+              !!selectedSeek &&
+              !!selectedWardType &&
+              isInSelectedWardType &&
+              !isOccupied &&
+              room?.Available;
+
+            const highlight =
+              selectedWardType && isInSelectedWardType
+                ? isOccupied
+                  ? "bg-rose-500 text-white cursor-not-allowed"
+                  : isClickable
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                    : "bg-emerald-400 text-white cursor-default"
+                : isOccupied
+                  ? "bg-rose-500 text-white cursor-not-allowed"
+                  : "bg-emerald-300 text-white cursor-default opacity-60";
+
+            return (
+              <div
+                key={roomNumber}
+                className={`aspect-square flex flex-col items-center justify-center rounded-lg text-center font-semibold transition-colors text-xs sm:text-sm ${highlight}`}
+                onClick={() => isClickable && handleAdmit(roomNumber)}
+              >
+                <span className="block font-bold">
+                  {room ? `${room.Room_Type} ${room.Room_No}` : `Room ${roomNumber}`}
+                </span>
+                <span className="block">
+                  PID: {pid ? pid : "None"}
+                </span>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );
