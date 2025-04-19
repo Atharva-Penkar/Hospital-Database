@@ -1,76 +1,216 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // Import shadcn components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 
+// API response interface - what comes from your backend
+interface ApiTest {
+  T_ID: number;
+  test_name: string;
+}
+
+// Component data interface - what your component uses
 interface Test {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  duration: string;
-  requiresFasting: boolean;
-  availability: 'Available' | 'Limited' | 'Unavailable';
+  id: number;  // Maps to T_ID in Prisma
+  name: string; // Maps to test_name in Prisma
 }
 
 interface TestsTableProps {
   darkMode: boolean;
 }
 
-const sampleTests: Test[] = [
-  { id: 'T001', name: 'Complete Blood Count (CBC)', category: 'Hematology', price: 50, duration: '1 hour', requiresFasting: false, availability: 'Available' },
-  { id: 'T002', name: 'Blood Glucose Test', category: 'Biochemistry', price: 30, duration: '30 minutes', requiresFasting: true, availability: 'Available' },
-  { id: 'T003', name: 'Lipid Profile', category: 'Biochemistry', price: 80, duration: '2 hours', requiresFasting: true, availability: 'Available' },
-];
-
 const TestsTable: React.FC<TestsTableProps> = ({ darkMode }) => {
-  const [searchId, setSearchId] = useState('');
-  const [tests, setTests] = useState<Test[]>(sampleTests);
+  const [searchId, setSearchId] = useState<string>('');
+  const [tests, setTests] = useState<Test[]>([]);
   const [selectedTest, setSelectedTest] = useState<Test | null>(null);
   const [editTest, setEditTest] = useState<Test | null>(null);
-  const [editMode, setEditMode] = useState(false);
-  const [viewDialogOpen, setViewDialogOpen] = useState(false);
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editMode, setEditMode] = useState<boolean>(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState<boolean>(false);
+  const [addDialogOpen, setAddDialogOpen] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   
   const [newTest, setNewTest] = useState<Omit<Test, 'id'>>({
     name: '',
-    category: '',
-    price: 0,
-    duration: '',
-    requiresFasting: false,
-    availability: 'Available',
   });
 
-  // Search logic
-  const handleSearch = () => {
+  // Fetch tests from API when component mounts
+  useEffect(() => {
+    fetchTests();
+  }, []);
+
+  // API functions
+  const fetchTests = async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/dbtest-available');
+      if (!response.ok) throw new Error('Failed to fetch tests');
+      
+      const data = await response.json();
+      console.log('Raw API response:', data);
+      
+      // Type guard to ensure data is an array
+      if (!Array.isArray(data)) {
+        throw new Error('API response is not an array');
+      }
+      
+      // Transform API data to match our component interface
+      const transformedData: Test[] = data.map((item: ApiTest) => ({
+        id: item.T_ID,
+        name: item.test_name
+      }));
+      
+      setTests(transformedData);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      console.error('Error fetching tests:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addTest = async (test: Omit<Test, 'id'>): Promise<Test | undefined> => {
+    try {
+      setLoading(true);
+      
+      const response = await fetch('http://localhost:5000/api/dbtest-available', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test_name: test.name })
+      });
+      
+      if (!response.ok) throw new Error('Failed to add test');
+      
+      const responseData = await response.json();
+      console.log('Add test response:', responseData);
+      
+      // If the response has nested data, ensure we extract it correctly
+      const newTestData = responseData.test || responseData;
+      
+      // Convert API response to our component's format
+      const newTestItem: Test = {
+        id: newTestData.T_ID,
+        name: newTestData.test_name
+      };
+      
+      setTests(prevTests => [...prevTests, newTestItem]);
+      return newTestItem;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      console.error('Error adding test:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateTest = async (id: number, testData: Partial<Test>): Promise<Test | undefined> => {
+    try {
+      setLoading(true);
+      
+      const response = await fetch(`http://localhost:5000/api/dbtest-available/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test_name: testData.name })
+      });
+      
+      if (!response.ok) {
+        // If API isn't implemented yet, simulate the update locally
+        const updatedTest: Test = { 
+          id, 
+          name: testData.name || '' 
+        };
+        
+        setTests(prevTests => prevTests.map(t => t.id === id ? updatedTest : t));
+        return updatedTest;
+      }
+      
+      const responseData = await response.json();
+      const updatedTestData = responseData.test || responseData;
+      
+      const updatedTest: Test = {
+        id: updatedTestData.T_ID,
+        name: updatedTestData.test_name
+      };
+      
+      setTests(prevTests => prevTests.map(t => t.id === id ? updatedTest : t));
+      return updatedTest;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      console.error('Error updating test:', err);
+      
+      // If the API fails, simulate update locally
+      if (testData.name) {
+        const updatedTest: Test = { id, name: testData.name };
+        setTests(prevTests => prevTests.map(t => t.id === id ? updatedTest : t));
+        return updatedTest;
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteTest = async (id: number): Promise<void> => {
+    try {
+      setLoading(true);
+      
+      const response = await fetch(`http://localhost:5000/api/dbtest-available/${id}`, {
+        method: 'DELETE'
+      });
+      
+      // If the API is not implemented yet, just do local deletion
+      if (!response.ok) {
+        setTests(prevTests => prevTests.filter(t => t.id !== id));
+        return;
+      }
+      
+      // If the API worked, still update local state
+      setTests(prevTests => prevTests.filter(t => t.id !== id));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      console.error('Error deleting test:', err);
+      
+      // Even if API fails, update the UI
+      setTests(prevTests => prevTests.filter(t => t.id !== id));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Search logic - fixed to search by string ID
+  const handleSearch = (): void => {
     if (searchId.trim() === '') {
-      setTests(sampleTests);
+      fetchTests();
     } else {
-      setTests(
-        sampleTests.filter(t =>
-          t.id.toLowerCase().includes(searchId.trim().toLowerCase())
+      const searchValue = searchId.trim().toLowerCase();
+      setTests(prevTests => 
+        prevTests.filter(t => 
+          t.id.toString().toLowerCase().includes(searchValue) || 
+          t.name.toLowerCase().includes(searchValue)
         )
       );
     }
   };
 
   // Row click: open dialog in view mode
-  const handleRowClick = (test: Test) => {
+  const handleRowClick = (test: Test): void => {
     setSelectedTest(test);
-    setEditTest(test);
+    setEditTest({...test}); // Make a copy to avoid reference issues
     setEditMode(false);
     setViewDialogOpen(true);
   };
 
   // Dialog close
-  const closeViewDialog = () => {
+  const closeViewDialog = (): void => {
     setViewDialogOpen(false);
     setSelectedTest(null);
     setEditMode(false);
@@ -78,12 +218,12 @@ const TestsTable: React.FC<TestsTableProps> = ({ darkMode }) => {
   };
 
   // Edit mode
-  const handleEdit = () => {
+  const handleEdit = (): void => {
     setEditMode(true);
   };
 
-  // Editing fields
-  const handleInputChange = (name: string, value: any) => {
+  // Editing fields with type safety
+  const handleInputChange = (name: keyof Test, value: any): void => {
     if (!editTest) return;
     setEditTest({
       ...editTest,
@@ -92,66 +232,95 @@ const TestsTable: React.FC<TestsTableProps> = ({ darkMode }) => {
   };
 
   // Detect changes for Save button
-  const isChanged = () => {
+  const isChanged = (): boolean => {
     if (!selectedTest || !editTest) return false;
-    return (
-      selectedTest.name !== editTest.name ||
-      selectedTest.category !== editTest.category ||
-      selectedTest.price !== editTest.price ||
-      selectedTest.duration !== editTest.duration ||
-      selectedTest.requiresFasting !== editTest.requiresFasting ||
-      selectedTest.availability !== editTest.availability
-    );
+    return selectedTest.name !== editTest.name;
   };
 
   // Save edits
-  const handleSave = () => {
+  const handleSave = async (): Promise<void> => {
     if (!editTest) return;
-    setTests(tests.map(t => (t.id === editTest.id ? editTest : t)));
-    setSelectedTest(editTest);
-    setEditMode(false);
+    try {
+      const updated = await updateTest(editTest.id, editTest);
+      if (updated) {
+        setSelectedTest(updated);
+        setEditMode(false);
+      }
+    } catch (error) {
+      console.error('Failed to save test:', error);
+    }
   };
 
   // Delete test
-  const handleDelete = () => {
+  const handleDelete = async (): Promise<void> => {
     if (!editTest) return;
-    setTests(tests.filter(t => t.id !== editTest.id));
-    closeViewDialog();
+    try {
+      await deleteTest(editTest.id);
+      closeViewDialog();
+    } catch (error) {
+      console.error('Failed to delete test:', error);
+    }
   };
 
   // Add Test Dialog
-  const openAddDialog = () => {
+  const openAddDialog = (): void => {
     setAddDialogOpen(true);
     setNewTest({
       name: '',
-      category: '',
-      price: 0,
-      duration: '',
-      requiresFasting: false,
-      availability: 'Available',
     });
   };
 
-  const handleNewTestChange = (name: string, value: any) => {
+  const handleNewTestChange = (name: keyof Omit<Test, 'id'>, value: string): void => {
     setNewTest(prev => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleAddTest = (e: React.FormEvent) => {
+  const handleAddTest = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    // Generate new ID
-    const maxIdNum = tests
-      .map(t => parseInt(t.id.replace(/\D/g, '')))
-      .reduce((max, curr) => (curr > max ? curr : max), 0);
-    const newId = `T${(maxIdNum + 1).toString().padStart(3, '0')}`;
-    setTests([
-      ...tests,
-      { id: newId, ...newTest }
-    ]);
-    setAddDialogOpen(false);
+    try {
+      await addTest(newTest);
+      setAddDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to add test:', error);
+    }
   };
+
+  // Loading state
+  if (loading && tests.length === 0) {
+    return (
+      <div className={darkMode ? "bg-gray-900 text-blue-400 p-6" : "bg-white text-black p-6"}>
+        <h2 className={darkMode ? "text-2xl font-bold text-white" : "text-2xl font-bold text-gray-800"}>
+          Tests Available
+        </h2>
+        <div className="text-center py-8">
+          <p className="text-lg">Loading tests...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state with no data
+  if (error && tests.length === 0) {
+    return (
+      <div className={darkMode ? "bg-gray-900 text-blue-400 p-6" : "bg-white text-black p-6"}>
+        <h2 className={darkMode ? "text-2xl font-bold text-white" : "text-2xl font-bold text-gray-800"}>
+          Tests Available
+        </h2>
+        <div className="text-center py-8">
+          <p className="text-lg text-red-500">Error: {error}</p>
+          <Button 
+            onClick={fetchTests}
+            variant="default"
+            className="mt-4"
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={darkMode ? "bg-gray-900 text-blue-400 p-6" : "bg-white text-black p-6"}>
@@ -163,9 +332,9 @@ const TestsTable: React.FC<TestsTableProps> = ({ darkMode }) => {
         <div className="flex gap-2 items-center">
           <Input
             type="text"
-            placeholder="Search by ID"
+            placeholder="Search by ID or name"
             value={searchId}
-            onChange={e => setSearchId(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchId(e.target.value)}
             className="w-40"
           />
           <Button 
@@ -175,7 +344,7 @@ const TestsTable: React.FC<TestsTableProps> = ({ darkMode }) => {
             Search
           </Button>
           <Button 
-            onClick={() => { setSearchId(''); setTests(sampleTests); }}
+            onClick={() => { setSearchId(''); fetchTests(); }}
             variant="secondary"
           >
             Reset
@@ -190,6 +359,10 @@ const TestsTable: React.FC<TestsTableProps> = ({ darkMode }) => {
         </div>
       </div>
 
+      {/* Loading and Error States when data exists */}
+      {loading && tests.length > 0 && <p className="text-center py-4">Refreshing tests...</p>}
+      {error && tests.length > 0 && <p className="text-center py-4 text-red-500">Error: {error}</p>}
+
       {/* Table */}
       <div className={`rounded-lg overflow-hidden shadow-md ${darkMode ? "bg-gray-800" : "bg-white"}`}>
         <div className="overflow-x-auto" style={{ maxHeight: '400px', overflowY: 'auto' }}>
@@ -198,17 +371,12 @@ const TestsTable: React.FC<TestsTableProps> = ({ darkMode }) => {
               <TableRow>
                 <TableHead className={darkMode ? "text-white" : "text-gray-800"}>ID</TableHead>
                 <TableHead className={darkMode ? "text-white" : "text-gray-800"}>Test Name</TableHead>
-                <TableHead className={darkMode ? "text-white" : "text-gray-800"}>Category</TableHead>
-                <TableHead className={darkMode ? "text-white" : "text-gray-800"}>Price</TableHead>
-                <TableHead className={darkMode ? "text-white" : "text-gray-800"}>Duration</TableHead>
-                <TableHead className={darkMode ? "text-white" : "text-gray-800"}>Fasting Required</TableHead>
-                <TableHead className={darkMode ? "text-white" : "text-gray-800"}>Availability</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className={darkMode ? "bg-gray-900" : "bg-white"}>
               {tests.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-6 text-gray-400">No tests found.</TableCell>
+                  <TableCell colSpan={2} className="text-center py-6 text-gray-400">No tests found.</TableCell>
                 </TableRow>
               ) : (
                 tests.map((test) => (
@@ -219,22 +387,6 @@ const TestsTable: React.FC<TestsTableProps> = ({ darkMode }) => {
                   >
                     <TableCell>{test.id}</TableCell>
                     <TableCell>{test.name}</TableCell>
-                    <TableCell>{test.category}</TableCell>
-                    <TableCell>${test.price}</TableCell>
-                    <TableCell>{test.duration}</TableCell>
-                    <TableCell>{test.requiresFasting ? 'Yes' : 'No'}</TableCell>
-                    <TableCell>
-                    <Badge 
-                        variant={
-                            test.availability === 'Available' ? 'default' : 
-                            test.availability === 'Limited' ? 'secondary' : 
-                            'destructive'
-                            }
-                            className={test.availability === 'Limited' ? 'bg-yellow-500 hover:bg-yellow-700 text-white' : ''}
-                        >
-                    {test.availability}
-                    </Badge>
-                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -251,12 +403,12 @@ const TestsTable: React.FC<TestsTableProps> = ({ darkMode }) => {
           </DialogHeader>
           
           {editMode ? (
-            <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+            <form className="space-y-3" onSubmit={(e: React.FormEvent) => { e.preventDefault(); handleSave(); }}>
               <div>
                 <Label className="font-semibold">ID:</Label>
                 <Input
                   className="w-full bg-gray-100 cursor-not-allowed"
-                  value={editTest?.id || ''}
+                  value={editTest?.id.toString() || ''}
                   readOnly
                 />
               </div>
@@ -265,56 +417,8 @@ const TestsTable: React.FC<TestsTableProps> = ({ darkMode }) => {
                 <Input
                   className="w-full"
                   value={editTest?.name || ''}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('name', e.target.value)}
                 />
-              </div>
-              <div>
-                <Label className="font-semibold">Category:</Label>
-                <Input
-                  className="w-full"
-                  value={editTest?.category || ''}
-                  onChange={(e) => handleInputChange('category', e.target.value)}
-                />
-              </div>
-              <div>
-                <Label className="font-semibold">Price:</Label>
-                <Input
-                  className="w-full"
-                  type="number"
-                  value={editTest?.price || 0}
-                  onChange={(e) => handleInputChange('price', Number(e.target.value))}
-                />
-              </div>
-              <div>
-                <Label className="font-semibold">Duration:</Label>
-                <Input
-                  className="w-full"
-                  value={editTest?.duration || ''}
-                  onChange={(e) => handleInputChange('duration', e.target.value)}
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <Label className="font-semibold">Fasting Required:</Label>
-                <Checkbox
-                  checked={editTest?.requiresFasting || false}
-                  onCheckedChange={(checked) => handleInputChange('requiresFasting', !!checked)}
-                />
-              </div>
-              <div>
-                <Label className="font-semibold">Availability:</Label>
-                <Select 
-                  value={editTest?.availability} 
-                  onValueChange={(value) => handleInputChange('availability', value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select availability" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Available">Available</SelectItem>
-                    <SelectItem value="Limited">Limited</SelectItem>
-                    <SelectItem value="Unavailable">Unavailable</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
               
               <DialogFooter className="flex justify-end gap-2 mt-6">
@@ -346,11 +450,6 @@ const TestsTable: React.FC<TestsTableProps> = ({ darkMode }) => {
               <div className="space-y-2">
                 <p><strong>ID:</strong> {selectedTest?.id}</p>
                 <p><strong>Name:</strong> {selectedTest?.name}</p>
-                <p><strong>Category:</strong> {selectedTest?.category}</p>
-                <p><strong>Price:</strong> ${selectedTest?.price}</p>
-                <p><strong>Duration:</strong> {selectedTest?.duration}</p>
-                <p><strong>Fasting Required:</strong> {selectedTest?.requiresFasting ? 'Yes' : 'No'}</p>
-                <p><strong>Availability:</strong> {selectedTest?.availability}</p>
               </div>
               
               <DialogFooter className="flex justify-end gap-2 mt-6">
@@ -386,61 +485,9 @@ const TestsTable: React.FC<TestsTableProps> = ({ darkMode }) => {
               <Input
                 className="w-full"
                 value={newTest.name}
-                onChange={(e) => handleNewTestChange('name', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleNewTestChange('name', e.target.value)}
                 required
               />
-            </div>
-            <div>
-              <Label className="font-semibold">Category:</Label>
-              <Input
-                className="w-full"
-                value={newTest.category}
-                onChange={(e) => handleNewTestChange('category', e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label className="font-semibold">Price:</Label>
-              <Input
-                className="w-full"
-                type="number"
-                value={newTest.price}
-                onChange={(e) => handleNewTestChange('price', Number(e.target.value))}
-                required
-                min={0}
-              />
-            </div>
-            <div>
-              <Label className="font-semibold">Duration:</Label>
-              <Input
-                className="w-full"
-                value={newTest.duration}
-                onChange={(e) => handleNewTestChange('duration', e.target.value)}
-                required
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Label className="font-semibold">Fasting Required:</Label>
-              <Checkbox
-                checked={newTest.requiresFasting}
-                onCheckedChange={(checked) => handleNewTestChange('requiresFasting', !!checked)}
-              />
-            </div>
-            <div>
-              <Label className="font-semibold">Availability:</Label>
-              <Select 
-                defaultValue={newTest.availability} 
-                onValueChange={(value) => handleNewTestChange('availability', value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select availability" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Available">Available</SelectItem>
-                  <SelectItem value="Limited">Limited</SelectItem>
-                  <SelectItem value="Unavailable">Unavailable</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             
             <DialogFooter className="flex justify-end gap-2 mt-6">
