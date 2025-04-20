@@ -18,6 +18,26 @@ import {
 import { LogOut, Moon, Sun } from "lucide-react";
 import { format } from "date-fns";
 
+const BACKEND_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
+  "http://localhost:5000"
+];
+
+async function fetchFromBackends(path: string, options?: RequestInit) {
+  for (const baseUrl of BACKEND_URLS) {
+    try {
+      const res = await fetch(`${baseUrl}${path}`, options);
+      if (res.ok) return await res.json();
+    } catch (err) {
+      // Try next URL
+    }
+  }
+  throw new Error("All backend URLs failed for: " + path);
+}
+
 interface AppointmentRequest {
   A_ID: number; // Ensure this is present for update
   P_ID: number;
@@ -84,37 +104,25 @@ const FrontDeskOpAppointments = ({
   useEffect(() => {
     const fetchSpecializations = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/doctors/specializations");
-        if (!response.ok) throw new Error("Failed to fetch specializations");
-        const data = await response.json();
-        if (data.specializations) {
-          setSpecializations(data.specializations);
-        } else {
-          setSpecializations([]);
-        }
+        const data = await fetchFromBackends("/api/doctors/specializations");
+        setSpecializations(data.specializations || []);
       } catch (error) {
         console.error("Error fetching specializations:", error);
         setSpecializations([]);
       }
     };
-
     fetchSpecializations();
   }, []);
+  
 
   // Fetch appointment requests (Requested status)
   useEffect(() => {
     const fetchAppointmentRequests = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:5000/api/appointments/requested"
-        );
-        if (!response.ok)
-          throw new Error("Failed to fetch appointment requests");
-        const data = await response.json();
-
+        const data = await fetchFromBackends("/api/appointments/requested");
         if (Array.isArray(data.appointments)) {
           const transformed = data.appointments.map((item: any) => ({
-            A_ID: item.A_ID, // <-- Make sure to include A_ID
+            A_ID: item.A_ID,
             P_ID: item.patient.P_ID,
             name: item.patient.name,
             Sex: item.patient.Sex,
@@ -124,15 +132,15 @@ const FrontDeskOpAppointments = ({
           }));
           setAppointmentRequests(transformed);
         } else {
-          console.error("Expected array under 'appointments' but got:", data);
+          setAppointmentRequests([]);
         }
       } catch (err) {
-        console.error("Error fetching appointments:", err);
+        setAppointmentRequests([]);
       }
     };
-
     fetchAppointmentRequests();
   }, []);
+  
 
   // Fetch scheduled appointments (Scheduled status)
   useEffect(() => {
