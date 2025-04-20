@@ -76,8 +76,8 @@ model Treatment {
   Tr_ID        Int
   dosage       Dosage
   duration     Int
-  TimeStamp    DateTime?
   Status       TreatmentStatus
+  TimeStamp    DateTime?
   appointment  Appointment         @relation(fields: [A_ID], references: [A_ID])
   treatment    TreatmentsAvailable @relation(fields: [Tr_ID], references: [Tr_ID])
 }
@@ -132,8 +132,8 @@ model MedicalHistory {
 
 model Allergy {
   allergy_id   Int     @id @default(autoincrement())
-  allergy_name String
   P_ID         Int
+  allergy_name String
   patient      Patient @relation(fields: [P_ID], references: [P_ID])
 }
 

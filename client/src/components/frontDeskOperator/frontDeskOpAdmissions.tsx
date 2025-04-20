@@ -14,10 +14,11 @@ type Patient = {
 };
 
 type AdmittedPatient = {
-  id: number;
+  id: number; // patient ID
   name: string;
   ward: number;
   admissionDateTime: string;
+  admit_id: number; // <-- add this
 };
 
 type WardType = "General" | "Maternity" | "ICU" | "";
@@ -37,28 +38,48 @@ type Room = {
 const TOTAL_ROOMS = 40;
 
 const ADMIT_REQUESTED_URLS = [
-  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/admit-requested",
-  "http://localhost:5000/api/front-desk-operator/admissions/admit-requested"
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/admit-requests",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/front-desk-operator/admissions/admit-requests",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/front-desk-operator/admissions/admit-requests",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/front-desk-operator/admissions/admit-requests",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/front-desk-operator/admissions/admit-requests",
+  "http://localhost:5000/api/front-desk-operator/admissions/admit-requests"
 ];
 
 const DISCHARGE_REQUESTED_URLS = [
-  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/discharge-requested",
-  "http://localhost:5000/api/front-desk-operator/admissions/discharge-requested"
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/discharge-requests",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/front-desk-operator/admissions/discharge-requests",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/front-desk-operator/admissions/discharge-requests",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/front-desk-operator/admissions/discharge-requests",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/front-desk-operator/admissions/discharge-requests",
+  "http://localhost:5000/api/front-desk-operator/admissions/discharge-requests"
 ];
 
-const ROOM_URLS = [
-  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/room",
-  "http://localhost:5000/api/front-desk-operator/admissions/room"
+const ROOMS_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/rooms",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/front-desk-operator/admissions/rooms",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/front-desk-operator/admissions/rooms",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/front-desk-operator/admissions/rooms",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/front-desk-operator/admissions/rooms",
+  "http://localhost:5000/api/front-desk-operator/admissions/rooms"
 ];
 
 const ADMIT_PATIENT_URLS = [
   "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/admit",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/front-desk-operator/admissions/admit",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/front-desk-operator/admissions/admit",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/front-desk-operator/admissions/admit",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/front-desk-operator/admissions/admit",
   "http://localhost:5000/api/front-desk-operator/admissions/admit"
 ];
 
-const UPDATE_ROOM_URLS = [
-  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/room",
-  "http://localhost:5000/api/front-desk-operator/admissions/room"
+const DISCHARGE_PATIENT_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/admissions/discharge",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/front-desk-operator/admissions/discharge",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/front-desk-operator/admissions/discharge",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/front-desk-operator/admissions/discharge",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/front-desk-operator/admissions/discharge",
+  "http://localhost:5000/api/front-desk-operator/admissions/discharge"
 ];
 
 const FrontDeskOpAdmissions = ({
@@ -80,18 +101,18 @@ const FrontDeskOpAdmissions = ({
   const fetchSeekingPatients = async () => {
     for (const url of ADMIT_REQUESTED_URLS) {
       try {
-        const res = await fetch(url);
+        const res = await fetch(url + "/");
         if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
         const data = await res.json();
         const patients: Patient[] = Array.isArray(data.admits)
           ? data.admits.map((admit: any) => ({
-              id: admit.patient?.P_ID ?? admit.P_ID,
-              name: admit.patient?.name ?? "Unknown",
-              sex: admit.patient?.Sex ?? "N/A",
-              dob: admit.patient?.DOB ?? "",
-              reason: admit.appointment?.Symptoms ?? "N/A",
-              admit_id: admit.admit_id
-            }))
+            id: admit.patient?.P_ID ?? admit.P_ID,
+            name: admit.patient?.name ?? "Unknown",
+            sex: admit.patient?.Sex ?? "N/A",
+            dob: admit.patient?.DOB ?? "",
+            reason: admit.appointment?.Symptoms ?? "N/A",
+            admit_id: admit.admit_id
+          }))
           : [];
         setSeekingPatients(patients);
         break;
@@ -103,20 +124,21 @@ const FrontDeskOpAdmissions = ({
     }
   };
 
-  // Fetch discharge requested admissions
+  // Fetch discharge requested admissions, now includes room number
   const fetchAdmittedPatients = async () => {
     for (const url of DISCHARGE_REQUESTED_URLS) {
       try {
-        const res = await fetch(url);
+        const res = await fetch(url + "/");
         if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
         const data = await res.json();
         const patients: AdmittedPatient[] = Array.isArray(data.admits)
           ? data.admits.map((admit: any) => ({
-              id: admit.patient?.P_ID ?? admit.P_ID,
-              name: admit.patient?.name ?? "Unknown",
-              ward: admit.room?.Room_No ?? admit.R_no ?? 0,
-              admissionDateTime: admit.admit_time ?? ""
-            }))
+            id: admit.patient?.P_ID ?? admit.P_ID,
+            name: admit.patient?.name ?? "Unknown",
+            ward: admit.room?.Room_No ?? admit.R_no ?? 0,
+            admissionDateTime: admit.admit_time ?? "",
+            admit_id: admit.admit_id, // <-- add this
+          }))
           : [];
         setAdmittedPatients(patients);
         break;
@@ -131,23 +153,32 @@ const FrontDeskOpAdmissions = ({
   // Fetch all rooms with their Admit relation
   const fetchRooms = async () => {
     setLoadingRooms(true);
-    for (const url of ROOM_URLS) {
+    for (const url of ROOMS_URLS) {
       try {
-        const res = await fetch(url);
+        const res = await fetch(url + "/");
         if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
         const data = await res.json();
-        const roomsData: Room[] = Array.isArray(data.rooms) ? data.rooms : [];
+        // Map backend result to expected frontend Room shape
+        const roomsData: Room[] = Array.isArray(data.rooms)
+          ? data.rooms.map((room: any) => ({
+            ...room,
+            Admit: room.admittedPatientId
+              ? [{ P_ID: room.admittedPatientId, admit_id: 0, status: "Admitted", discharge_time: null }]
+              : []
+          }))
+          : [];
         setRooms(roomsData);
         setLoadingRooms(false);
         break;
       } catch (err) {
-        if (url === ROOM_URLS[ROOM_URLS.length - 1]) {
+        if (url === ROOMS_URLS[ROOMS_URLS.length - 1]) {
           setRooms([]);
           setLoadingRooms(false);
         }
       }
     }
   };
+
 
   useEffect(() => {
     fetchSeekingPatients();
@@ -163,48 +194,27 @@ const FrontDeskOpAdmissions = ({
     return currentAdmit ? currentAdmit.P_ID : null;
   };
 
-  // Helper: Determine if a room is occupied
+  // Helper: Determine if a room is occupied (now uses only Available)
   const isRoomOccupied = (room: Room) => {
-    return getCurrentPID(room) !== null || room.Available === false;
+    return !room.Available;
   };
 
-  // Handler: Admit patient to a room
+  // Handler: Admit patient to a room (uses admitPatientToRoom controller)
   const handleAdmit = async (roomNumber: number) => {
     if (!selectedSeek || !selectedSeek.admit_id) return;
-    // 1. Update admission status and assign room
     let admitSuccess = false;
     for (const url of ADMIT_PATIENT_URLS) {
       try {
-        const res = await fetch(`${url}/${selectedSeek.admit_id}`, {
+        const res = await fetch(`${url}/${selectedSeek.admit_id}/Room/${roomNumber}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ R_no: roomNumber }),
+          headers: { "Content-Type": "application/json" }
         });
         if (!res.ok) throw new Error(`Failed to admit: ${res.status}`);
         admitSuccess = true;
         break;
-      } catch (err) {
-        // Try next URL
-      }
+      } catch (err) { }
     }
-    // 2. Update room availability
-    let roomSuccess = false;
-    for (const url of UPDATE_ROOM_URLS) {
-      try {
-        const res = await fetch(`${url}/${roomNumber}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ Available: false }),
-        });
-        if (!res.ok) throw new Error(`Failed to update room: ${res.status}`);
-        roomSuccess = true;
-        break;
-      } catch (err) {
-        // Try next URL
-      }
-    }
-    // 3. Refetch rooms and admissions to update UI
-    if (admitSuccess && roomSuccess) {
+    if (admitSuccess) {
       await fetchRooms();
       await fetchSeekingPatients();
       setSelectedSeek(null);
@@ -212,9 +222,27 @@ const FrontDeskOpAdmissions = ({
     }
   };
 
-  const handleDischarge = () => {
-    // ...your logic unchanged...
-  };
+  // Handler: Discharge patient from room (uses dischargePatientFromRoom controller)
+  const handleDischarge = async () => {
+    if (!selectedDischarge) return;
+    let dischargeSuccess = false;
+    for (const url of DISCHARGE_PATIENT_URLS) {
+      try {
+        const res = await fetch(`${url}/${selectedDischarge.admit_id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" }
+        });
+        if (!res.ok) throw new Error(`Failed to discharge: ${res.status}`);
+        dischargeSuccess = true;
+        break;
+      } catch (err) {}
+    }
+    if (dischargeSuccess) {
+      await fetchRooms();
+      await fetchAdmittedPatients();
+      setSelectedDischarge(null);
+    }
+  };  
 
   return (
     <div className={`min-h-screen p-2 sm:p-4 grid grid-rows-[auto_1fr_auto] gap-2 sm:gap-4 ${darkMode ? "bg-gray-900 text-blue-400" : ""}`}>
@@ -229,9 +257,7 @@ const FrontDeskOpAdmissions = ({
             className="relative w-10 h-5 bg-gray-300 dark:bg-gray-700 rounded-full cursor-pointer transition"
             onClick={toggleDarkMode}
           >
-            <div
-              className={`absolute top-0.5 h-4 w-4 bg-white rounded-full shadow-md transition-transform duration-300 ${darkMode ? "translate-x-5" : "translate-x-1"}`}
-            />
+            <div className={`absolute top-0.5 h-4 w-4 bg-white rounded-full shadow-md transition-transform duration-300 ${darkMode ? "translate-x-5" : "translate-x-1"}`} />
             <div className="absolute inset-0 flex justify-between items-center px-1">
               <Sun className="w-3 h-3 text-yellow-500" />
               <Moon className="w-3 h-3 text-blue-400" />
@@ -306,7 +332,7 @@ const FrontDeskOpAdmissions = ({
                     setSelectedWardType("");
                   }}
                 >
-                  {p.name} (ID: {p.id})
+                  {p.name} (ID: {p.id}) <b>Room: {p.ward}</b>
                 </div>
               ))
             )}
@@ -315,10 +341,16 @@ const FrontDeskOpAdmissions = ({
             <div className="mt-2 border-t pt-2 space-y-1 text-xs sm:text-sm">
               <p><strong>Name:</strong> {selectedDischarge.name}</p>
               <p><strong>ID:</strong> {selectedDischarge.id}</p>
+              <p><strong>Room:</strong> {selectedDischarge.ward}</p>
               <p><strong>Admitted on:</strong> {selectedDischarge.admissionDateTime ? format(new Date(selectedDischarge.admissionDateTime), "PPPp") : "N/A"}</p>
-              <Button variant="destructive" className="text-xs sm:text-sm px-2 py-1" onClick={handleDischarge}>
+              <Button
+                variant="destructive"
+                className="text-xs sm:text-sm px-2 py-1 hover:bg-red-700 transition"
+                onClick={handleDischarge}
+              >
                 Discharge Patient
               </Button>
+
             </div>
           )}
         </div>
