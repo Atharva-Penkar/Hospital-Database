@@ -738,7 +738,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // API response interface - matches your Prisma model
 interface ApiDoctor {
@@ -788,9 +787,6 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [specializations, setSpecializations] = useState<string[]>([]);
-  const [specializationsError, setSpecializationsError] = useState<string | null>(null);
-
   const [newDoctor, setNewDoctor] = useState<Omit<Doctor, 'id'>>({
     name: '',
     specialization: '',
@@ -801,57 +797,24 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
     ad_id: null
   });
 
-  // Fetch specializations from multiple URLs
-  useEffect(() => {
-    const abortController = new AbortController();
-    const fetchSpecializations = async () => {
-      for (const baseUrl of SPECIALIZATIONS_URLS) {
-        try {
-          const res = await fetch(`${baseUrl}/api/dbdoctor-available`, {
-            signal: abortController.signal
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data?.specializations)) {
-              setSpecializations(data.specializations);
-              setSpecializationsError(null);
-              return;
-            }
-          }
-        } catch (error) {
-          // Try next URL
-        }
-      }
-      setSpecializations([]);
-      setSpecializationsError("All specialization URLs failed.");
-    };
-    fetchSpecializations();
-    return () => abortController.abort();
-  }, []);
-
-  // Fetch doctors from API when component mounts
-  useEffect(() => {
-    fetchDoctors();
-  }, []);
-
-  // API functions
-  const baseUrl = "http://localhost:5000"; // You can make this dynamic if needed
-
+  // Fetch doctors from all backend URLs in parallel
   const fetchDoctors = async (): Promise<void> => {
     setLoading(true);
     setError(null);
-
     try {
-      const response = await fetch(`${baseUrl}/api/dbdoctor-available`);
-      if (!response.ok) throw new Error('Failed to fetch doctors');
-
-      const data = await response.json();
-
-      if (!Array.isArray(data)) {
-        throw new Error('API response is not an array');
-      }
-
-      const transformedData: Doctor[] = data.map((item: ApiDoctor) => ({
+      const fetchPromises = SPECIALIZATIONS_URLS.map(async (baseUrl) => {
+        try {
+          const response = await fetch(`${baseUrl}/api/dbdoctor-available`);
+          if (!response.ok) throw new Error();
+          const data = await response.json();
+          if (!Array.isArray(data)) throw new Error();
+          return data;
+        } catch {
+          return [];
+        }
+      });
+      const results = await Promise.all(fetchPromises);
+      const allDoctors: Doctor[] = results.flat().map((item: ApiDoctor) => ({
         id: item.D_ID,
         name: item.name,
         specialization: item.specialization,
@@ -861,21 +824,25 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
         available: item.available,
         ad_id: item.ad_id
       }));
-
-      setDoctors(transformedData);
+      setDoctors(allDoctors);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
+      setDoctors([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // Fetch doctors on mount
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
+
   const addDoctor = async (doctor: Omit<Doctor, 'id'>): Promise<Doctor | undefined> => {
     try {
       setLoading(true);
-
-      const response = await fetch(`${baseUrl}/api/dbdoctor-available`, {
+      const response = await fetch('http://localhost:5000/api/dbdoctor-available', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -888,12 +855,9 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
           ad_id: doctor.ad_id
         })
       });
-
       if (!response.ok) throw new Error('Failed to add doctor');
-
       const responseData = await response.json();
       const newDoctorData = responseData.doctor || responseData;
-
       const newDoctorItem: Doctor = {
         id: newDoctorData.D_ID,
         name: newDoctorData.name,
@@ -904,7 +868,6 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
         available: newDoctorData.available,
         ad_id: newDoctorData.ad_id
       };
-
       setDoctors(prevDoctors => [...prevDoctors, newDoctorItem]);
       return newDoctorItem;
     } catch (err) {
@@ -918,8 +881,7 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
   const updateDoctor = async (id: number, doctorData: Partial<Doctor>): Promise<Doctor | undefined> => {
     try {
       setLoading(true);
-
-      const response = await fetch(`${baseUrl}/api/dbdoctor-available/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/dbdoctor-available/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -928,11 +890,10 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
           mail: doctorData.mail,
           phone: doctorData.phone,
           shift: doctorData.shift,
-          available: doctorData.available,
+          available: doctorData.available !== undefined ? doctorData.available : true,
           ad_id: doctorData.ad_id
         })
       });
-
       if (!response.ok) {
         const updatedDoctor: Doctor = {
           id,
@@ -944,14 +905,11 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
           available: doctorData.available !== undefined ? doctorData.available : true,
           ad_id: doctorData.ad_id
         };
-
         setDoctors(prevDoctors => prevDoctors.map(d => d.id === id ? updatedDoctor : d));
         return updatedDoctor;
       }
-
       const responseData = await response.json();
       const updatedDoctorData = responseData.doctor || responseData;
-
       const updatedDoctor: Doctor = {
         id: updatedDoctorData.D_ID,
         name: updatedDoctorData.name,
@@ -962,20 +920,16 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
         available: updatedDoctorData.available,
         ad_id: updatedDoctorData.ad_id
       };
-
       setDoctors(prevDoctors => prevDoctors.map(d => d.id === id ? updatedDoctor : d));
       return updatedDoctor;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
-
-      if (doctorData.name) {
-        const existingDoctor = doctors.find(d => d.id === id);
-        if (existingDoctor) {
-          const updatedDoctor = { ...existingDoctor, ...doctorData };
-          setDoctors(prevDoctors => prevDoctors.map(d => d.id === id ? updatedDoctor : d));
-          return updatedDoctor;
-        }
+      const existingDoctor = doctors.find(d => d.id === id);
+      if (existingDoctor) {
+        const updatedDoctor = { ...existingDoctor, ...doctorData };
+        setDoctors(prevDoctors => prevDoctors.map(d => d.id === id ? updatedDoctor : d));
+        return updatedDoctor;
       }
     } finally {
       setLoading(false);
@@ -985,23 +939,24 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
   const deleteDoctor = async (id: number): Promise<void> => {
     try {
       setLoading(true);
-
-      const response = await fetch(`${baseUrl}/api/dbdoctor-available/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/dbdoctor-available/${id}`, {
         method: 'DELETE'
       });
-
+      if (!response.ok) {
+        setDoctors(prevDoctors => prevDoctors.filter(d => d.id !== id));
+        return;
+      }
       setDoctors(prevDoctors => prevDoctors.filter(d => d.id !== id));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
-
       setDoctors(prevDoctors => prevDoctors.filter(d => d.id !== id));
     } finally {
       setLoading(false);
     }
   };
 
-  // Search logic
+  // Search logic - fixed to search by string ID or name
   const handleSearch = (): void => {
     if (searchId.trim() === '') {
       fetchDoctors();
@@ -1017,7 +972,6 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
     }
   };
 
-  // Row click: open dialog in view mode
   const handleRowClick = (doctor: Doctor): void => {
     setSelectedDoctor(doctor);
     setEditDoctor({ ...doctor });
@@ -1025,7 +979,6 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
     setViewDialogOpen(true);
   };
 
-  // Dialog close
   const closeViewDialog = (): void => {
     setViewDialogOpen(false);
     setSelectedDoctor(null);
@@ -1033,12 +986,10 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
     setEditDoctor(null);
   };
 
-  // Edit mode
   const handleEdit = (): void => {
     setEditMode(true);
   };
 
-  // Editing fields with type safety
   const handleInputChange = (name: keyof Doctor, value: any): void => {
     if (!editDoctor) return;
     setEditDoctor({
@@ -1047,7 +998,6 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
     });
   };
 
-  // Detect changes for Save button
   const isChanged = (): boolean => {
     if (!selectedDoctor || !editDoctor) return false;
     return (
@@ -1061,7 +1011,6 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
     );
   };
 
-  // Save edits
   const handleSave = async (): Promise<void> => {
     if (!editDoctor) return;
     try {
@@ -1071,22 +1020,20 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
         setEditMode(false);
       }
     } catch (error) {
-      // handle error
+      console.error('Failed to save doctor:', error);
     }
   };
 
-  // Delete doctor
   const handleDelete = async (): Promise<void> => {
     if (!editDoctor) return;
     try {
       await deleteDoctor(editDoctor.id);
       closeViewDialog();
     } catch (error) {
-      // handle error
+      console.error('Failed to delete doctor:', error);
     }
   };
 
-  // Add Doctor Dialog
   const openAddDialog = (): void => {
     setAddDialogOpen(true);
     setNewDoctor({
@@ -1113,11 +1060,10 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
       await addDoctor(newDoctor);
       setAddDialogOpen(false);
     } catch (error) {
-      // handle error
+      console.error('Failed to add doctor:', error);
     }
   };
 
-  // Loading state
   if (loading && doctors.length === 0) {
     return (
       <div className={darkMode ? "bg-gray-900 text-blue-400 p-6" : "bg-white text-black p-6"}>
@@ -1131,7 +1077,6 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
     );
   }
 
-  // Error state with no data
   if (error && doctors.length === 0) {
     return (
       <div className={darkMode ? "bg-gray-900 text-blue-400 p-6" : "bg-white text-black p-6"}>
@@ -1189,7 +1134,6 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
         </div>
       </div>
 
-      {/* Loading and Error States when data exists */}
       {loading && doctors.length > 0 && <p className="text-center py-4">Refreshing doctors...</p>}
       {error && doctors.length > 0 && <p className="text-center py-4 text-red-500">Error: {error}</p>}
 
@@ -1237,7 +1181,139 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
       </div>
 
       {/* View/Edit Dialog */}
-      {/* ... (Unchanged, see your original code for dialog) ... */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className={`sm:max-w-md ${darkMode ? "bg-gray-800 text-blue-200" : "bg-white"}`}>
+          <DialogHeader>
+            <DialogTitle>{editMode ? "Edit Doctor" : "Doctor Details"}</DialogTitle>
+          </DialogHeader>
+          {editMode ? (
+            <form className="space-y-3" onSubmit={(e: React.FormEvent) => { e.preventDefault(); handleSave(); }}>
+              <div>
+                <Label className="font-semibold">ID:</Label>
+                <Input
+                  className="w-full bg-gray-100 cursor-not-allowed"
+                  value={editDoctor?.id.toString() || ''}
+                  readOnly
+                />
+              </div>
+              <div>
+                <Label className="font-semibold">Name:</Label>
+                <Input
+                  className="w-full"
+                  value={editDoctor?.name || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('name', e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <Label className="font-semibold">Specialization:</Label>
+                <Input
+                  className="w-full"
+                  value={editDoctor?.specialization || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('specialization', e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <Label className="font-semibold">Email:</Label>
+                <Input
+                  className="w-full"
+                  value={editDoctor?.mail || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('mail', e.target.value || null)}
+                />
+              </div>
+              <div>
+                <Label className="font-semibold">Phone:</Label>
+                <Input
+                  className="w-full"
+                  value={editDoctor?.phone || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('phone', e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <Label className="font-semibold">Shift:</Label>
+                <Input
+                  className="w-full"
+                  value={editDoctor?.shift || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('shift', e.target.value || null)}
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Label className="font-semibold">Available:</Label>
+                <Switch
+                  checked={editDoctor?.available || false}
+                  onCheckedChange={(checked: boolean) => handleInputChange('available', checked)}
+                />
+                <span className="ml-2">{editDoctor?.available ? 'Yes' : 'No'}</span>
+              </div>
+              <div>
+                <Label className="font-semibold">Admin ID:</Label>
+                <Input
+                  className="w-full"
+                  type="number"
+                  value={editDoctor?.ad_id?.toString() || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const value = e.target.value === '' ? null : parseInt(e.target.value);
+                    handleInputChange('ad_id', value);
+                  }}
+                />
+              </div>
+              <DialogFooter className="flex justify-end gap-2 mt-6">
+                <Button
+                  type="submit"
+                  disabled={!isChanged()}
+                  className={isChanged() ? "bg-blue-600 hover:bg-blue-700" : "bg-blue-300 cursor-not-allowed"}
+                >
+                  Save
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleDelete}
+                  variant="destructive"
+                >
+                  Delete
+                </Button>
+                <Button
+                  type="button"
+                  onClick={closeViewDialog}
+                  variant="secondary"
+                >
+                  Close
+                </Button>
+              </DialogFooter>
+            </form>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <p><strong>ID:</strong> {selectedDoctor?.id}</p>
+                <p><strong>Name:</strong> {selectedDoctor?.name}</p>
+                <p><strong>Specialization:</strong> {selectedDoctor?.specialization}</p>
+                <p><strong>Email:</strong> {selectedDoctor?.mail || 'Not provided'}</p>
+                <p><strong>Phone:</strong> {selectedDoctor?.phone}</p>
+                <p><strong>Shift:</strong> {selectedDoctor?.shift || 'Not specified'}</p>
+                <p><strong>Available:</strong> {selectedDoctor?.available ? 'Yes' : 'No'}</p>
+                <p><strong>Admin ID:</strong> {selectedDoctor?.ad_id || 'Not assigned'}</p>
+              </div>
+              <DialogFooter className="flex justify-end gap-2 mt-6">
+                <Button
+                  onClick={handleEdit}
+                  variant="default"
+                  className="bg-yellow-500 hover:bg-yellow-600"
+                >
+                  Edit
+                </Button>
+                <Button
+                  onClick={closeViewDialog}
+                  variant="secondary"
+                >
+                  Close
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Add Doctor Dialog */}
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
@@ -1245,7 +1321,6 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
           <DialogHeader>
             <DialogTitle>Add Doctor</DialogTitle>
           </DialogHeader>
-
           <form className="space-y-3" onSubmit={handleAddDoctor}>
             <div>
               <Label className="font-semibold">Name:</Label>
@@ -1258,23 +1333,12 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
             </div>
             <div>
               <Label className="font-semibold">Specialization:</Label>
-              <Select
+              <Input
+                className="w-full"
                 value={newDoctor.specialization}
-                onValueChange={value => handleNewDoctorChange('specialization', value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleNewDoctorChange('specialization', e.target.value)}
                 required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Specialization" />
-                </SelectTrigger>
-                <SelectContent>
-                  {specializations.map(spec => (
-                    <SelectItem key={spec} value={spec}>{spec}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {specializationsError && (
-                <p className="text-red-500 text-xs mt-1">{specializationsError}</p>
-              )}
+              />
             </div>
             <div>
               <Label className="font-semibold">Email:</Label>
@@ -1321,7 +1385,6 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
                 }}
               />
             </div>
-
             <DialogFooter className="flex justify-end gap-2 mt-6">
               <Button
                 type="submit"
@@ -1345,4 +1408,3 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
 };
 
 export default DoctorsTable;
-
