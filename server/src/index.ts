@@ -37,6 +37,9 @@ import testsRequestedRouter from "./routes/tests/getTestsStatusRequested.routes"
 import testsCompletedRouter from "./routes/tests/getTestsStatusCompleted.routes";
 import setTestResultsRouter from "./routes/tests/setTestsResults.routes";
 import updateTestTimeAndStatusRouter from "./routes/tests/scheduleTest.routes";
+import treatmentsRequestedRouter from "./routes/treatments/getTreatmentsStatusRequested.routes";
+import treatmentsScheduledRouter from "./routes/treatments/getTreatmentsStatusScheduled.routes";
+import updateTreatmentRouter from "./routes/treatments/scheduleTreatments.routes";
 
 dotenv.config();
 const app = express();
@@ -83,6 +86,9 @@ app.use("/api/front-desk-operator/admissions/admit", admitPatientRouter)
 app.use("/api/front-desk-operator/tests/pending", testsPendingRouter)
 app.use("/api/front-desk-operator/tests/requested", testsRequestedRouter)
 app.use("/api/front-desk-operator/tests/schedule", updateTestTimeAndStatusRouter)
+app.use("/api/front-desk-operator/treatments/requested", treatmentsRequestedRouter)
+app.use("/api/front-desk-operator/treatments/scheduled", treatmentsScheduledRouter)
+app.use("/api/front-desk-operator/treatments/schedule", updateTreatmentRouter)
 
 app.use("/api/access/admissions", admissionsRouter)
 
