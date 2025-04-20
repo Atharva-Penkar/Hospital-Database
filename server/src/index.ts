@@ -28,15 +28,13 @@ import getAppointmentDetailsRouter from "./routes/appointments/getAppointmentDet
 import setAppointmentDetailsRouter from "./routes/appointments/setAppointmentDetails.routes";
 import addAppointmentDetailsRouter from "./routes/appointments/addAppointmentDetails.routes";
 
-import getPendingTestsRouter from "./routes/dataEntry/getPendingTests.routes";
-import getCompletedTestsRouter from "./routes/dataEntry/getCompletedTests.routes";
-import setTestResultsRouter from "./routes/dataEntry/setTestResults";
-
 import dbmanagerdoctor from "./routes/DBmanager/doctor.routes";
 import dbtestavailable from "./routes/DBmanager/testavailable.routes";
 import dbmanagerpatient from "./routes/DBmanager/patient.routes";
+
 import testsPendingRouter from "./routes/tests/getTestsStatusPending.routes";
 import testsRequestedRouter from "./routes/tests/getTestsStatusRequested.routes";
+import testsCompletedRouter from "./routes/tests/getTestsStatusCompleted.routes";
 import updateTestTimeAndStatusRouter from "./routes/tests/scheduleTest.routes";
 
 dotenv.config();
@@ -94,10 +92,8 @@ app.use("/api/doctor-admitted", doctorAdmittedPatientsRouter)
 app.use("/api/appointment-details/set", setAppointmentDetailsRouter)
 app.use("/api/appointment-details/add", addAppointmentDetailsRouter)
 
-app.use("/api/tests-pending", getPendingTestsRouter)
-app.use("/api/tests-completed", getCompletedTestsRouter)
-app.use("/api/tests-finish", setTestResultsRouter)
-
+app.use("/api/tests-pending", testsPendingRouter)
+app.use("/api/tests-completed", testsCompletedRouter)
 app.get("/", (req, res) => {
   res.send("Hospital Management API is running");
 });

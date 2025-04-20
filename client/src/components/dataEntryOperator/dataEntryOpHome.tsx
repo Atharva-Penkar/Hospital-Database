@@ -1,113 +1,126 @@
-import React, { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import logo from "@/assets/images/logo.png";
 import { Button } from "@/components/ui/button";
-import { LogOut, Sun, Moon } from "lucide-react";
+import { Sun, Moon, LogOut } from "lucide-react";
+import { format } from "date-fns";
 
-interface Test {
+// Backend endpoint bases for robust multi-backend fetches
+const PENDING_TESTS_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/tests-pending",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/tests-pending",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/tests-pending",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/tests-pending",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/tests-pending",
+  "http://localhost:5000/api/tests-pending"
+];
+
+const COMPLETED_TESTS_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/tests-completed",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/tests-completed",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/tests-completed",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/tests-completed",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/tests-completed",
+  "http://localhost:5000/api/tests-completed"
+];
+
+const SET_RESULT_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/tests-finish",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/tests-finish",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/tests-finish",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/tests-finish",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/tests-finish",
+  "http://localhost:5000/api/tests-finish"
+];
+
+// Types
+type Test = {
   test_id: number;
-  A_ID: number;
-  testType: { test_name: string };
+  test_name: string;
   Status: string;
-  patient: { name: string; P_ID: number };
-  doctor: { name: string };
-  timeStamp: string;
-  result?: string;
-}
+  TimeStamp: string;
+  Result?: string;
+  patient?: { name: string; P_ID: number };
+  doctor?: { name: string; D_ID: number };
+};
 
-const DataEntryOpHome: React.FC = () => {
-  const [darkMode, setDarkMode] = useState(false);
+const DataEntryOpHome = ({
+  darkMode,
+  toggleDarkMode,
+}: {
+  darkMode: boolean;
+  toggleDarkMode: () => void;
+}) => {
   const [pendingTests, setPendingTests] = useState<Test[]>([]);
   const [completedTests, setCompletedTests] = useState<Test[]>([]);
+  const [loadingPending, setLoadingPending] = useState(true);
+  const [loadingCompleted, setLoadingCompleted] = useState(true);
+  const [errorPending, setErrorPending] = useState<string | null>(null);
+  const [errorCompleted, setErrorCompleted] = useState<string | null>(null);
+
   const [selectedTest, setSelectedTest] = useState<Test | null>(null);
   const [result, setResult] = useState("");
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  // Robust fetching with multiple base URLs
+  // Fetch pending tests
   useEffect(() => {
-    const fetchTests = async () => {
-      setLoading(true);
-      setMessage(null);
-
-      const urls = [
-        "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
-        "http://127.0.0.1:5000"
-      ];
-
-      let lastError: any = null;
-
-      // Fetch pending tests
-      let pendingData: any = null;
-      for (let base of urls) {
+    const fetchPending = async () => {
+      setLoadingPending(true);
+      setErrorPending(null);
+      for (const url of PENDING_TESTS_URLS) {
         try {
-          const res = await fetch(`${base}/api/tests-pending/`);
-          if (res.ok) {
-            const data = await res.json();
-            pendingData = data;
-            break;
-          } else {
-            lastError = new Error(`HTTP error ${res.status} from ${base}`);
-          }
-        } catch (err) {
-          lastError = err;
-        }
+          const res = await fetch(url);
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (!Array.isArray(data.tests)) continue;
+          setPendingTests(data.tests);
+          setLoadingPending(false);
+          return;
+        } catch (err) {}
       }
-      if (!pendingData) {
-        setMessage({ type: "error", text: lastError?.message || "Failed to fetch pending tests." });
-        setLoading(false);
-        return;
-      }
-      setPendingTests(pendingData.tests || []);
-
-      // Fetch completed tests
-      let completedData: any = null;
-      for (let base of urls) {
-        try {
-          const res = await fetch(`${base}/api/tests-completed/`);
-          if (res.ok) {
-            const data = await res.json();
-            completedData = data;
-            break;
-          }
-        } catch {}
-      }
-      setCompletedTests(completedData?.tests || []);
-      setLoading(false);
+      setPendingTests([]);
+      setLoadingPending(false);
+      setErrorPending("Could not fetch pending tests from any backend.");
     };
-    fetchTests();
+    fetchPending();
   }, []);
 
+  // Fetch completed tests
   useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add("dark");
-    } else {
-      document.body.classList.remove("dark");
-    }
-  }, [darkMode]);
+    const fetchCompleted = async () => {
+      setLoadingCompleted(true);
+      setErrorCompleted(null);
+      for (const url of COMPLETED_TESTS_URLS) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (!Array.isArray(data.tests)) continue;
+          setCompletedTests(data.tests);
+          setLoadingCompleted(false);
+          return;
+        } catch (err) {}
+      }
+      setCompletedTests([]);
+      setLoadingCompleted(false);
+      setErrorCompleted("Could not fetch completed tests from any backend.");
+    };
+    fetchCompleted();
+  }, []);
 
-  const handleSelectTest = (test: Test) => {
-    setSelectedTest(test);
-    setResult("");
-    setMessage(null);
-  };
-
+  // Save test result
   const handleSaveResult = async () => {
     if (!selectedTest || !result.trim()) {
       setMessage({ type: "error", text: "Please enter a result before saving." });
       return;
     }
-    setLoading(true);
+    setSaving(true);
     setMessage(null);
-
-    const urls = [
-      "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
-      "http://127.0.0.1:5000"
-    ];
     let success = false;
     let lastError: any = null;
-    for (let base of urls) {
+    for (const url of SET_RESULT_URLS) {
       try {
-        const res = await fetch(`${base}/api/tests-finish/${selectedTest.test_id}`, {
+        const res = await fetch(`${url}/${selectedTest.test_id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ result }),
@@ -116,7 +129,7 @@ const DataEntryOpHome: React.FC = () => {
           success = true;
           break;
         } else {
-          lastError = new Error(`HTTP error ${res.status} from ${base}`);
+          lastError = new Error(`HTTP error ${res.status} from ${url}`);
         }
       } catch (err) {
         lastError = err;
@@ -124,34 +137,39 @@ const DataEntryOpHome: React.FC = () => {
     }
     if (!success) {
       setMessage({ type: "error", text: lastError?.message || "Failed to save result. Please try again." });
-      setLoading(false);
+      setSaving(false);
       return;
     }
-
-    // Remove from pending, add to completed
+    // Move test from pending to completed
     setPendingTests((prev) => prev.filter((t) => t.test_id !== selectedTest.test_id));
     setCompletedTests((prev) => [
-      { ...selectedTest, Status: "Completed", result, timeStamp: new Date().toISOString() },
+      {
+        ...selectedTest,
+        Status: "Completed",
+        Result: result,
+        TimeStamp: new Date().toISOString(),
+      },
       ...prev,
     ]);
     setSelectedTest(null);
     setResult("");
     setMessage({ type: "success", text: "Test result saved successfully!" });
-    setLoading(false);
+    setSaving(false);
   };
 
   return (
-    <div className={`min-h-screen p-6 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"}`}>
-      {/* Top Bar */}
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-4">
+    <div className={`min-h-screen p-4 grid grid-rows-[auto_1fr] gap-4 ${darkMode ? "bg-gray-900 text-blue-400" : ""}`}>
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-3">
           <img src={logo} alt="Hospital Logo" className="h-12 w-12" />
-          <h1 className="text-3xl font-bold">Test Results Entry</h1>
+          <h1 className="text-2xl font-bold">Test Results Entry</h1>
         </div>
         <div className="flex items-center gap-4">
+          {/* Dark Mode Toggle */}
           <div
             className="relative w-14 h-7 bg-gray-300 dark:bg-gray-700 rounded-full cursor-pointer transition"
-            onClick={() => setDarkMode((prev) => !prev)}
+            onClick={toggleDarkMode}
           >
             <div
               className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${darkMode ? "translate-x-7" : "translate-x-1"}`}
@@ -162,8 +180,7 @@ const DataEntryOpHome: React.FC = () => {
             </div>
           </div>
           <Button variant="destructive" className="flex items-center gap-2">
-            <LogOut className="w-4 h-4" />
-            Logout
+            <LogOut className="w-4 h-4" /> Logout
           </Button>
         </div>
       </div>
@@ -180,38 +197,35 @@ const DataEntryOpHome: React.FC = () => {
         </div>
       )}
 
-      {/* Main Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Main Content */}
+      <div className="grid grid-cols-3 gap-6">
         {/* Pending Tests List */}
-        <div>
+        <div className={`p-4 rounded-lg shadow ${darkMode ? "bg-gray-800" : "bg-white"}`}>
           <h2 className="text-xl font-semibold mb-2">Pending Tests</h2>
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-h-96 overflow-y-auto pr-2 border">
-            {loading ? (
-              <div className="p-4 text-center text-gray-500">Loading...</div>
-            ) : pendingTests.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">No pending tests</div>
-            ) : (
-              pendingTests.map((test) => (
-                <div
-                  key={test.test_id}
-                  onClick={() => handleSelectTest(test)}
-                  className={`p-3 border-b cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 ${selectedTest?.test_id === test.test_id
-                    ? "bg-blue-100 dark:bg-blue-900/30"
-                    : ""
-                    }`}
-                >
-                  <div className="font-medium">{test.testType.test_name}</div>
-                  <div className="text-sm">
-                    {test.patient.name} (ID: {test.patient.P_ID})
-                    <br />
-                    Doctor: {test.doctor.name}
-                    <br />
-                    Date: {new Date(test.timeStamp).toLocaleDateString()}
+          {loadingPending ? (
+            <div className="text-gray-500">Loading...</div>
+          ) : errorPending ? (
+            <div className="text-red-500">{errorPending}</div>
+          ) : (
+            <div className="max-h-80 overflow-y-auto pr-2 space-y-2">
+              {pendingTests.length === 0 ? (
+                <div className="text-gray-500">No pending tests found.</div>
+              ) : (
+                pendingTests.map((t) => (
+                  <div
+                    key={t.test_id}
+                    className={`p-2 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${selectedTest?.test_id === t.test_id ? "bg-blue-100 dark:bg-blue-900/30" : ""}`}
+                    onClick={() => setSelectedTest(t)}
+                  >
+                    <div>{t.patient?.name} (Patient ID: {t.patient?.P_ID}) — {t.test_name}</div>
+                    <div className="text-sm text-gray-500">
+                      {t.TimeStamp ? format(new Date(t.TimeStamp), "PPPp") : "N/A"}
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
 
         {/* Result Entry */}
@@ -220,16 +234,16 @@ const DataEntryOpHome: React.FC = () => {
           {selectedTest ? (
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border">
               <div className="mb-2">
-                <span className="font-semibold">Test:</span> {selectedTest.testType.test_name}
+                <span className="font-semibold">Test:</span> {selectedTest.test_name}
               </div>
               <div className="mb-2">
-                <span className="font-semibold">Patient:</span> {selectedTest.patient.name} (ID: {selectedTest.patient.P_ID})
+                <span className="font-semibold">Patient:</span> {selectedTest.patient?.name} (ID: {selectedTest.patient?.P_ID})
               </div>
               <div className="mb-2">
-                <span className="font-semibold">Doctor:</span> {selectedTest.doctor.name}
+                <span className="font-semibold">Doctor:</span> {selectedTest.doctor?.name}
               </div>
               <div className="mb-2">
-                <span className="font-semibold">Date:</span> {new Date(selectedTest.timeStamp).toLocaleDateString()}
+                <span className="font-semibold">Date:</span> {selectedTest.TimeStamp ? format(new Date(selectedTest.TimeStamp), "PPPp") : "N/A"}
               </div>
               <div className="mb-3">
                 <label className="block font-semibold mb-1" htmlFor="result">
@@ -245,7 +259,7 @@ const DataEntryOpHome: React.FC = () => {
                 />
               </div>
               <div className="flex gap-2">
-                <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSaveResult} disabled={!result.trim() || loading}>
+                <Button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSaveResult} disabled={!result.trim() || saving}>
                   Save Result
                 </Button>
                 <Button className="flex-1" variant="outline" onClick={() => setSelectedTest(null)}>
@@ -261,30 +275,31 @@ const DataEntryOpHome: React.FC = () => {
         </div>
 
         {/* Completed Tests List */}
-        <div>
+        <div className={`p-4 rounded-lg shadow ${darkMode ? "bg-gray-800" : "bg-white"}`}>
           <h2 className="text-xl font-semibold mb-2">Completed Tests</h2>
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-h-96 overflow-y-auto pr-2 border">
-            {loading ? (
-              <div className="p-4 text-center text-gray-500">Loading...</div>
-            ) : completedTests.length === 0 ? (
-              <div className="p-4 text-center text-gray-500">No completed tests</div>
-            ) : (
-              completedTests.map((test) => (
-                <div key={test.test_id} className="p-3 border-b">
-                  <div className="font-medium">{test.testType.test_name}</div>
-                  <div className="text-sm">
-                    {test.patient.name} (ID: {test.patient.P_ID})
-                    <br />
-                    Doctor: {test.doctor.name}
-                    <br />
-                    Date: {new Date(test.timeStamp).toLocaleDateString()}
-                    <br />
-                    <span className="font-semibold">Result:</span> {test.result || "No result"}
+          {loadingCompleted ? (
+            <div className="text-gray-500">Loading...</div>
+          ) : errorCompleted ? (
+            <div className="text-red-500">{errorCompleted}</div>
+          ) : (
+            <div className="max-h-80 overflow-y-auto pr-2 space-y-2">
+              {completedTests.length === 0 ? (
+                <div className="text-gray-500">No completed tests found.</div>
+              ) : (
+                completedTests.map((t) => (
+                  <div key={t.test_id} className="p-2 border-b">
+                    <div>{t.patient?.name} (Patient ID: {t.patient?.P_ID}) — {t.test_name}</div>
+                    <div className="text-sm text-gray-500">
+                      {t.TimeStamp ? format(new Date(t.TimeStamp), "PPPp") : "N/A"}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      <span className="font-semibold">Result:</span> {t.Result || "No result"}
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
