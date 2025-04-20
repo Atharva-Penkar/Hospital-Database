@@ -6,49 +6,49 @@ import { toast } from "sonner";
 const BACKEND_URLS = [
   "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev",
   "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev",
-  "http://127.0.0.1:5000",
-
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev",
+  "http://localhost:5000"
 ];
 
-const LoginPatient = () => {
+const SignUpPatient = () => {
   const navigate = useNavigate();
 
   const handleAuth = async (
     userId: string,
     password: string,
-    role: "patient", // You can keep this for future use if needed
-    type: "login" | "signup"
+    role: "patient",
+    type: "signup" | "login"
   ) => {
     let lastError: any = null;
     for (const baseUrl of BACKEND_URLS) {
       try {
-        const apiUrl = type === "login" ? "/api/auth-patient/login" : "/api/auth-patient/signup";
+        const apiUrl = "/api/auth-patient/signup";
         const res = await fetch(baseUrl + apiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, password }),
+          body: JSON.stringify({ userId, password, role }),
         });
 
         const data = await res.json();
 
-        if (!res.ok) throw new Error(data.message || "Login failed");
+        if (!res.ok) throw new Error(data.message || "Signup failed");
 
         localStorage.setItem("userId", data.user.userId);
 
-        toast.success("Login successful!", {
+        toast.success("Signup successful!", {
           className: "bg-emerald-500 text-white",
         });
 
-        navigate("/patientHome");
-        return; // Stop after successful login
+        navigate("/patient-info");
+        return; // stop after successful signup
       } catch (err: any) {
         lastError = err;
-        console.error(`Login error with ${baseUrl}:`, err);
-        // Try next URL
+        console.error(`Signup error with ${baseUrl}:`, err);
       }
     }
-    // If both failed:
-    toast.error("Login failed: " + (lastError?.message || "Unknown error"), {
+    toast.error("Signup failed: " + (lastError?.message || "Unknown error"), {
       className: "bg-rose-500 text-white",
     });
   };
@@ -60,4 +60,4 @@ const LoginPatient = () => {
   );
 };
 
-export default LoginPatient;
+export default SignUpPatient;

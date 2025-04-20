@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ Add this import
+import { useNavigate } from "react-router-dom";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Button } from "../../components/ui/button";
@@ -11,6 +11,16 @@ import {
   SelectItem,
 } from "../../components/ui/select";
 import { toast } from "sonner";
+
+// Try Codespace URL first, then localhost
+const BACKEND_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev",
+  "http://localhost:5000"
+];
 
 interface PatientInfoFormProps {
   userId: string;
@@ -25,42 +35,53 @@ const PatientInfoForm: React.FC<PatientInfoFormProps> = ({ userId }) => {
   const [phoneNo, setPhoneNo] = useState("");
   const [emergencyPhoneNo, setEmergencyPhoneNo] = useState("");
 
-  const navigate = useNavigate(); // ✅ Add this hook
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    let lastError: any = null;
 
-    try {
-      const res = await fetch("http://127.0.0.1:5000/api/patient-info", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          P_ID: userId,
-          name,
-          address,
-          DOB,
-          sex,
-          mail,
-          phone_no: phoneNo,
-          emergency_phone_no: emergencyPhoneNo,
-        }),
-      });
+    for (const baseUrl of BACKEND_URLS) {
+      try {
+        const apiUrl = "/api/patient-info";
+        const res = await fetch(baseUrl + apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            P_ID: userId,
+            name,
+            address,
+            DOB,
+            sex,
+            mail,
+            phone_no: phoneNo,
+            emergency_phone_no: emergencyPhoneNo,
+          }),
+        });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to submit info");
+        const data = await res.json();
 
-      toast.success("Patient info saved successfully!", {
-        className: "bg-emerald-500 text-white",
-      });
+        if (!res.ok) throw new Error(data.message || "Failed to submit info");
 
-      // ✅ Navigate to patient home after success
-      navigate("/patientHome");
+        localStorage.setItem("userId", data.user.userId);
 
-    } catch (err: any) {
-      toast.error("Submission error: " + err.message, {
-        className: "bg-rose-500 text-white",
-      });
+        toast.success("Patient info saved successfully!", {
+          className: "bg-emerald-500 text-white",
+        });
+
+        // Navigate to patient home after success
+        navigate("/patientHome");
+        return; // Stop after a successful submission
+      } catch (err: any) {
+        lastError = err;
+        console.error(`Submission error with ${baseUrl}:`, err);
+        // Try next URL
+      }
     }
+    // If none of the URLs succeeded, show an error.
+    toast.error("Submission error: " + (lastError?.message || "Unknown error"), {
+      className: "bg-rose-500 text-white",
+    });
   };
 
   return (

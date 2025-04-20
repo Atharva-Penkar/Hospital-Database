@@ -2,8 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import HomePage from "./pages/Home";
 import PatientHomePage from "./pages/patient/PatientHomePage";
 import PatientInfoFormPage from "./pages/patient/PatientInfoFormPage";
-import LoginPatient from "./pages/login-signup/LoginPatient";
-import SignUpPatient from "./pages/login-signup/SignUpPatient";
+import LoginPatient from "./pages/auth-patient/LoginPatient";
+import SignUpPatient from "./pages/auth-patient/SignUpPatient";
 import FrontDeskHomePage from "./pages/frontDeskOperator/frontDeskOpDashboardPage";
 import FrontDeskOpAppointments from "./pages/frontDeskOperator/frontDeskOpAppointmentsPage";
 import FrontDeskOpAdmissions from "./pages/frontDeskOperator/frontDeskOpAdmissionsPage";

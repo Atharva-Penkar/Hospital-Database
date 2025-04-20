@@ -46,6 +46,7 @@ import getDischargeRequestsRouter from "./routes/admissionsSnehal/getDischargeRe
 import admitPatientToRoomRouter from "./routes/admissionsSnehal/admitPatientToRoom.routes";
 import dischargePatientFromRoomRouter from "./routes/admissionsSnehal/dischargePatientFromRoom.routes";
 import getAllRoomsRouter from "./routes/admissionsSnehal/getAllRooms.routes";
+import patientAppointmentsRouter from "./routes/patient/patientAppointments.routes";
 
 dotenv.config();
 const app = express();
@@ -72,6 +73,7 @@ app.use(express.json());
 app.use("/api/auth-patient", authRouter);
 app.use("/api/patient", patientRouter);
 app.use("/api/patient-info", patientInfoRouter)
+app.use("/api/appointments/patient", patientAppointmentsRouter)
 
 app.use("/api/appointments/request", createAppointmentsRouter)
 app.use("/api/appointments", getAppointmentsRouter)
