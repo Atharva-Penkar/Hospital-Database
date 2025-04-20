@@ -1,5 +1,6 @@
-// src/gate-components/StaffLoginForm.tsx
-import { useState } from "react";
+"use client";
+import { useState, useEffect } from "react";
+import logo from "@/assets/images/logo.png";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -11,13 +12,47 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Sun, Moon } from "lucide-react";
 
-export const StaffLoginForm = () => {
+const STAFF_ROLES = [
+  { value: "doctor", label: "Doctor" },
+  { value: "front-desk-operator", label: "Front Desk Operator" },
+  { value: "data-entry-operator", label: "Data Entry Operator" },
+  { value: "database-administrator", label: "Database Administrator" },
+];
+
+export const AuthFormStaff = () => {
   const [formData, setFormData] = useState({
     userId: "",
     password: "",
     role: "",
   });
+  const [darkMode, setDarkMode] = useState(false);
+
+  // On mount, set theme based on localStorage or system preference – apply to root (<html>)
+  useEffect(() => {
+    const localTheme = localStorage.getItem("theme");
+    if (
+      localTheme === "dark" ||
+      (!localTheme && window.matchMedia("(prefers-color-scheme: dark)").matches)
+    ) {
+      setDarkMode(true);
+      document.documentElement.classList.add("dark");
+    } else {
+      setDarkMode(false);
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [darkMode]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -29,81 +64,123 @@ export const StaffLoginForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!formData.userId || !formData.password || !formData.role) {
       toast.error("Please fill all fields");
       return;
     }
-
     try {
       const res = await fetch("http://localhost:5000/api/auth/staff/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.message || "Login failed");
-
       toast.success("Login successful!");
-      // redirect based on role if needed
+      // Redirect based on role if needed.
     } catch (err: any) {
       toast.error(err.message);
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-8 w-full max-w-lg mx-auto mt-24 p-10 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-2xl shadow-2xl"
+    <div
+      className={`min-h-screen transition-colors duration-300 ${
+        darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"
+      } flex flex-col`}
     >
-      <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-white">
-        Staff Login
-      </h2>
+      {/* Full-width Header */}
+      <header className="w-full px-6 py-4 flex justify-between items-center bg-white dark:bg-zinc-900 shadow">
+        <div className="flex items-center gap-4">
+          <img src={logo} alt="Hospital Logo" className="h-12 w-12" />
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
+            MASA Hospital
+          </h1>
+        </div>
+        {/* Dark Mode Toggle Switch */}
+        <div
+          className="relative w-14 h-7 bg-gray-300 dark:bg-gray-700 rounded-full cursor-pointer transition"
+          onClick={() => setDarkMode((prev) => !prev)}
+          aria-label="Toggle dark mode"
+        >
+          <div
+            className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${
+              darkMode ? "translate-x-7" : "translate-x-1"
+            }`}
+          />
+          <div className="absolute inset-0 flex justify-between items-center px-1.5">
+            <Sun className="w-4 h-4 text-yellow-500" />
+            <Moon className="w-4 h-4 text-blue-400" />
+          </div>
+        </div>
+      </header>
 
-      <div className="space-y-3">
-        <Label htmlFor="userId" className="text-lg">User ID</Label>
-        <Input
-          id="userId"
-          name="userId"
-          type="text"
-          value={formData.userId}
-          onChange={handleChange}
-          required
-        />
-      </div>
+      {/* Centered Login Form */}
+      <main className="flex flex-1 items-center justify-center">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-8 w-full max-w-xl mx-auto p-10 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-2xl shadow-2xl"
+        >
+          <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-white">
+            Staff Login
+          </h2>
 
-      <div className="space-y-3">
-        <Label htmlFor="password" className="text-lg">Password</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="userId" className="block text-base">
+              User ID
+            </Label>
+            <Input
+              id="userId"
+              name="userId"
+              type="text"
+              value={formData.userId}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-      <div className="space-y-3">
-        <Label htmlFor="role" className="text-lg">Role</Label>
-        <Select onValueChange={handleRoleChange}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="doctor">Doctor</SelectItem>
-            <SelectItem value="front-desk-operator">Front Desk Operator</SelectItem>
-            <SelectItem value="data-entry-operator">Data Entry Operator</SelectItem>
-            <SelectItem value="database-administrator">Database Administrator</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="password" className="block text-base">
+              Password
+            </Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-      <Button type="submit" className="w-full text-lg py-3">
-        Login
-      </Button>
-    </form>
+          <div className="space-y-2">
+            <Label htmlFor="role" className="block text-base">
+              Role
+            </Label>
+            <Select onValueChange={handleRoleChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                {STAFF_ROLES.map((role) => (
+                  <SelectItem key={role.value} value={role.value}>
+                    {role.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full text-lg py-3 bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            Login
+          </Button>
+        </form>
+      </main>
+    </div>
   );
 };
+
+export default AuthFormStaff;
