@@ -169,7 +169,6 @@ enum TestStatus {
   Pending
   Completed
   Cancelled
-  Requested
 }
 
 enum TreatmentStatus {
@@ -200,10 +199,4 @@ enum AdmitStatus {
   Admitted
   Discharge_Requested
   Discharged
-}
-
-enum TreatmentStatus {
-  Requested
-  Scheduled
-  Cancelled
 }
