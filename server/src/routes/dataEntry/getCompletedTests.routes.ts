@@ -5,6 +5,6 @@ import asyncHandler from "../../middlewares/RouteErrorHandler";
 const getCompletedTestsRouter = Router();
 
 // Get all completed tests
-getCompletedTestsRouter.get("/:testID", asyncHandler(getCompletedTests));
+getCompletedTestsRouter.get("/", asyncHandler(getCompletedTests));
 
 export default getCompletedTestsRouter;

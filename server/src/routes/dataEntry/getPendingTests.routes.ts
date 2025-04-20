@@ -5,6 +5,6 @@ import asyncHandler from "../../middlewares/RouteErrorHandler";
 const getPendingTestsRouter = Router();
 
 // Get all pending tests
-getPendingTestsRouter.get("/:testID", asyncHandler(getPendingTests));
+getPendingTestsRouter.get("/", asyncHandler(getPendingTests));
 
 export default getPendingTestsRouter;

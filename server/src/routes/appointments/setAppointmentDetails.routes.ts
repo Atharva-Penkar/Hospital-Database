@@ -3,9 +3,9 @@ import { Router } from "express";
 import { setAppointmentDetails } from "../../controllers/appointments/setAppointmentDetails.controllers";
 import asyncHandler from "../../middlewares/RouteErrorHandler";
 
-const router = Router();
+const setAppointmentDetailsRouter = Router();
 
 // PUT /api/appointments/:appointmentId/details
-router.put("/:appointmentId", asyncHandler(setAppointmentDetails));
+setAppointmentDetailsRouter.put("/:appointmentId", asyncHandler(setAppointmentDetails));
 
-export default router;
+export default setAppointmentDetailsRouter;
