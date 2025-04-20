@@ -81,8 +81,8 @@ app.use("/api/doctor-info", doctorInfoRouter)
 app.use("/api/doctor-pending", doctorPendingAppointmentsRouter)
 app.use("/api/doctor-completed", doctorCompletedAppointmentsRouter)
 app.use("/api/doctor-admitted", doctorAdmittedPatientsRouter)
-app.use("/api/appointment-details/set/:appointmentId", setAppointmentDetailsRouter)
-app.use("/api/appointment-details/add/:appointmentId", addAppointmentDetailsRouter)
+app.use("/api/appointment-details/set/", setAppointmentDetailsRouter)
+app.use("/api/appointment-details/add/", addAppointmentDetailsRouter)
 app.get("/", (req, res) => {
   res.send("Hospital Management API is running");
 });

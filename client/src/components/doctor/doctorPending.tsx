@@ -166,29 +166,73 @@ const DoctorPending: React.FC = () => {
     setTreatments((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  // --- POST request to complete the appointment ---
+  // --- Submit request to complete the appointment ---
   const handleSubmit = async () => {
+    const urls = [
+      "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
+      "http://127.0.0.1:5000"
+    ];
+    setLoading(true);
+    setError(null);
+  
     try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch(`http://127.0.0.1:5000/api/finish-appointment/${appointmentId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          diagnosis,
-          tests,
-          treatments,
-          admit,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to submit doctor's orders");
+      // 1. POST to add appointment details
+      let postSuccess = false;
+      let lastPostError = null;
+      for (let base of urls) {
+        try {
+          const res = await fetch(`${base}/api/appointments/add/${appointmentId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              diagnosis,
+              tests,
+              treatments,
+              admit,
+            }),
+          });
+          if (res.ok) {
+            postSuccess = true;
+            break;
+          } else {
+            lastPostError = new Error(`POST failed with status ${res.status} from ${base}`);
+          }
+        } catch (err) {
+          lastPostError = err;
+        }
+      }
+      if (!postSuccess) throw lastPostError || new Error("Failed to add appointment details");
+  
+      // 2. PUT to set appointment as finished
+      let putSuccess = false;
+      let lastPutError = null;
+      for (let base of urls) {
+        try {
+          const res = await fetch(`${base}/api/appointments/set/${appointmentId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+          });
+          if (res.ok) {
+            putSuccess = true;
+            break;
+          } else {
+            lastPutError = new Error(`PUT failed with status ${res.status} from ${base}`);
+          }
+        } catch (err) {
+          lastPutError = err;
+        }
+      }
+      if (!putSuccess) throw lastPutError || new Error("Failed to finish appointment");
+  
+      // Success!
       navigate("/doctor-home");
     } catch (err: any) {
       setError(err.message || "Error submitting doctor's orders");
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   return (
     <div className={`min-h-screen p-6 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"}`}>
