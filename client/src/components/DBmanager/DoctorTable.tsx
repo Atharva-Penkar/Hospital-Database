@@ -807,7 +807,7 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
     const fetchSpecializations = async () => {
       for (const baseUrl of SPECIALIZATIONS_URLS) {
         try {
-          const res = await fetch(`${baseUrl}/api/doctors/specializations`, {
+          const res = await fetch(`${baseUrl}/api/dbdoctor-available`, {
             signal: abortController.signal
           });
           if (res.ok) {
