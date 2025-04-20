@@ -166,7 +166,7 @@ const DoctorPending: React.FC = () => {
     setTreatments((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  // --- Submit request to complete the appointment ---
+  // --- POST request to complete the appointment ---
   const handleSubmit = async () => {
     const urls = [
       "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
@@ -174,7 +174,7 @@ const DoctorPending: React.FC = () => {
     ];
     setLoading(true);
     setError(null);
-  
+
     try {
       // 1. POST to add appointment details
       let postSuccess = false;
@@ -202,7 +202,7 @@ const DoctorPending: React.FC = () => {
         }
       }
       if (!postSuccess) throw lastPostError || new Error("Failed to add appointment details");
-  
+
       // 2. PUT to set appointment as finished
       let putSuccess = false;
       let lastPutError = null;
@@ -224,7 +224,7 @@ const DoctorPending: React.FC = () => {
         }
       }
       if (!putSuccess) throw lastPutError || new Error("Failed to finish appointment");
-  
+
       // Success!
       navigate("/doctor-home");
     } catch (err: any) {
@@ -232,7 +232,14 @@ const DoctorPending: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };  
+  };
+
+  // --- Button enable/disable logic ---
+  const canSubmit =
+    !!diagnosis ||
+    tests.length > 0 ||
+    treatments.length > 0 ||
+    admit;
 
   return (
     <div className={`min-h-screen p-6 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"}`}>
@@ -431,8 +438,13 @@ const DoctorPending: React.FC = () => {
 
                 {/* Submit Button */}
                 <Button
-                  className="bg-blue-600 hover:bg-blue-700 text-white w-full mt-4"
+                  className={`w-full mt-4 ${
+                    canSubmit
+                      ? "bg-blue-600 hover:bg-blue-700 text-white"
+                      : "bg-gray-400 text-white cursor-not-allowed"
+                  }`}
                   onClick={handleSubmit}
+                  disabled={!canSubmit}
                 >
                   Submit Doctor's Orders
                 </Button>
