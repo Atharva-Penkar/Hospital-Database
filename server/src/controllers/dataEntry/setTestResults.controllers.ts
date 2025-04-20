@@ -15,7 +15,7 @@ export const setTestResults = async (req: Request, res: Response) => {
       data: {
         Result: result,
         Status: "Completed",
-        TimeStamp: new Date(), // Optionally update the timestamp to now
+        // TimeStamp: new Date(), // Optionally update the timestamp to now
       },
       include: {
         test: { select: { test_name: true } },

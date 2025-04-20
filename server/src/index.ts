@@ -20,12 +20,17 @@ import getDischargeRequestedAdmissionsRouter from "./routes/admissions/getDischa
 import admissionsRouter from "./routes/admissions/admissionsBASIC.routes";
 import roomRouter from "./routes/room/room.routes";
 import admitPatientRouter from "./routes/admissions/updateAR2AAdmissions.routes";
+
 import doctorPendingAppointmentsRouter from "./routes/doctorSnehal/doctorPending.routes";
 import doctorCompletedAppointmentsRouter from "./routes/doctorSnehal/doctorComplete.routes";
 import doctorAdmittedPatientsRouter from "./routes/doctorSnehal/doctorAdmitted.routes";
 import getAppointmentDetailsRouter from "./routes/appointments/getAppointmentDetails.routes";
 import setAppointmentDetailsRouter from "./routes/appointments/setAppointmentDetails.routes";
 import addAppointmentDetailsRouter from "./routes/appointments/addAppointmentDetails.routes";
+
+import getPendingTestsRouter from "./routes/dataEntry/getPendingTests.routes";
+import getCompletedTestsRouter from "./routes/dataEntry/getCompletedTests.routes";
+import setTestResultsRouter from "./routes/dataEntry/setTestResults";
 
 import dbmanagerdoctor from "./routes/DBmanager/doctor.routes";
 import dbtestavailable from "./routes/DBmanager/testavailable.routes";
@@ -82,8 +87,13 @@ app.use("/api/doctor-info", doctorInfoRouter)
 app.use("/api/doctor-pending", doctorPendingAppointmentsRouter)
 app.use("/api/doctor-completed", doctorCompletedAppointmentsRouter)
 app.use("/api/doctor-admitted", doctorAdmittedPatientsRouter)
-app.use("/api/appointment-details/set/", setAppointmentDetailsRouter)
-app.use("/api/appointment-details/add/", addAppointmentDetailsRouter)
+app.use("/api/appointment-details/set", setAppointmentDetailsRouter)
+app.use("/api/appointment-details/add", addAppointmentDetailsRouter)
+
+app.use("/api/tests-pending", getPendingTestsRouter)
+app.use("/api/tests-completed", getCompletedTestsRouter)
+app.use("/api/tests-finish", setTestResultsRouter)
+
 app.get("/", (req, res) => {
   res.send("Hospital Management API is running");
 });
