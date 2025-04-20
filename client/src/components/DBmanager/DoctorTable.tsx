@@ -777,10 +777,10 @@ const resolveBaseBySpecialization = async (specialization: string): Promise<stri
     try {
       const response = await fetch(`${baseUrl}/api/dbdoctor-available`);
       if (!response.ok) continue;
-      const doctors = await response.json();
-      if (Array.isArray(doctors) && doctors.some((d: ApiDoctor) => d.specialization === specialization)) {
-        return baseUrl;
-      }
+      // const doctors = await response.json();
+      // if (Array.isArray(doctors) && doctors.some((d: ApiDoctor) => d.specialization === specialization)) {
+      //   return baseUrl;
+      // }
     } catch {
       continue;
     }
