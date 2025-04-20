@@ -76,6 +76,7 @@ model Treatment {
   Tr_ID        Int
   dosage       Dosage
   duration     Int
+  Status       TreatmentStatus
   appointment  Appointment         @relation(fields: [A_ID], references: [A_ID])
   treatment    TreatmentsAvailable @relation(fields: [Tr_ID], references: [Tr_ID])
 }
