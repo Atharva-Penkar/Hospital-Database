@@ -37,6 +37,7 @@ import dbtestavailable from "./routes/DBmanager/testavailable.routes";
 import dbmanagerpatient from "./routes/DBmanager/patient.routes";
 import testsPendingRouter from "./routes/tests/getTestsStatusPending.routes";
 import testsRequestedRouter from "./routes/tests/getTestsStatusRequested.routes";
+import updateTestTimeAndStatusRouter from "./routes/tests/scheduleTest.routes";
 
 dotenv.config();
 const app = express();
@@ -82,6 +83,7 @@ app.use("/api/front-desk-operator/admissions/room", roomRouter)
 app.use("/api/front-desk-operator/admissions/admit", admitPatientRouter)
 app.use("/api/front-desk-operator/tests/pending", testsPendingRouter)
 app.use("/api/front-desk-operator/tests/requested", testsRequestedRouter)
+app.use("/api/front-desk-operator/tests/schedule", updateTestTimeAndStatusRouter)
 
 app.use("/api/access/admissions", admissionsRouter)
 

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sun, Moon, LogOut } from "lucide-react";
 import { format } from "date-fns";
 
-// New type definitions
+// New type definitions per your updated requirements
 type RequestedTest = {
   test_id: number;
   test_name: string;
@@ -47,6 +47,15 @@ const PENDING_TESTS_URLS = [
   "http://localhost:5000/api/front-desk-operator/tests/pending"
 ];
 
+const SCHEDULE_TESTS_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/tests/schedule",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/front-desk-operator/tests/schedule",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/front-desk-operator/tests/schedule",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/front-desk-operator/tests/schedule",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/front-desk-operator/tests/schedule",
+  "http://localhost:5000/api/front-desk-operator/tests/schedule"
+];
+
 const FrontDeskOpTests = ({
   darkMode,
   toggleDarkMode,
@@ -54,24 +63,24 @@ const FrontDeskOpTests = ({
   darkMode: boolean;
   toggleDarkMode: () => void;
 }) => {
-  // State declarations for requested tests
+  // State for requested tests
   const [requestedTests, setRequestedTests] = useState<RequestedTest[]>([]);
   const [loadingRequested, setLoadingRequested] = useState<boolean>(true);
   const [errorRequested, setErrorRequested] = useState<string | null>(null);
 
-  // State declarations for pending tests
+  // State for pending tests
   const [pendingTests, setPendingTests] = useState<PendingTest[]>([]);
   const [loadingPending, setLoadingPending] = useState<boolean>(true);
   const [errorPending, setErrorPending] = useState<string | null>(null);
 
-  // Selection and scheduling states
+  // Selection and scheduling state
   const [selectedTest, setSelectedTest] = useState<RequestedTest | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
 
   const isFormComplete = selectedTest && selectedDate && selectedTime;
 
-  // Fetch requested tests from backend endpoints
+  // Fetch requested tests
   useEffect(() => {
     const fetchRequested = async () => {
       setLoadingRequested(true);
@@ -87,7 +96,6 @@ const FrontDeskOpTests = ({
           if (!Array.isArray(data.tests)) {
             throw new Error(`[RequestedTests] ${url} did not return an array of tests`);
           }
-          // Map backend JSON fields to our RequestedTest type
           const tests: RequestedTest[] = data.tests.map((t: any) => ({
             test_id: t.test_id,
             test_name: t.test?.test_name ?? "",
@@ -99,6 +107,7 @@ const FrontDeskOpTests = ({
             appointment_id: t.appointment?.A_ID ?? 0,
             appointment_time: t.appointment?.TimeStamp ?? "",
           }));
+          console.log("[RequestedTests] Fetched tests:", tests);
           setRequestedTests(tests);
           setLoadingRequested(false);
           return;
@@ -113,7 +122,7 @@ const FrontDeskOpTests = ({
     fetchRequested();
   }, []);
 
-  // Fetch pending tests from backend endpoints
+  // Fetch pending tests
   useEffect(() => {
     const fetchPending = async () => {
       setLoadingPending(true);
@@ -129,7 +138,6 @@ const FrontDeskOpTests = ({
           if (!Array.isArray(data.tests)) {
             throw new Error(`[PendingTests] ${url} did not return an array of tests`);
           }
-          // Map backend JSON fields to our PendingTest type
           const tests: PendingTest[] = data.tests.map((t: any) => ({
             test_id: t.test_id,
             test_name: t.test?.test_name ?? "",
@@ -141,6 +149,7 @@ const FrontDeskOpTests = ({
             appointment_id: t.appointment?.A_ID ?? 0,
             appointment_time: t.appointment?.TimeStamp ?? "",
           }));
+          console.log("[PendingTests] Fetched tests:", tests);
           setPendingTests(tests);
           setLoadingPending(false);
           return;
@@ -155,14 +164,57 @@ const FrontDeskOpTests = ({
     fetchPending();
   }, []);
 
-  const handleSchedule = () => {
-    // Scheduling logic will be added later
+  // Schedule the selected test: update its TimeStamp and change status from Requested to Pending
+  const handleSchedule = async () => {
+    if (!selectedTest || !selectedDate || !selectedTime) return;
+
+    // Combine selected date and time into an ISO-formatted datetime string.
+    const newTime = new Date(`${selectedDate}T${selectedTime}:00`);
+    console.log("[handleSchedule] Scheduling test", selectedTest.test_id, "with new time", newTime.toISOString());
+
+    for (const url of SCHEDULE_TESTS_URLS) {
+      try {
+        const res = await fetch(url, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            test_id: selectedTest.test_id,
+            newTime: newTime.toISOString(),
+          }),
+        });
+        if (!res.ok) {
+          console.error(`[handleSchedule] ${url} returned status ${res.status}`);
+          continue;
+        }
+        const data = await res.json();
+        console.log("[handleSchedule] Successfully scheduled test:", data);
+
+        // On success, clear selection and refresh requested/pending lists
+        setSelectedTest(null);
+        setSelectedDate("");
+        setSelectedTime("");
+        
+        // Optionally, refetch tests or update the state locally to reflect the change.
+        // Here, we'll filter out the scheduled test from requestedTests and push it to pendingTests.
+        setRequestedTests((prev) => prev.filter((t) => t.test_id !== selectedTest.test_id));
+        setPendingTests((prev) => [
+          ...prev,
+          {
+            ...selectedTest,
+            appointment_time: newTime.toISOString(),
+          },
+        ]);
+
+        return;
+      } catch (err: any) {
+        console.error(`[handleSchedule] Error scheduling from ${url}:`, err);
+      }
+    }
+    console.error("[handleSchedule] Failed to schedule test from all backends.");
   };
 
   return (
-    <div className={`min-h-screen p-4 grid grid-rows-[auto_1fr] gap-4 ${
-      darkMode ? "bg-gray-900 text-blue-400" : ""
-    }`}>
+    <div className={`min-h-screen p-4 grid grid-rows-[auto_1fr] gap-4 ${darkMode ? "bg-gray-900 text-blue-400" : ""}`}>
       {/* Header */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
@@ -176,9 +228,7 @@ const FrontDeskOpTests = ({
             onClick={toggleDarkMode}
           >
             <div
-              className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${
-                darkMode ? "translate-x-7" : "translate-x-1"
-              }`}
+              className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${darkMode ? "translate-x-7" : "translate-x-1"}`}
             />
             <div className="absolute inset-0 flex justify-between items-center px-1.5">
               <Sun className="w-4 h-4 text-yellow-500" />
@@ -190,9 +240,10 @@ const FrontDeskOpTests = ({
           </Button>
         </div>
       </div>
+      
       {/* Main Content */}
       <div className="grid grid-cols-2 gap-6">
-        {/* Requested Tests */}
+        {/* Requested Tests Panel */}
         <div className={`p-4 rounded-lg shadow ${darkMode ? "bg-gray-800" : "bg-white"}`}>
           <h2 className="text-xl font-semibold mb-2">Requested Tests</h2>
           {loadingRequested ? (
@@ -218,31 +269,17 @@ const FrontDeskOpTests = ({
           )}
           {selectedTest && (
             <div className="mt-4 border-t pt-4 space-y-2 text-sm">
-              <p>
-                <strong>Test Name:</strong> {selectedTest.test_name}
-              </p>
-              <p>
-                <strong>Test ID:</strong> {selectedTest.test_id}
-              </p>
-              <p>
-                <strong>Patient Name:</strong> {selectedTest.patient_name}
-              </p>
-              <p>
-                <strong>Patient ID:</strong> {selectedTest.patient_id}
-              </p>
-              <p>
-                <strong>Sex:</strong> {selectedTest.sex}
-              </p>
+              <p><strong>Test Name:</strong> {selectedTest.test_name}</p>
+              <p><strong>Test ID:</strong> {selectedTest.test_id}</p>
+              <p><strong>Patient Name:</strong> {selectedTest.patient_name}</p>
+              <p><strong>Patient ID:</strong> {selectedTest.patient_id}</p>
+              <p><strong>Sex:</strong> {selectedTest.sex}</p>
               <p>
                 <strong>DOB:</strong>{" "}
                 {selectedTest.dob ? format(new Date(selectedTest.dob), "PPP") : "N/A"}
               </p>
-              <p>
-                <strong>Symptoms:</strong> {selectedTest.symptoms}
-              </p>
-              <p>
-                <strong>Appointment ID:</strong> {selectedTest.appointment_id}
-              </p>
+              <p><strong>Symptoms:</strong> {selectedTest.symptoms}</p>
+              <p><strong>Appointment ID:</strong> {selectedTest.appointment_id}</p>
               <p>
                 <strong>Appointment Time:</strong>{" "}
                 {selectedTest.appointment_time
@@ -251,9 +288,7 @@ const FrontDeskOpTests = ({
               </p>
               <div className="flex gap-4 mt-2">
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Select Date
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Select Date</label>
                   <input
                     type="date"
                     value={selectedDate}
@@ -262,9 +297,7 @@ const FrontDeskOpTests = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Select Time
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Select Time</label>
                   <input
                     type="time"
                     value={selectedTime}
@@ -276,18 +309,14 @@ const FrontDeskOpTests = ({
               <Button
                 disabled={!isFormComplete}
                 onClick={handleSchedule}
-                className={`w-full mt-4 ${
-                  isFormComplete
-                    ? "bg-blue-500 hover:bg-blue-600"
-                    : "bg-gray-400 cursor-not-allowed"
-                }`}
+                className={`w-full mt-4 ${isFormComplete ? "bg-blue-500 hover:bg-blue-600" : "bg-gray-400 cursor-not-allowed"}`}
               >
                 Schedule Test
               </Button>
             </div>
           )}
         </div>
-        {/* Pending Tests */}
+        {/* Pending Tests Panel */}
         <div className={`p-4 rounded-lg shadow ${darkMode ? "bg-gray-800" : "bg-white"}`}>
           <h2 className="text-xl font-semibold mb-2">Pending Tests</h2>
           {loadingPending ? (
