@@ -86,8 +86,8 @@ model Test {
   A_ID        Int
   T_ID        Int
   TimeStamp   DateTime
-  Result      String?
   Status      TestStatus
+  Result      String?
   appointment Appointment    @relation(fields: [A_ID], references: [A_ID])
   test        TestsAvailable @relation(fields: [T_ID], references: [T_ID])
 }
@@ -166,10 +166,10 @@ enum RoomType {
 }
 
 enum TestStatus {
-  Requested
   Pending
   Completed
   Cancelled
+  Requested
 }
 
 enum TreatmentStatus {
