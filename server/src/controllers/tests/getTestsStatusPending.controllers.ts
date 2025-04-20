@@ -11,7 +11,8 @@ export const getPendingTestsController = async (req: Request, res: Response) => 
       include: {
         appointment: {
           include: {
-            patient: true
+            patient: true,
+            doctor: true
           }
         },
         test: true,

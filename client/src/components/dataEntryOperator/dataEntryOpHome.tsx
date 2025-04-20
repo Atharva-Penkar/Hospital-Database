@@ -73,7 +73,14 @@ const DataEntryOpHome = ({
           if (!res.ok) continue;
           const data = await res.json();
           if (!Array.isArray(data.tests)) continue;
-          setPendingTests(data.tests);
+          setPendingTests(
+            data.tests.map((t: any) => ({
+              ...t,
+              test_name: t.test?.test_name,
+              patient: t.appointment?.patient,
+              doctor: t.appointment?.doctor,
+            }))
+          );
           setLoadingPending(false);
           return;
         } catch (err) {}
@@ -96,7 +103,14 @@ const DataEntryOpHome = ({
           if (!res.ok) continue;
           const data = await res.json();
           if (!Array.isArray(data.tests)) continue;
-          setCompletedTests(data.tests);
+          setCompletedTests(
+            data.tests.map((t: any) => ({
+              ...t,
+              test_name: t.test?.test_name,
+              patient: t.appointment?.patient,
+              doctor: t.appointment?.doctor,
+            }))
+          );
           setLoadingCompleted(false);
           return;
         } catch (err) {}
@@ -217,7 +231,12 @@ const DataEntryOpHome = ({
                     className={`p-2 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${selectedTest?.test_id === t.test_id ? "bg-blue-100 dark:bg-blue-900/30" : ""}`}
                     onClick={() => setSelectedTest(t)}
                   >
-                    <div>{t.patient?.name} (Patient ID: {t.patient?.P_ID}) — {t.test_name}</div>
+                    <div>
+                      {t.patient?.name} (Patient ID: {t.patient?.P_ID}) — {t.test_name}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Doctor: {t.doctor?.name} (ID: {t.doctor?.D_ID})
+                    </div>
                     <div className="text-sm text-gray-500">
                       {t.TimeStamp ? format(new Date(t.TimeStamp), "PPPp") : "N/A"}
                     </div>
@@ -240,7 +259,7 @@ const DataEntryOpHome = ({
                 <span className="font-semibold">Patient:</span> {selectedTest.patient?.name} (ID: {selectedTest.patient?.P_ID})
               </div>
               <div className="mb-2">
-                <span className="font-semibold">Doctor:</span> {selectedTest.doctor?.name}
+                <span className="font-semibold">Doctor:</span> {selectedTest.doctor?.name} (ID: {selectedTest.doctor?.D_ID})
               </div>
               <div className="mb-2">
                 <span className="font-semibold">Date:</span> {selectedTest.TimeStamp ? format(new Date(selectedTest.TimeStamp), "PPPp") : "N/A"}
@@ -288,7 +307,12 @@ const DataEntryOpHome = ({
               ) : (
                 completedTests.map((t) => (
                   <div key={t.test_id} className="p-2 border-b">
-                    <div>{t.patient?.name} (Patient ID: {t.patient?.P_ID}) — {t.test_name}</div>
+                    <div>
+                      {t.patient?.name} (Patient ID: {t.patient?.P_ID}) — {t.test_name}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Doctor: {t.doctor?.name} (ID: {t.doctor?.D_ID})
+                    </div>
                     <div className="text-sm text-gray-500">
                       {t.TimeStamp ? format(new Date(t.TimeStamp), "PPPp") : "N/A"}
                     </div>

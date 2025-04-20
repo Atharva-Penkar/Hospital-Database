@@ -35,6 +35,7 @@ import dbmanagerpatient from "./routes/DBmanager/patient.routes";
 import testsPendingRouter from "./routes/tests/getTestsStatusPending.routes";
 import testsRequestedRouter from "./routes/tests/getTestsStatusRequested.routes";
 import testsCompletedRouter from "./routes/tests/getTestsStatusCompleted.routes";
+import setTestResultsRouter from "./routes/tests/setTestsResults.routes";
 import updateTestTimeAndStatusRouter from "./routes/tests/scheduleTest.routes";
 
 dotenv.config();
@@ -94,6 +95,7 @@ app.use("/api/appointment-details/add", addAppointmentDetailsRouter)
 
 app.use("/api/tests-pending", testsPendingRouter)
 app.use("/api/tests-completed", testsCompletedRouter)
+app.use("/api/tests/set-results", setTestResultsRouter)
 app.get("/", (req, res) => {
   res.send("Hospital Management API is running");
 });
