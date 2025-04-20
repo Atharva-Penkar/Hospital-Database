@@ -41,6 +41,12 @@ import treatmentsRequestedRouter from "./routes/treatments/getTreatmentsStatusRe
 import treatmentsScheduledRouter from "./routes/treatments/getTreatmentsStatusScheduled.routes";
 import updateTreatmentRouter from "./routes/treatments/scheduleTreatments.routes";
 
+import getAdmitRequestsRouter from "./routes/admissionsSnehal/getAdmitRequests.routes";
+import getDischargeRequestsRouter from "./routes/admissionsSnehal/getDischargeRequests.routes";
+import admitPatientToRoomRouter from "./routes/admissionsSnehal/admitPatientToRoom.routes";
+import dischargePatientFromRoomRouter from "./routes/admissionsSnehal/dischargePatientFromRoom.routes";
+import getAllRoomsRouter from "./routes/admissionsSnehal/getAllRooms.routes";
+
 dotenv.config();
 const app = express();
 
@@ -79,13 +85,15 @@ app.use("/api/tests-available", testsAvailableRouter)
 
 app.use("/api/treatments-available", treatmentsAvailableRouter)
 
-app.use("/api/front-desk-operator/admissions", getAdmitRequestedAdmissionsRouter)
-app.use("/api/front-desk-operator/admissions", getDischargeRequestedAdmissionsRouter)
-app.use("/api/front-desk-operator/admissions/room", roomRouter)
-app.use("/api/front-desk-operator/admissions/admit", admitPatientRouter)
+// app.use("/api/front-desk-operator/admissions", getAdmitRequestedAdmissionsRouter)
+// app.use("/api/front-desk-operator/admissions", getDischargeRequestedAdmissionsRouter)
+// app.use("/api/front-desk-operator/admissions/room", roomRouter)
+// app.use("/api/front-desk-operator/admissions/admit", admitPatientRouter)
+
 app.use("/api/front-desk-operator/tests/pending", testsPendingRouter)
 app.use("/api/front-desk-operator/tests/requested", testsRequestedRouter)
 app.use("/api/front-desk-operator/tests/schedule", updateTestTimeAndStatusRouter)
+
 app.use("/api/front-desk-operator/treatments/requested", treatmentsRequestedRouter)
 app.use("/api/front-desk-operator/treatments/scheduled", treatmentsScheduledRouter)
 app.use("/api/front-desk-operator/treatments/schedule", updateTreatmentRouter)
@@ -102,6 +110,13 @@ app.use("/api/appointment-details/add", addAppointmentDetailsRouter)
 app.use("/api/tests-pending", testsPendingRouter)
 app.use("/api/tests-completed", testsCompletedRouter)
 app.use("/api/tests/set-results", setTestResultsRouter)
+
+app.use("/api/front-desk-operator/admissions/admit-requests", getAdmitRequestsRouter)
+app.use("/api/front-desk-operator/admissions/discharge-requests", getDischargeRequestsRouter)
+app.use("/api/front-desk-operator/admissions/admit", admitPatientToRoomRouter)
+app.use("/api/front-desk-operator/admissions/discharge", dischargePatientFromRoomRouter)
+app.use("/api/front-desk-operator/admissions/rooms", getAllRoomsRouter)
+
 app.get("/", (req, res) => {
   res.send("Hospital Management API is running");
 });

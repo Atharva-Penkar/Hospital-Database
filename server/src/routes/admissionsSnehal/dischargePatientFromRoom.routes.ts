@@ -2,9 +2,9 @@ import { Router } from "express";
 import { dischargePatient } from "../../controllers/admissionsSnehal/dischargePatientFromRoom.controllers";
 import asyncHandler from "../../middlewares/RouteErrorHandler";
 
-const dischargePatientRouter = Router();
+const dischargePatientFromRoomRouter = Router();
 
 // PUT /api/front-desk-operator/admissions/discharge/:admitId
-dischargePatientRouter.put("/:admitId", asyncHandler(dischargePatient));
+dischargePatientFromRoomRouter.put("/:admitId", asyncHandler(dischargePatient));
 
-export default dischargePatientRouter;
+export default dischargePatientFromRoomRouter;
