@@ -495,7 +495,7 @@ const DoctorPending: React.FC = () => {
                   onClick={handleSubmit}
                   disabled={!canSubmit}
                 >
-                  Submit Doctor's Orders
+                  Mark as complete
                 </Button>
               </CardContent>
             </Card>
