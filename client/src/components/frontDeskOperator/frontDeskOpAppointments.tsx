@@ -291,11 +291,11 @@ const FrontDeskOpAppointments = ({
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left Panel */}
-        <Card className="bg-card text-card-foreground">
+        <Card className="bg-white dark:bg-gray-800 text-black dark:text-blue-300">
           <CardHeader>
             <CardTitle>Appointment Requests</CardTitle>
           </CardHeader>
-          <CardContent className="bg-card text-card-foreground">
+          <CardContent className="bg-white dark:bg-gray-800 text-black dark:text-blue-300">
             <div className="h-96 overflow-y-auto pr-2">
               {appointmentRequests.length > 0 ? (
                 appointmentRequests.map((req) => {
@@ -306,13 +306,13 @@ const FrontDeskOpAppointments = ({
                   return (
                     <Card
                       key={req.A_ID}
-                      className="mb-2 cursor-pointer hover:bg-muted bg-card text-card-foreground"
+                      className="mb-2 cursor-pointer hover:bg-muted bg-white dark:bg-gray-800 text-black dark:text-blue-300"
                       onClick={() => {
                         clearSelections();
                         setSelectedRequest(req);
                       }}
                     >
-                      <CardContent className="py-2 px-4 bg-card text-card-foreground">
+                      <CardContent className="py-2 px-4 bg-white dark:bg-gray-800 text-black dark:text-blue-300">
                         <div className="font-medium">
                           {req.name} (ID: {req.P_ID})
                         </div>
@@ -335,11 +335,11 @@ const FrontDeskOpAppointments = ({
         <div>
           {/* Scheduled Appointment Details */}
           {selectedScheduledAppointment && (
-            <Card className="bg-card text-card-foreground">
+            <Card className="bg-white dark:bg-gray-800 text-black dark:text-blue-300">
               <CardHeader>
                 <CardTitle>Scheduled Appointment Details</CardTitle>
               </CardHeader>
-              <CardContent className="bg-card text-card-foreground">
+              <CardContent className="bg-white dark:bg-gray-800 text-black dark:text-blue-300">
                 <p>
                   <strong>Patient Name:</strong>{" "}
                   {selectedScheduledAppointment.patientName}
@@ -371,7 +371,7 @@ const FrontDeskOpAppointments = ({
 
           {/* Requested Appointment Details & Scheduling */}
           {!selectedScheduledAppointment && selectedRequest && (
-            <Card className="bg-card text-card-foreground">
+            <Card className="bg-white dark:bg-gray-800 text-black dark:text-blue-300">
               <CardHeader>
                 <CardTitle>
                   Selected Patient:{" "}
@@ -380,7 +380,7 @@ const FrontDeskOpAppointments = ({
                   </span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="bg-card text-card-foreground">
+              <CardContent className="bg-white dark:bg-gray-800 text-black dark:text-blue-300">
                 <p>
                   <strong>Name:</strong> {selectedRequest.name}
                 </p>
@@ -478,11 +478,11 @@ const FrontDeskOpAppointments = ({
           )}
           {/* Confirmation for newly scheduled appointment */}
           {!selectedScheduledAppointment && selectedAppointment && (
-            <Card className="mt-6 bg-card text-card-foreground">
+            <Card className="mt-6 bg-white dark:bg-gray-800 text-black dark:text-blue-300">
               <CardHeader>
                 <CardTitle>Scheduled Appointment</CardTitle>
               </CardHeader>
-              <CardContent className="bg-card text-card-foreground">
+              <CardContent className="bg-white dark:bg-gray-800 text-black dark:text-blue-300">
                 <p>
                   <strong>Patient Name:</strong> {selectedAppointment.patientName}
                 </p>
@@ -506,23 +506,23 @@ const FrontDeskOpAppointments = ({
           )}
         </div>
         {/* Right Panel */}
-        <Card className="bg-card text-card-foreground">
+        <Card className="bg-white dark:bg-gray-800 text-black dark:text-blue-300">
           <CardHeader>
             <CardTitle>Scheduled Appointments</CardTitle>
           </CardHeader>
-          <CardContent className="bg-card text-card-foreground">
+          <CardContent className="bg-white dark:bg-gray-800 text-black dark:text-blue-300">
             <div className="h-96 overflow-y-auto pr-2">
               {scheduledAppointments.length > 0 ? (
                 scheduledAppointments.map((appointment, index) => (
                   <Card
                     key={index}
-                    className="mb-2 cursor-pointer hover:bg-muted bg-card text-card-foreground"
+                    className="mb-2 cursor-pointer hover:bg-muted bg-white dark:bg-gray-800 text-black dark:text-blue-300"
                     onClick={() => {
                       clearSelections();
                       setSelectedScheduledAppointment(appointment);
                     }}
                   >
-                    <CardContent className="py-2 px-4 bg-card text-card-foreground">
+                    <CardContent className="py-2 px-4 bg-white dark:bg-gray-800 text-black dark:text-blue-300">
                       {appointment.patientName} (Dr. {appointment.doctorName}) on{" "}
                       {appointment.date} at {appointment.time}
                     </CardContent>
