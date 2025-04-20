@@ -2,16 +2,16 @@ import { Request, Response } from "express";
 import prisma from "../../utils/prisma";
 
 export const setTestResults = async (req: Request, res: Response) => {
-  const { testId } = req.params;
+  const { testID } = req.params;
   const { result } = req.body;
 
-  if (!testId || typeof result !== "string" || !result.trim()) {
+  if (!testID || typeof result !== "string" || !result.trim()) {
     return res.status(400).json({ error: "testId and non-empty result are required" });
   }
 
   try {
     const updatedTest = await prisma.test.update({
-      where: { test_id: Number(testId) },
+      where: { test_id: Number(testID) },
       data: {
         Result: result,
         Status: "Completed",
