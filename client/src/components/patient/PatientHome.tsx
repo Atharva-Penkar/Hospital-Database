@@ -31,18 +31,16 @@ const BACKEND_URLS = [
   "http://localhost:5000"
 ];
 
-// Update the Patient type to use "Sex" (with a capital S)
 type Patient = {
   P_ID: number;
   name: string;
   address: string;
   DOB: string;
-  Sex: string;  // Note: now capitalized!
+  Sex: string; // Returned as "Sex" (capitalized)
   mail: string;
   phone_no: string;
   emergency_phone_no: string;
   admissions: any[];
-  // Allergy data, expecting allergy_name will be returned.
   allergies: { allergy_name: string }[];
 };
 
@@ -51,6 +49,15 @@ type Appointment = {
   TimeStamp: string;
   Status: "Requested" | "Scheduled" | "Finished";
   Symptoms?: string;
+};
+
+// New type for Medical History – each record has an id and a related disease.
+type MedicalHistoryRecord = {
+  history_id: number;
+  disease: {
+    Disease_Name: string;
+    Description?: string;
+  };
 };
 
 // Fallback function to try multiple backend URLs.
@@ -87,6 +94,10 @@ const PatientHome = () => {
   // Appointment-related state
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loadingAppointments, setLoadingAppointments] = useState<boolean>(true);
+
+  // Medical History state
+  const [medicalHistory, setMedicalHistory] = useState<MedicalHistoryRecord[]>([]);
+  const [loadingMedicalHistory, setLoadingMedicalHistory] = useState<boolean>(true);
   
   // Appointment submission state (for the Request Appointment tab)
   const [appointmentData, setAppointmentData] = useState({
@@ -173,6 +184,31 @@ const PatientHome = () => {
       }
     };
     fetchAppointments();
+  }, [patient]);
+
+  // Fetch medical history once patient data is available.
+  useEffect(() => {
+    const fetchMedicalHistory = async () => {
+      if (!patient) return;
+      setLoadingMedicalHistory(true);
+      try {
+        // Assuming the endpoint uses a query parameter for P_ID.
+        const res = await fetchFromFallbackURLs(`/api/patient/medical-history/P_ID=${patient.P_ID}`);
+        const data = await res.json();
+        if (Array.isArray(data.medicalHistory)) {
+          console.log("Fetched medical history:", data.medicalHistory);
+          setMedicalHistory(data.medicalHistory);
+        } else {
+          throw new Error("Invalid medical history data");
+        }
+      } catch (err) {
+        console.error("Error fetching medical history:", err);
+        toast.error("Failed to fetch medical history");
+      } finally {
+        setLoadingMedicalHistory(false);
+      }
+    };
+    fetchMedicalHistory();
   }, [patient]);
 
   // Appointment submission handler.
@@ -320,7 +356,19 @@ const PatientHome = () => {
                 <CardTitle>Medical History</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">No medical history available.</p>
+                {loadingMedicalHistory ? (
+                  <p>Loading medical history...</p>
+                ) : medicalHistory.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No medical history available.</p>
+                ) : (
+                  <ul className="list-disc pl-5 space-y-2">
+                    {medicalHistory.map((record) => (
+                      <li key={record.history_id}>
+                        <strong>{record.disease.Disease_Name}</strong>: {record.disease.Description || "No description"}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
