@@ -4,6 +4,6 @@ import asyncHandler from "../../middlewares/RouteErrorHandler";
 
 const testsRequestedRouter = Router();
 
-testsRequestedRouter.get("/requested", asyncHandler(getRequestedTestsController));
+testsRequestedRouter.get("/", asyncHandler(getRequestedTestsController));
 
 export default testsRequestedRouter;

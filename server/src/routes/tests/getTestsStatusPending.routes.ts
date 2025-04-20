@@ -3,5 +3,5 @@ import { getPendingTestsController } from "../../controllers/tests/getTestsStatu
 import asyncHandler from "../../middlewares/RouteErrorHandler";
 
 const testsPendingRouter = Router();
-testsPendingRouter.get("/pending", asyncHandler(getPendingTestsController));
+testsPendingRouter.get("/", asyncHandler(getPendingTestsController));
 export default testsPendingRouter;

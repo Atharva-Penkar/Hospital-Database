@@ -80,8 +80,8 @@ app.use("/api/front-desk-operator/admissions", getAdmitRequestedAdmissionsRouter
 app.use("/api/front-desk-operator/admissions", getDischargeRequestedAdmissionsRouter)
 app.use("/api/front-desk-operator/admissions/room", roomRouter)
 app.use("/api/front-desk-operator/admissions/admit", admitPatientRouter)
-app.use("/api/front-desk-operator/tests", testsPendingRouter)
-app.use("/api/front-desk-operator/tests", testsRequestedRouter)
+app.use("/api/front-desk-operator/tests/pending", testsPendingRouter)
+app.use("/api/front-desk-operator/tests/requested", testsRequestedRouter)
 
 app.use("/api/access/admissions", admissionsRouter)
 
