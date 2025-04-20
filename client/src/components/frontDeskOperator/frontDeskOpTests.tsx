@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logo from '@/assets/images/logo.png';
 import { Button } from "@/components/ui/button";
 import { Sun, Moon, LogOut } from "lucide-react";
 import { format } from "date-fns";
 
-type Test = {
+type RequestedTest = {
     id: number;
     name: string;
     reason: string;
@@ -12,37 +12,29 @@ type Test = {
     sex: string;
 };
 
-type ScheduledTest = {
+type PendingTest = {
     id: number;
     name: string;
     scheduledAt: string;
-    reason: string;  // Added reason field to the ScheduledTest type
+    reason: string;
 };
 
-const initialPendingTests: Test[] = [
-    { id: 301, name: "Riya Sharma", sex: "F", dob: "1998-05-23", reason: "Blood Test" },
-    { id: 302, name: "Aman Gupta", sex: "M", dob: "2000-11-12", reason: "X-Ray" },
-    { id: 303, name: "Neha Mehta", sex: "F", dob: "1985-04-03", reason: "MRI" },
-    { id: 304, name: "Sita Kumari", sex: "F", dob: "1995-02-21", reason: "ECG" },
-    { id: 305, name: "Rajesh Kumar", sex: "M", dob: "1988-07-13", reason: "CT Scan" },
-    { id: 306, name: "Ayesha Khan", sex: "F", dob: "1992-09-18", reason: "Blood Pressure Check" },
-    { id: 307, name: "Vikas Sharma", sex: "M", dob: "1984-11-30", reason: "Ultrasound" },
-    { id: 308, name: "Ravi Gupta", sex: "M", dob: "1999-03-02", reason: "MRI" },
-    { id: 309, name: "Pooja Mehta", sex: "F", dob: "2002-01-15", reason: "X-Ray" },
-    { id: 310, name: "Vijay Singh", sex: "M", dob: "1987-05-29", reason: "Blood Test" }
+const REQUESTED_TESTS_URLS = [
+    "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/tests/requested",
+    "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/front-desk-operator/tests/requested",
+    "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/front-desk-operator/tests/requested",
+    "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/front-desk-operator/tests/requested",
+    "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/front-desk-operator/tests/requested",
+    "http://localhost:5000/api/front-desk-operator/tests/requested"
 ];
 
-const initialScheduledTests: ScheduledTest[] = [
-    { id: 401, name: "Sunil Dube", scheduledAt: "2025-04-18T09:30", reason: "Blood Test" },
-    { id: 402, name: "Tina Singh", scheduledAt: "2025-04-18T11:15", reason: "X-Ray" },
-    { id: 403, name: "Ajay Patel", scheduledAt: "2025-04-19T10:00", reason: "MRI" },
-    { id: 404, name: "Maya Verma", scheduledAt: "2025-04-19T12:30", reason: "ECG" },
-    { id: 405, name: "Krishna Yadav", scheduledAt: "2025-04-20T08:00", reason: "CT Scan" },
-    { id: 406, name: "Simran Rathi", scheduledAt: "2025-04-20T14:00", reason: "Blood Pressure Check" },
-    { id: 407, name: "Anjali Rai", scheduledAt: "2025-04-21T09:15", reason: "Ultrasound" },
-    { id: 408, name: "Arvind Kumar", scheduledAt: "2025-04-21T13:30", reason: "MRI" },
-    { id: 409, name: "Pooja Bhatt", scheduledAt: "2025-04-22T15:45", reason: "X-Ray" },
-    { id: 410, name: "Manoj Sharma", scheduledAt: "2025-04-23T10:30", reason: "Blood Test" }
+const PENDING_TESTS_URLS = [
+    "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/front-desk-operator/tests/pending",
+    "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/front-desk-operator/tests/pending",
+    "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/front-desk-operator/tests/pending",
+    "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/front-desk-operator/tests/pending",
+    "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/front-desk-operator/tests/pending",
+    "http://localhost:5000/api/front-desk-operator/tests/pending"
 ];
 
 const FrontDeskOpTests = ({
@@ -52,28 +44,93 @@ const FrontDeskOpTests = ({
     darkMode: boolean;
     toggleDarkMode: () => void;
 }) => {
-    const [pendingTests, setPendingTests] = useState<Test[]>(initialPendingTests);
-    const [scheduledTests, setScheduledTests] = useState<ScheduledTest[]>(initialScheduledTests);
-    const [selectedPatient, setSelectedPatient] = useState<Test | null>(null);
+    const [pendingTests, setPendingTests] = useState<PendingTest[]>([]);
+    const [requestedTests, setRequestedTests] = useState<RequestedTest[]>([]);
+    const [selectedPatient, setSelectedPatient] = useState<RequestedTest | null>(null);
     const [selectedDate, setSelectedDate] = useState<string>("");
     const [selectedTime, setSelectedTime] = useState<string>("");
 
-    const handleSchedule = () => {
-        if (!selectedPatient || !selectedDate || !selectedTime) return;
-        const scheduledAt = `${selectedDate}T${selectedTime}`;
+    const [loadingRequested, setLoadingRequested] = useState<boolean>(true);
+    const [loadingPending, setLoadingPending] = useState<boolean>(true);
+    const [errorRequested, setErrorRequested] = useState<string | null>(null);
+    const [errorPending, setErrorPending] = useState<string | null>(null);
 
-        const newScheduled: ScheduledTest = {
-            id: selectedPatient.id,
-            name: selectedPatient.name,
-            scheduledAt,
-            reason: selectedPatient.reason // Added reason here
+    // Fetch requested tests
+    useEffect(() => {
+        const fetchRequested = async () => {
+            setLoadingRequested(true);
+            setErrorRequested(null);
+            for (const url of REQUESTED_TESTS_URLS) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) {
+                        // Log the HTTP error
+                        console.error(`[RequestedTests] ${url} returned status ${res.status}`);
+                        continue;
+                    }
+                    const data = await res.json();
+                    if (!Array.isArray(data.tests)) {
+                        throw new Error(`[RequestedTests] ${url} did not return an array of tests`);
+                    }
+                    const tests: RequestedTest[] = data.tests.map((t: any) => ({
+                        id: t.appointment?.P_ID || t.patient?.P_ID || t.P_ID || t.id,
+                        name: t.patient?.name || t.name,
+                        reason: t.test?.test_name || t.reason || t.test_name,
+                        dob: t.patient?.DOB || t.dob,
+                        sex: t.patient?.Sex || t.sex,
+                    }));
+                    setRequestedTests(tests);
+                    setLoadingRequested(false);
+                    return;
+                } catch (err: any) {
+                    console.error(`[RequestedTests] Error fetching from ${url}:`, err);
+                }
+            }
+            setRequestedTests([]);
+            setLoadingRequested(false);
+            setErrorRequested("Could not fetch requested tests from any backend.");
         };
+        fetchRequested();
+    }, []);
 
-        setScheduledTests((prev) => [...prev, newScheduled]);
-        setPendingTests((prev) => prev.filter((p) => p.id !== selectedPatient.id));
-        setSelectedPatient(null);
-        setSelectedDate("");
-        setSelectedTime("");
+    // Fetch pending tests
+    useEffect(() => {
+        const fetchPending = async () => {
+            setLoadingPending(true);
+            setErrorPending(null);
+            for (const url of PENDING_TESTS_URLS) {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) {
+                        console.error(`[PendingTests] ${url} returned status ${res.status}`);
+                        continue;
+                    }
+                    const data = await res.json();
+                    if (!Array.isArray(data.tests)) {
+                        throw new Error(`[PendingTests] ${url} did not return an array of tests`);
+                    }
+                    const tests: PendingTest[] = data.tests.map((t: any) => ({
+                        id: t.appointment?.P_ID || t.patient?.P_ID || t.P_ID || t.id,
+                        name: t.patient?.name || t.name,
+                        scheduledAt: t.TimeStamp || t.scheduledAt,
+                        reason: t.test?.test_name || t.reason || t.test_name,
+                    }));
+                    setPendingTests(tests);
+                    setLoadingPending(false);
+                    return;
+                } catch (err: any) {
+                    console.error(`[PendingTests] Error fetching from ${url}:`, err);
+                }
+            }
+            setPendingTests([]);
+            setLoadingPending(false);
+            setErrorPending("Could not fetch pending tests from any backend.");
+        };
+        fetchPending();
+    }, []);
+
+    const handleSchedule = () => {
+        // Scheduling logic will be added later
     };
 
     const isFormComplete = selectedPatient && selectedDate && selectedTime;
@@ -110,27 +167,37 @@ const FrontDeskOpTests = ({
 
             {/* Main Content */}
             <div className="grid grid-cols-2 gap-6">
-                {/* Pending Tests */}
+                {/* Requested Tests */}
                 <div className={`p-4 rounded-lg shadow ${darkMode ? "bg-gray-800" : "bg-white"}`}>
-                    <h2 className="text-xl font-semibold mb-2">Pending Tests</h2>
-                    <div className="max-h-72 overflow-y-auto pr-2 space-y-2">
-                        {pendingTests.map((p) => (
-                            <div
-                                key={p.id}
-                                className="p-2 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-                                onClick={() => setSelectedPatient(p)}
-                            >
-                                {p.name} (ID: {p.id}) — {p.reason}
-                            </div>
-                        ))}
-                    </div>
+                    <h2 className="text-xl font-semibold mb-2">Requested Tests</h2>
+                    {loadingRequested ? (
+                        <div className="text-gray-500">Loading...</div>
+                    ) : errorRequested ? (
+                        <div className="text-red-500">{errorRequested}</div>
+                    ) : (
+                        <div className="max-h-72 overflow-y-auto pr-2 space-y-2">
+                            {requestedTests.length === 0 ? (
+                                <div className="text-gray-500">No requested tests found.</div>
+                            ) : (
+                                requestedTests.map((p) => (
+                                    <div
+                                        key={p.id}
+                                        className="p-2 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        onClick={() => setSelectedPatient(p)}
+                                    >
+                                        {p.name} (ID: {p.id}) — {p.reason}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
 
                     {selectedPatient && (
                         <div className="mt-4 border-t pt-4 space-y-2 text-sm">
                             <p><strong>Name:</strong> {selectedPatient.name}</p>
                             <p><strong>ID:</strong> {selectedPatient.id}</p>
                             <p><strong>Sex:</strong> {selectedPatient.sex}</p>
-                            <p><strong>DOB:</strong> {format(new Date(selectedPatient.dob), "PPP")}</p>
+                            <p><strong>DOB:</strong> {selectedPatient.dob ? format(new Date(selectedPatient.dob), "PPP") : "N/A"}</p>
                             <p><strong>Test:</strong> {selectedPatient.reason}</p>
 
                             <div className="flex gap-4 mt-2">
@@ -164,19 +231,28 @@ const FrontDeskOpTests = ({
                         </div>
                     )}
                 </div>
-
-                {/* Scheduled Tests */}
+                {/* Pending Tests */}
                 <div className={`p-4 rounded-lg shadow ${darkMode ? "bg-gray-800" : "bg-white"}`}>
-                    <h2 className="text-xl font-semibold mb-2">Scheduled Tests</h2>
-                    <div className="max-h-72 overflow-y-auto pr-2 space-y-2">
-                        {scheduledTests.map((s) => (
-                            <div key={s.id} className="p-2 border-b">
-                                <div>{s.name} (ID: {s.id})</div>
-                                <div className="text-sm text-gray-500">{format(new Date(s.scheduledAt), "PPPp")}</div>
-                                <div className="text-sm text-gray-500">{s.reason}</div>
-                            </div>
-                        ))}
-                    </div>
+                    <h2 className="text-xl font-semibold mb-2">Pending Tests</h2>
+                    {loadingPending ? (
+                        <div className="text-gray-500">Loading...</div>
+                    ) : errorPending ? (
+                        <div className="text-red-500">{errorPending}</div>
+                    ) : (
+                        <div className="max-h-72 overflow-y-auto pr-2 space-y-2">
+                            {pendingTests.length === 0 ? (
+                                <div className="text-gray-500">No pending tests found.</div>
+                            ) : (
+                                pendingTests.map((s) => (
+                                    <div key={s.id} className="p-2 border-b">
+                                        <div>{s.name} (ID: {s.id})</div>
+                                        <div className="text-sm text-gray-500">{s.scheduledAt ? format(new Date(s.scheduledAt), "PPPp") : "N/A"}</div>
+                                        <div className="text-sm text-gray-500">{s.reason}</div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -30,6 +30,8 @@ import addAppointmentDetailsRouter from "./routes/appointments/addAppointmentDet
 import dbmanagerdoctor from "./routes/DBmanager/doctor.routes";
 import dbtestavailable from "./routes/DBmanager/testavailable.routes";
 import dbmanagerpatient from "./routes/DBmanager/patient.routes";
+import testsPendingRouter from "./routes/tests/getTestsStatusPending.routes";
+import testsRequestedRouter from "./routes/tests/getTestsStatusRequested.routes";
 
 dotenv.config();
 const app = express();
@@ -37,21 +39,19 @@ const app = express();
 const PORT = parseInt(process.env.PORT || "5000", 10);
 
 // Middlewares
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-      "https://effective-enigma-6jx7j47vvj635gqv-5173.app.github.dev",
-      "https://probable-parakeet-9vw4979p6q5c4x4-5173.app.github.dev",
-      "https://improved-umbrella-6997vv74rqgpc59gx-5173.app.github.dev",
-      "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5173.app.github.dev",
-      "https://special-spoon-q7wxq4pjqwrf4rrw-5173.app.github.dev",
-      // Add any other URLs you use (e.g., Codespaces)
-    ],
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://probable-parakeet-9vw4979p6q5c4x4-5173.app.github.dev",
+    "https://effective-enigma-6jx7j47vvj635gqv-5173.app.github.dev",
+    "https://improved-umbrella-6997vv74rqgpc59gx-5173.app.github.dev",
+    "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5173.app.github.dev",
+    "https://special-spoon-q7wxq4pjqwrf4rrw-5173.app.github.dev",
+    // Add any other frontend URLs you use
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 
 // Routes
@@ -75,6 +75,8 @@ app.use("/api/front-desk-operator/admissions", getAdmitRequestedAdmissionsRouter
 app.use("/api/front-desk-operator/admissions", getDischargeRequestedAdmissionsRouter)
 app.use("/api/front-desk-operator/admissions/room", roomRouter)
 app.use("/api/front-desk-operator/admissions/admit", admitPatientRouter)
+app.use("/api/front-desk-operator/tests", testsPendingRouter)
+app.use("/api/front-desk-operator/tests", testsRequestedRouter)
 
 app.use("/api/access/admissions", admissionsRouter)
 

@@ -30,16 +30,20 @@ function App() {
         <Route path="/patient-info" element={<PatientInfoFormPage />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/patientHome" element={<PatientHomePage />} />
+
         <Route path="/front-desk-dashboard" element={<FrontDeskHomePage />} />
         <Route path="/front-desk-appointments" element={<FrontDeskOpAppointments />} />
         <Route path="/front-desk-appointments" element={<FrontDeskOpAppointments />} />
         <Route path="/front-desk-admissions" element={<FrontDeskOpAdmissions />} />
         <Route path="/front-desk-tests" element={<FrontDeskOpTestsPage />} />
         <Route path="/front-desk-treatments" element={<FrontDeskOpTreatmentsPage />} />
+
         <Route path="/data-entry-home" element={<DataEntryOpHomePage />} />
+
         <Route path="/doctor-home" element={<DoctorHomePage />} />
         <Route path="/doctor-pending" element={<DoctorPendingPage />} />
         <Route path="/doctor-complete" element={<DoctorCompletePage />} />
+        
         <Route path="/database-manager" element={<DatabaseManager />} />
       </Routes>
     </Router>
