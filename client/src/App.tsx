@@ -4,7 +4,6 @@ import PatientHomePage from "./pages/patient/PatientHomePage";
 import PatientInfoFormPage from "./pages/patient/PatientInfoFormPage";
 import LoginPatient from "./pages/login-signup/LoginPatient";
 import SignUpPatient from "./pages/login-signup/SignUpPatient";
-import LoginStaff from "./pages/login-signup/LoginStaff";
 import FrontDeskHomePage from "./pages/frontDeskOperator/frontDeskOpDashboardPage";
 import FrontDeskOpAppointments from "./pages/frontDeskOperator/frontDeskOpAppointmentsPage";
 import FrontDeskOpAdmissions from "./pages/frontDeskOperator/frontDeskOpAdmissionsPage";
@@ -15,6 +14,7 @@ import DoctorHomePage from "./pages/doctor/doctorHomePage";
 import DoctorPendingPage from "./pages/doctor/doctorPendingPage"
 import DoctorCompletePage from "./pages/doctor/doctorCompletePage";
 import DatabaseManager from "./pages/dbmanager/dashboard";
+import StaffLoginPage from "./pages/auth-staff/LoginStaff";
 
 
 function App() {
@@ -22,8 +22,10 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Navigate to="/login-patient" replace />} />
-        <Route path="/login-staff" element={<LoginStaff />} />
         <Route path="/login-patient" element={<LoginPatient />} />
+
+        <Route path="/login-staff" element={<StaffLoginPage />} />
+
         <Route path="/signup-patient" element={<SignUpPatient />} />
         <Route path="/patient-info" element={<PatientInfoFormPage />} />
         <Route path="/home" element={<HomePage />} />
