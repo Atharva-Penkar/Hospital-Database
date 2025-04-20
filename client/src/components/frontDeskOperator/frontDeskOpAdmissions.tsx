@@ -75,6 +75,7 @@ const FrontDeskOpAdmissions = ({
   const [selectedWardType, setSelectedWardType] = useState<WardType>("");
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
+  const [admitting, setAdmitting] = useState(false);
 
   // Fetch seeking admissions
   const fetchSeekingPatients = async () => {
@@ -171,7 +172,7 @@ const FrontDeskOpAdmissions = ({
   // Handler: Admit patient to a room
   const handleAdmit = async (roomNumber: number) => {
     if (!selectedSeek || !selectedSeek.admit_id) return;
-    // 1. Update admission status and assign room
+    setAdmitting(true);
     let admitSuccess = false;
     for (const url of ADMIT_PATIENT_URLS) {
       try {
@@ -187,7 +188,6 @@ const FrontDeskOpAdmissions = ({
         // Try next URL
       }
     }
-    // 2. Update room availability
     let roomSuccess = false;
     for (const url of UPDATE_ROOM_URLS) {
       try {
@@ -203,13 +203,14 @@ const FrontDeskOpAdmissions = ({
         // Try next URL
       }
     }
-    // 3. Refetch rooms and admissions to update UI
     if (admitSuccess && roomSuccess) {
+      // Refetch all data so UI updates
       await fetchRooms();
       await fetchSeekingPatients();
       setSelectedSeek(null);
       setSelectedWardType("");
     }
+    setAdmitting(false);
   };
 
   const handleDischarge = () => {
@@ -254,7 +255,7 @@ const FrontDeskOpAdmissions = ({
               seekingPatients.map((p) => (
                 <div
                   key={p.id}
-                  className="p-1 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm"
+                  className={`p-1 border-b cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-xs sm:text-sm ${admitting ? "opacity-50 pointer-events-none" : ""}`}
                   onClick={() => {
                     setSelectedSeek(p);
                     setSelectedDischarge(null);
@@ -279,6 +280,7 @@ const FrontDeskOpAdmissions = ({
                   className="w-full p-1 border rounded text-xs"
                   value={selectedWardType}
                   onChange={e => setSelectedWardType(e.target.value as WardType)}
+                  disabled={admitting}
                 >
                   <option value="">-- Select --</option>
                   <option value="General">General (1-20)</option>
@@ -348,7 +350,8 @@ const FrontDeskOpAdmissions = ({
               !!selectedWardType &&
               isInSelectedWardType &&
               !isOccupied &&
-              room?.Available;
+              room?.Available &&
+              !admitting;
 
             const highlight =
               selectedWardType && isInSelectedWardType
@@ -366,6 +369,7 @@ const FrontDeskOpAdmissions = ({
                 key={roomNumber}
                 className={`aspect-square flex flex-col items-center justify-center rounded-lg text-center font-semibold transition-colors text-xs sm:text-sm ${highlight}`}
                 onClick={() => isClickable && handleAdmit(roomNumber)}
+                style={admitting ? { pointerEvents: "none", opacity: 0.7 } : {}}
               >
                 <span className="block font-bold">
                   {room ? `${room.Room_Type} ${room.Room_No}` : `Room ${roomNumber}`}
