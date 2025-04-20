@@ -76,6 +76,7 @@ model Treatment {
   Tr_ID        Int
   dosage       Dosage
   duration     Int
+  Status       TreatmentStatus
   appointment  Appointment         @relation(fields: [A_ID], references: [A_ID])
   treatment    TreatmentsAvailable @relation(fields: [Tr_ID], references: [Tr_ID])
 }
@@ -167,6 +168,7 @@ enum TestStatus {
   Pending
   Completed
   Cancelled
+  Requested
 }
 
 enum AppointmentStatus {
@@ -191,4 +193,10 @@ enum AdmitStatus {
   Admitted
   Discharge_Requested
   Discharged
+}
+
+enum TreatmentStatus {
+  Requested
+  Scheduled
+  Cancelled
 }
