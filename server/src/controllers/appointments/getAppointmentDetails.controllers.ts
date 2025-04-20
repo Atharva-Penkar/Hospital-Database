@@ -25,6 +25,7 @@ export const getAppointmentDetails = async (req: Request, res: Response) => {
             test_id: true,
             TimeStamp: true,
             Status: true,
+            Result: true, // <-- Include the test result here
             test: { select: { test_name: true } }
           }
         },

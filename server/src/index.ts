@@ -15,11 +15,11 @@ import scheduleAppointmentRouter from "./routes/appointments/updateAppointments.
 import testsAvailableRouter from "./routes/testsAvailable/testsAvailable.routes";
 import treatmentsAvailableRouter from "./routes/treatmentsAvailable/treatmentsAvailable.routes";
 import doctorInfoRouter from "./routes/doctorSnehal/doctorInfo.routes";
-import getAdmitRequestedAdmissionsRouter from "./routes/admissions/getAdmitRequestedAdmissions.routes";
-import getDischargeRequestedAdmissionsRouter from "./routes/admissions/getDischargeRequestedAdmissions.routes";
+// import getAdmitRequestedAdmissionsRouter from "./routes/admissions/getAdmitRequestedAdmissions.routes";
+// import getDischargeRequestedAdmissionsRouter from "./routes/admissions/getDischargeRequestedAdmissions.routes";
 import admissionsRouter from "./routes/admissions/admissionsBASIC.routes";
-import roomRouter from "./routes/room/room.routes";
-import admitPatientRouter from "./routes/admissions/updateAR2AAdmissions.routes";
+// import roomRouter from "./routes/room/room.routes";
+// import admitPatientRouter from "./routes/admissions/updateAR2AAdmissions.routes";
 
 import doctorPendingAppointmentsRouter from "./routes/doctorSnehal/doctorPending.routes";
 import doctorCompletedAppointmentsRouter from "./routes/doctorSnehal/doctorComplete.routes";

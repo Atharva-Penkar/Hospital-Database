@@ -15,19 +15,27 @@ const dosageLabels: Record<string, string> = {
   "YYY": "All three times"
 };
 
+// All backend bases for robust fetch
+const APPOINTMENT_DETAILS_BASES = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev",
+  "http://localhost:5000"
+];
+
 const DoctorComplete: React.FC = () => {
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const id = localStorage.getItem("appointmentId");
-    setAppointmentId(id);
-    // Use appointmentId in your fetch logic
-  }, []);
-  
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [appointment, setAppointment] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = localStorage.getItem("appointmentId");
+    setAppointmentId(id);
+  }, []);
 
   useEffect(() => {
     if (darkMode) {
@@ -41,13 +49,8 @@ const DoctorComplete: React.FC = () => {
     const fetchAppointment = async () => {
       setLoading(true);
       setError(null);
-      const urls = [
-        "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
-        "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev",
-        "http://127.0.0.1:5000"
-      ];
       let lastError: any = null;
-      for (let base of urls) {
+      for (let base of APPOINTMENT_DETAILS_BASES) {
         try {
           const res = await fetch(`${base}/api/appointment-details/${appointmentId}`);
           if (res.ok) {
@@ -81,9 +84,7 @@ const DoctorComplete: React.FC = () => {
             className="relative w-14 h-7 bg-gray-300 dark:bg-gray-700 rounded-full cursor-pointer transition"
             onClick={() => setDarkMode((prev) => !prev)}
           >
-            <div
-              className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${darkMode ? "translate-x-7" : "translate-x-1"}`}
-            />
+            <div className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${darkMode ? "translate-x-7" : "translate-x-1"}`} />
             <div className="absolute inset-0 flex justify-between items-center px-1.5">
               <Sun className="w-4 h-4 text-yellow-500" />
               <Moon className="w-4 h-4 text-blue-400" />
@@ -103,7 +104,7 @@ const DoctorComplete: React.FC = () => {
       {/* Show only after loading and if appointment exists */}
       {!loading && appointment && (
         <>
-          {/* Patient Info & Medical History */}
+          {/* Patient Info */}
           <Card className={`mb-8 ${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
             <CardHeader>
               <CardTitle>Patient Information</CardTitle>
@@ -113,9 +114,7 @@ const DoctorComplete: React.FC = () => {
                 <div className="flex-1 space-y-2">
                   <div><b>Name:</b> {appointment.patient?.name}</div>
                   <div><b>Patient ID:</b> {appointment.P_ID}</div>
-                  {/* Add age/sex if available in your backend response */}
                 </div>
-                {/* If you want to show medical history, you can add another fetch or expand your backend */}
               </div>
             </CardContent>
           </Card>
@@ -183,17 +182,34 @@ const DoctorComplete: React.FC = () => {
                               test.Status === "Completed"
                                 ? "text-green-600"
                                 : test.Status === "Pending"
-                                ? "text-yellow-600"
-                                : "text-red-600"
+                                  ? "text-yellow-600"
+                                  : test.Status === "Cancelled"
+                                    ? "text-red-600"
+                                    : test.Status === "Requested"
+                                      ? "text-blue-600"
+                                      : "text-gray-600"
                             }
                           >
                             {test.Status}
                           </span>
-                          {test.Status === "Completed" && test.result && (
-                            <div>
-                              <b>Result:</b> {test.result}
-                            </div>
-                          )}
+                          <div>
+                            <b>Result:</b>{" "}
+                            <span
+                              className={
+                                test.Status === "Completed"
+                                  ? "text-green-600"
+                                  : test.Status === "Pending"
+                                    ? "text-yellow-600"
+                                    : test.Status === "Cancelled"
+                                      ? "text-red-600"
+                                      : test.Status === "Requested"
+                                        ? "text-blue-600"
+                                        : "text-gray-600"
+                              }
+                            >
+                              {test.Result && test.Result.trim() !== "" ? test.Result : "No result"}
+                            </span>
+                          </div>
                         </li>
                       ))}
                     </ul>

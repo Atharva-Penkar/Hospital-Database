@@ -15,6 +15,16 @@ const DOSAGE_OPTIONS = [
   { value: "YYY", label: "All three times" },
 ];
 
+// All backend bases for robust fetch
+const BASES = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev",
+  "http://localhost:5000"
+];
+
 const DoctorPending: React.FC = () => {
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
 
@@ -69,16 +79,11 @@ const DoctorPending: React.FC = () => {
     const fetchAll = async () => {
       setLoading(true);
       setError(null);
-      const urls = [
-        "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
-        "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev",
-        "http://127.0.0.1:5000"
-      ];
       try {
         // Fetch appointment details
         let appointmentData = null;
         let lastError = null;
-        for (let base of urls) {
+        for (let base of BASES) {
           try {
             const appointmentRes = await fetch(`${base}/api/appointment-details/${appointmentId}`);
             if (appointmentRes.ok) {
@@ -97,7 +102,7 @@ const DoctorPending: React.FC = () => {
         // Fetch patient details (for medical history, allergies, etc.)
         if (appointmentData.appointment?.P_ID) {
           let patientData = null;
-          for (let base of urls) {
+          for (let base of BASES) {
             try {
               const patientRes = await fetch(`${base}/api/patient/${appointmentData.appointment.P_ID}`);
               if (patientRes.ok) {
@@ -111,7 +116,7 @@ const DoctorPending: React.FC = () => {
 
         // Fetch available diagnoses
         let diagnosisData = null;
-        for (let base of urls) {
+        for (let base of BASES) {
           try {
             const diagnosisRes = await fetch(`${base}/api/diagnoses`);
             if (diagnosisRes.ok) {
@@ -124,7 +129,7 @@ const DoctorPending: React.FC = () => {
 
         // Fetch available tests
         let testData = null;
-        for (let base of urls) {
+        for (let base of BASES) {
           try {
             const testRes = await fetch(`${base}/api/tests-available`);
             if (testRes.ok) {
@@ -137,7 +142,7 @@ const DoctorPending: React.FC = () => {
 
         // Fetch available treatments
         let treatmentData = null;
-        for (let base of urls) {
+        for (let base of BASES) {
           try {
             const treatmentRes = await fetch(`${base}/api/treatments-available`);
             if (treatmentRes.ok) {
@@ -189,13 +194,8 @@ const DoctorPending: React.FC = () => {
     setTests((prev) => prev.filter((t) => t !== test));
   };
 
-  // --- POST request to complete the appointment ---
+  // --- Submit request to complete the appointment ---
   const handleSubmit = async () => {
-    const urls = [
-      "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
-      "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev",
-      "http://127.0.0.1:5000"
-    ];
     setLoading(true);
     setError(null);
 
@@ -203,9 +203,9 @@ const DoctorPending: React.FC = () => {
       // 1. POST to add appointment details
       let postSuccess = false;
       let lastPostError = null;
-      for (let base of urls) {
+      for (let base of BASES) {
         try {
-          const res = await fetch(`${base}/api/appointments/add/${appointmentId}`, {
+          const res = await fetch(`${base}/api/appointment-details/add/${appointmentId}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -230,9 +230,9 @@ const DoctorPending: React.FC = () => {
       // 2. PUT to set appointment as finished
       let putSuccess = false;
       let lastPutError = null;
-      for (let base of urls) {
+      for (let base of BASES) {
         try {
-          const res = await fetch(`${base}/api/appointments/set/${appointmentId}`, {
+          const res = await fetch(`${base}/api/appointment-details/set/${appointmentId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({}),

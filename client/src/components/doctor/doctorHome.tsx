@@ -45,12 +45,22 @@ type AdmittedPatient = {
   };
 };
 
-// Helper: try all base URLs in order for a given endpoint
-async function fetchFromAllBases(bases: string[], endpoint: string) {
+// --- All backend base URLs ---
+const BASE_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev",
+  "http://localhost:5000"
+];
+
+// --- Helper: try all base URLs in order for a given endpoint ---
+async function fetchFromAllBases(bases: string[], endpoint: string, options?: RequestInit) {
   let lastError;
   for (let base of bases) {
     try {
-      const res = await fetch(`${base}${endpoint}`);
+      const res = await fetch(`${base}${endpoint}`, options);
       if (res.ok) return await res.json();
       lastError = new Error(`HTTP error ${res.status} from ${base}${endpoint}`);
     } catch (err) {
@@ -62,7 +72,7 @@ async function fetchFromAllBases(bases: string[], endpoint: string) {
 
 const DoctorHome: React.FC = () => {
   // Replace with actual doctor ID (from auth or context)
-  const doctorId = 102;
+  const doctorId = 103;
   const navigate = useNavigate();
 
   const [darkMode, setDarkMode] = useState(false);
@@ -74,13 +84,6 @@ const DoctorHome: React.FC = () => {
   const [completedAppointments, setCompletedAppointments] = useState<Appointment[]>([]);
   const [admittedPatients, setAdmittedPatients] = useState<AdmittedPatient[]>([]);
   const [activeTab, setActiveTab] = useState<"pending" | "completed" | "admitted">("pending");
-
-  // Array of base URLs to try in order
-  const baseUrls = [
-    "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
-    "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev",
-    "http://127.0.0.1:5000"
-  ];
 
   // Fetch all data in parallel using for-loop fallback logic
   useEffect(() => {
@@ -97,7 +100,7 @@ const DoctorHome: React.FC = () => {
     (async () => {
       try {
         const [doctorRes, pendingRes, completedRes, admittedRes] = await Promise.all(
-          endpoints.map(ep => fetchFromAllBases(baseUrls, ep))
+          endpoints.map(ep => fetchFromAllBases(BASE_URLS, ep))
         );
         setDoctor(doctorRes.doctor);
         setPendingAppointments(pendingRes.appointments || []);
@@ -128,14 +131,23 @@ const DoctorHome: React.FC = () => {
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
 
-  // Request discharge for a patient
+  // Request discharge for a patient using all bases
   const handleRequestDischarge = async (admit_id: number) => {
-    try {
-      await fetch(`http://127.0.0.1:5000/api/doctor-admitted/${doctorId}/discharge/${admit_id}/`, { method: "PUT" });
+    let dischargeSuccess = false;
+    for (let base of BASE_URLS) {
+      try {
+        const res = await fetch(`${base}/api/doctor-admitted/${doctorId}/discharge/${admit_id}/`, { method: "PUT" });
+        if (res.ok) {
+          dischargeSuccess = true;
+          break;
+        }
+      } catch {}
+    }
+    if (dischargeSuccess) {
       setAdmittedPatients((prev) =>
         prev.filter((p) => p.admit_id !== admit_id)
       );
-    } catch {
+    } else {
       // Optionally show an error toast
     }
   };
