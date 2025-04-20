@@ -165,10 +165,17 @@ enum RoomType {
 }
 
 enum TestStatus {
+  Requested
   Pending
   Completed
   Cancelled
   Requested
+}
+
+enum TreatmentStatus {
+  Requested
+  Scheduled
+  Cancelled
 }
 
 enum AppointmentStatus {

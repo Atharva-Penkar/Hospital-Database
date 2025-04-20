@@ -36,7 +36,7 @@ export const addAppointmentDetails = async (req: Request, res: Response) => {
           T_ID: t.T_ID,
           A_ID: appointmentId,
           TimeStamp: new Date(),
-          Status: "Pending"
+          Status: "Requested"
         }))
       });
     }
@@ -48,7 +48,9 @@ export const addAppointmentDetails = async (req: Request, res: Response) => {
           Tr_ID: tr.Tr_ID,
           A_ID: appointmentId,
           dosage: tr.dosage,
-          duration: tr.duration
+          duration: tr.duration,
+          // TimeStamp: new Date(),
+          Status: "Requested"
         }))
       });
     }
