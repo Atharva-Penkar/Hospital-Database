@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { LogOut, Sun, Moon } from "lucide-react";
 
-// Try Codespace URL first, then localhost
+// BACKEND_URLS remains the same.
 const BACKEND_URLS = [
   "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev",
   "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev",
@@ -31,20 +31,21 @@ const BACKEND_URLS = [
   "http://localhost:5000"
 ];
 
+// Update the Patient type to use "Sex" (with a capital S)
 type Patient = {
   P_ID: number;
   name: string;
   address: string;
   DOB: string;
-  sex: string;
+  Sex: string;  // Note: now capitalized!
   mail: string;
   phone_no: string;
   emergency_phone_no: string;
   admissions: any[];
-  allergies: { name: string }[];
+  // Allergy data, expecting allergy_name will be returned.
+  allergies: { allergy_name: string }[];
 };
 
-// New Appointment type for the appointments tab.
 type Appointment = {
   A_ID: number;
   TimeStamp: string;
@@ -52,7 +53,7 @@ type Appointment = {
   Symptoms?: string;
 };
 
-// We'll use the same fallback function to try multiple URLs.
+// Fallback function to try multiple backend URLs.
 const fetchFromFallbackURLs = async (path: string, options?: RequestInit) => {
   let lastError: any = null;
   for (const baseUrl of BACKEND_URLS) {
@@ -131,7 +132,7 @@ const PatientHome = () => {
     setAppointmentData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Fetch patient details from backend.
+  // Fetch patient details.
   useEffect(() => {
     const fetchPatient = async () => {
       try {
@@ -139,6 +140,7 @@ const PatientHome = () => {
         if (!userId) throw new Error("User ID not found");
         const res = await fetchFromFallbackURLs(`/api/patient/${userId}`);
         const data = await res.json();
+        console.log("Fetched patient:", data.patient);
         setPatient(data.patient);
       } catch (err) {
         console.error("Error fetching patient:", err);
@@ -149,7 +151,7 @@ const PatientHome = () => {
     fetchPatient();
   }, []);
 
-  // Once patient is available, fetch their appointments using their P_ID.
+  // Fetch appointments once patient data is available.
   useEffect(() => {
     const fetchAppointments = async () => {
       if (!patient) return;
@@ -158,6 +160,7 @@ const PatientHome = () => {
         const res = await fetchFromFallbackURLs(`/api/appointments/patient/${patient.P_ID}`);
         const data = await res.json();
         if (Array.isArray(data.appointments)) {
+          console.log("Fetched appointments:", data.appointments);
           setAppointments(data.appointments);
         } else {
           throw new Error("Invalid appointments data");
@@ -172,7 +175,7 @@ const PatientHome = () => {
     fetchAppointments();
   }, [patient]);
 
-  // Appointment submission handler (for Request Appointment tab)
+  // Appointment submission handler.
   const handleSubmit = async () => {
     try {
       const userId = localStorage.getItem("userId");
@@ -260,12 +263,17 @@ const PatientHome = () => {
                 <p><strong>Name:</strong> {patient.name}</p>
                 <p><strong>Address:</strong> {patient.address}</p>
                 <p><strong>DOB:</strong> {format(new Date(patient.DOB), "MM/dd/yyyy")}</p>
-                <p><strong>Sex:</strong> {patient.sex}</p>
+                <p><strong>Sex:</strong> {patient.Sex}</p>
                 <p><strong>Email:</strong> {patient.mail}</p>
                 <p><strong>Phone:</strong> {patient.phone_no}</p>
                 <p><strong>Emergency Contact:</strong> {patient.emergency_phone_no}</p>
                 <p><strong>Admissions:</strong> {patient.admissions.length}</p>
-                <p><strong>Allergies:</strong> {patient.allergies.map(a => a.name).join(", ") || "None"}</p>
+                <p>
+                  <strong>Allergies:</strong>{" "}
+                  {patient.allergies && patient.allergies.length > 0
+                    ? patient.allergies.map((a) => a.allergy_name).join(", ")
+                    : "None"}
+                </p>
               </>
             ) : (
               <p>Patient not found.</p>

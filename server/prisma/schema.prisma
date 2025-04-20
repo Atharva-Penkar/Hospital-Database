@@ -131,9 +131,10 @@ model MedicalHistory {
 }
 
 model Allergy {
-  allergy_id Int     @id @default(autoincrement())
-  P_ID       Int
-  patient    Patient @relation(fields: [P_ID], references: [P_ID])
+  allergy_id   Int     @id @default(autoincrement())
+  allergy_name String
+  P_ID         Int
+  patient      Patient @relation(fields: [P_ID], references: [P_ID])
 }
 
 model AuthPatient {
