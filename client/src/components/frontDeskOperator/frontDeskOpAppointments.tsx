@@ -18,28 +18,22 @@ import {
 import { LogOut, Moon, Sun } from "lucide-react";
 import { format } from "date-fns";
 
-const BACKEND_URLS = [
+// Separate backend URL arrays for each operation
+const SPECIALIZATIONS_URLS = [
   "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev",
   "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev",
   "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev",
   "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev",
   "http://localhost:5000"
 ];
-
-async function fetchFromBackends(path: string, options?: RequestInit) {
-  for (const baseUrl of BACKEND_URLS) {
-    try {
-      const res = await fetch(`${baseUrl}${path}`, options);
-      if (res.ok) return await res.json();
-    } catch (err) {
-      // Try next URL
-    }
-  }
-  throw new Error("All backend URLs failed for: " + path);
-}
+const APPOINTMENT_REQUESTS_URLS = [...SPECIALIZATIONS_URLS];
+const SCHEDULED_APPOINTMENTS_URLS = [...SPECIALIZATIONS_URLS];
+const DOCTORS_BY_SPEC_URLS = [...SPECIALIZATIONS_URLS];
+const SCHEDULE_APPOINTMENT_URLS = [...SPECIALIZATIONS_URLS];
 
 interface AppointmentRequest {
-  A_ID: number; // Ensure this is present for update
+  A_ID: number;
   P_ID: number;
   name: string;
   Sex: string;
@@ -72,24 +66,16 @@ const FrontDeskOpAppointments = ({
   toggleDarkMode: () => void;
 }) => {
   const [specializations, setSpecializations] = useState<string[]>([]);
-  const [selectedRequest, setSelectedRequest] =
-    useState<AppointmentRequest | null>(null);
-  const [selectedAppointment, setSelectedAppointment] =
-    useState<ScheduledAppointment | null>(null);
-  const [selectedScheduledAppointment, setSelectedScheduledAppointment] =
-    useState<ScheduledAppointment | null>(null);
-  const [selectedSpecialization, setSelectedSpecialization] =
-    useState<string>("");
+  const [selectedRequest, setSelectedRequest] = useState<AppointmentRequest | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<ScheduledAppointment | null>(null);
+  const [selectedScheduledAppointment, setSelectedScheduledAppointment] = useState<ScheduledAppointment | null>(null);
+  const [selectedSpecialization, setSelectedSpecialization] = useState<string>("");
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [scheduledAppointments, setScheduledAppointments] = useState<
-    ScheduledAppointment[]
-  >([]);
-  const [appointmentRequests, setAppointmentRequests] = useState<
-    AppointmentRequest[]
-  >([]);
+  const [scheduledAppointments, setScheduledAppointments] = useState<ScheduledAppointment[]>([]);
+  const [appointmentRequests, setAppointmentRequests] = useState<AppointmentRequest[]>([]);
 
   const isFormComplete =
     selectedRequest && selectedSpecialization && selectedDoctor && date && time;
@@ -103,75 +89,85 @@ const FrontDeskOpAppointments = ({
   // Fetch specializations from backend
   useEffect(() => {
     const fetchSpecializations = async () => {
-      try {
-        const data = await fetchFromBackends("/api/doctors/specializations");
-        setSpecializations(data.specializations || []);
-      } catch (error) {
-        console.error("Error fetching specializations:", error);
-        setSpecializations([]);
+      for (const baseUrl of SPECIALIZATIONS_URLS) {
+        try {
+          const res = await fetch(`${baseUrl}/api/doctors/specializations`);
+          if (res.ok) {
+            const data = await res.json();
+            setSpecializations(data.specializations || []);
+            return;
+          }
+        } catch (error) {
+          // Try next URL
+        }
       }
+      setSpecializations([]);
+      console.error("All specialization URLs failed.");
     };
     fetchSpecializations();
   }, []);
-  
 
   // Fetch appointment requests (Requested status)
   useEffect(() => {
     const fetchAppointmentRequests = async () => {
-      try {
-        const data = await fetchFromBackends("/api/appointments/requested");
-        if (Array.isArray(data.appointments)) {
-          const transformed = data.appointments.map((item: any) => ({
-            A_ID: item.A_ID,
-            P_ID: item.patient.P_ID,
-            name: item.patient.name,
-            Sex: item.patient.Sex,
-            DOB: item.patient.DOB,
-            symptoms: item.Symptoms,
-            requestedAt: item.TimeStamp,
-          }));
-          setAppointmentRequests(transformed);
-        } else {
-          setAppointmentRequests([]);
+      for (const baseUrl of APPOINTMENT_REQUESTS_URLS) {
+        try {
+          const res = await fetch(`${baseUrl}/api/appointments/requested`);
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.appointments)) {
+              const transformed = data.appointments.map((item: any) => ({
+                A_ID: item.A_ID,
+                P_ID: item.patient.P_ID,
+                name: item.patient.name,
+                Sex: item.patient.Sex,
+                DOB: item.patient.DOB,
+                symptoms: item.Symptoms,
+                requestedAt: item.TimeStamp,
+              }));
+              setAppointmentRequests(transformed);
+              return;
+            }
+          }
+        } catch (err) {
+          // Try next URL
         }
-      } catch (err) {
-        setAppointmentRequests([]);
       }
+      setAppointmentRequests([]);
+      console.error("All appointment request URLs failed.");
     };
     fetchAppointmentRequests();
   }, []);
-  
 
   // Fetch scheduled appointments (Scheduled status)
   useEffect(() => {
     const fetchScheduledAppointments = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:5000/api/appointments/scheduled"
-        );
-        if (!response.ok)
-          throw new Error("Failed to fetch scheduled appointments");
-        const data = await response.json();
-
-        if (Array.isArray(data.appointments)) {
-          const transformed = data.appointments.map((item: any) => ({
-            patientName: item.patient?.name ?? "Unknown",
-            patientId: item.patient?.P_ID ?? 0,
-            doctorName: item.doctor?.name ?? "Unknown",
-            doctorId: item.doctor?.D_ID ?? 0,
-            specialization: item.doctor?.specialization ?? "Unknown",
-            date: item.TimeStamp ? item.TimeStamp.slice(0, 10) : "",
-            time: item.TimeStamp ? item.TimeStamp.slice(11, 16) : "",
-          }));
-          setScheduledAppointments(transformed);
-        } else {
-          console.error("Expected array under 'appointments' but got:", data);
+      for (const baseUrl of SCHEDULED_APPOINTMENTS_URLS) {
+        try {
+          const res = await fetch(`${baseUrl}/api/appointments/scheduled`);
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.appointments)) {
+              const transformed = data.appointments.map((item: any) => ({
+                patientName: item.patient?.name ?? "Unknown",
+                patientId: item.patient?.P_ID ?? 0,
+                doctorName: item.doctor?.name ?? "Unknown",
+                doctorId: item.doctor?.D_ID ?? 0,
+                specialization: item.doctor?.specialization ?? "Unknown",
+                date: item.TimeStamp ? item.TimeStamp.slice(0, 10) : "",
+                time: item.TimeStamp ? item.TimeStamp.slice(11, 16) : "",
+              }));
+              setScheduledAppointments(transformed);
+              return;
+            }
+          }
+        } catch (err) {
+          // Try next URL
         }
-      } catch (err) {
-        console.error("Error fetching scheduled appointments:", err);
       }
+      setScheduledAppointments([]);
+      console.error("All scheduled appointment URLs failed.");
     };
-
     fetchScheduledAppointments();
   }, []);
 
@@ -183,104 +179,76 @@ const FrontDeskOpAppointments = ({
         setSelectedDoctor(null);
         return;
       }
-
-      try {
-        const response = await fetch(
-          `http://localhost:5000/api/doctors/specialization?specialization=${encodeURIComponent(selectedSpecialization)}`
-        );
-        if (!response.ok) throw new Error("Failed to fetch doctors");
-        const data = await response.json();
-        if (data.doctors) {
-          setDoctors(data.doctors);
-          setSelectedDoctor(null);
-        } else {
-          setDoctors([]);
-          setSelectedDoctor(null);
+      for (const baseUrl of DOCTORS_BY_SPEC_URLS) {
+        try {
+          const res = await fetch(
+            `${baseUrl}/api/doctors/specialization?specialization=${encodeURIComponent(selectedSpecialization)}`
+          );
+          if (res.ok) {
+            const data = await res.json();
+            setDoctors(data.doctors || []);
+            setSelectedDoctor(null);
+            return;
+          }
+        } catch (error) {
+          // Try next URL
         }
-      } catch (error) {
-        console.error("Error fetching doctors:", error);
-        setDoctors([]);
-        setSelectedDoctor(null);
       }
+      setDoctors([]);
+      setSelectedDoctor(null);
+      console.error("All doctor fetch URLs failed.");
     };
-
     fetchDoctors();
   }, [selectedSpecialization]);
 
   const handleScheduleAppointment = async () => {
-    console.log("[handleScheduleAppointment] Called");
-
     if (!selectedSpecialization || !selectedRequest || !selectedDoctor || !date || !time) {
-      console.log("[handleScheduleAppointment] Missing required fields", {
-        selectedSpecialization,
-        selectedRequest,
-        selectedDoctor,
-        date,
-        time,
-      });
       return;
     }
-
-    // Combine date and time into an ISO string
     const appointmentDateTime = new Date(`${date}T${time}:00`);
-    console.log("[handleScheduleAppointment] appointmentDateTime:", appointmentDateTime.toISOString());
-
-    try {
-      console.log("[handleScheduleAppointment] Sending API request to /api/appointments/schedule");
-      const res = await fetch("http://localhost:5000/api/appointments/schedule", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          appointmentId: selectedRequest.A_ID,
-          specialization: selectedSpecialization,
-          doctorId: selectedDoctor.D_ID,
-          date: appointmentDateTime.toISOString(),
-        }),
-      });
-
-      console.log("[handleScheduleAppointment] Awaiting response...");
-      const data = await res.json();
-      console.log("[handleScheduleAppointment] API response:", data);
-
-      if (!res.ok) {
-        console.log("[handleScheduleAppointment] API returned error", data.message);
-        alert(data.message || "Failed to schedule appointment");
-        return;
+    let scheduled = false;
+    for (const baseUrl of SCHEDULE_APPOINTMENT_URLS) {
+      try {
+        const res = await fetch(`${baseUrl}/api/appointments/schedule`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            appointmentId: selectedRequest.A_ID,
+            specialization: selectedSpecialization,
+            doctorId: selectedDoctor.D_ID,
+            date: appointmentDateTime.toISOString(),
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          const newScheduledAppointment: ScheduledAppointment = {
+            patientName: selectedRequest.name,
+            patientId: selectedRequest.P_ID,
+            doctorName: selectedDoctor.name,
+            doctorId: selectedDoctor.D_ID,
+            specialization: selectedSpecialization,
+            date,
+            time,
+          };
+          setScheduledAppointments((prev) => [...prev, newScheduledAppointment]);
+          setAppointmentRequests((prev) =>
+            prev.filter((req) => req.A_ID !== selectedRequest.A_ID)
+          );
+          setSelectedAppointment(newScheduledAppointment);
+          setSelectedRequest(null);
+          setSelectedSpecialization("");
+          setSelectedDoctor(null);
+          setDate("");
+          setTime("");
+          scheduled = true;
+          break;
+        }
+      } catch (error) {
+        // Try next URL
       }
-
-      // Update local state: move the appointment from requests to scheduled
-      const newScheduledAppointment: ScheduledAppointment = {
-        patientName: selectedRequest.name,
-        patientId: selectedRequest.P_ID,
-        doctorName: selectedDoctor.name,
-        doctorId: selectedDoctor.D_ID,
-        specialization: selectedSpecialization,
-        date,
-        time,
-      };
-
-      console.log("[handleScheduleAppointment] Updating local state with new scheduled appointment:", newScheduledAppointment);
-
-      setScheduledAppointments((prev) => [...prev, newScheduledAppointment]);
-      setAppointmentRequests((prev) =>
-        prev.filter((req) => req.A_ID !== selectedRequest.A_ID)
-      );
-      setSelectedAppointment(newScheduledAppointment);
-
-      // Reset form
-      setSelectedRequest(null);
-      setSelectedSpecialization("");
-      setSelectedDoctor(null);
-      setDate("");
-      setTime("");
-      console.log("[handleScheduleAppointment] Form reset complete");
-    } catch (error) {
-      console.log("[handleScheduleAppointment] Network or unexpected error:", error);
-      alert("Failed to schedule appointment due to network error.");
-      console.error(error);
     }
+    if (!scheduled) alert("Failed to schedule appointment on all backends.");
   };
-
 
   const clearSelections = () => {
     setSelectedRequest(null);
@@ -508,7 +476,6 @@ const FrontDeskOpAppointments = ({
               </CardContent>
             </Card>
           )}
-
           {/* Confirmation for newly scheduled appointment */}
           {!selectedScheduledAppointment && selectedAppointment && (
             <Card className="mt-6 bg-card text-card-foreground">

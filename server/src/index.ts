@@ -46,6 +46,7 @@ app.use(
       "https://probable-parakeet-9vw4979p6q5c4x4-5173.app.github.dev",
       "https://improved-umbrella-6997vv74rqgpc59gx-5173.app.github.dev",
       "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5173.app.github.dev",
+      "https://special-spoon-q7wxq4pjqwrf4rrw-5173.app.github.dev",
       // Add any other URLs you use (e.g., Codespaces)
     ],
     credentials: true,
