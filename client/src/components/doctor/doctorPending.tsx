@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import logo from "@/assets/images/logo.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { LogOut, Sun, Moon } from "lucide-react";
+import { LogOut, Sun, Moon, X } from "lucide-react";
 
 const DOSAGE_OPTIONS = [
   { value: "YNN", label: "Morning only" },
@@ -47,6 +47,15 @@ const DoctorPending: React.FC = () => {
   const [selectedTreatment, setSelectedTreatment] = useState("");
   const [selectedDosage, setSelectedDosage] = useState("");
   const [selectedDuration, setSelectedDuration] = useState("");
+
+  // For single-select tests dropdown
+  const [availableTests, setAvailableTests] = useState<string[]>([]);
+  const [selectedTest, setSelectedTest] = useState("");
+
+  // Keep availableTests in sync with testOptions and tests
+  useEffect(() => {
+    setAvailableTests(testOptions.filter((t) => !tests.includes(t)));
+  }, [testOptions, tests]);
 
   useEffect(() => {
     if (darkMode) {
@@ -164,6 +173,19 @@ const DoctorPending: React.FC = () => {
 
   const handleRemoveTreatment = (idx: number) => {
     setTreatments((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // --- Tests: Add selected test ---
+  const handleAddTest = () => {
+    if (selectedTest && !tests.includes(selectedTest)) {
+      setTests((prev) => [...prev, selectedTest]);
+      setSelectedTest("");
+    }
+  };
+
+  // --- Tests: Remove a chosen test ---
+  const handleRemoveTest = (test: string) => {
+    setTests((prev) => prev.filter((t) => t !== test));
   };
 
   // --- POST request to complete the appointment ---
@@ -354,19 +376,46 @@ const DoctorPending: React.FC = () => {
                 {/* Tests */}
                 <div className="mb-4">
                   <label className="font-semibold block mb-1">Tests to Prescribe</label>
-                  <select
-                    multiple
-                    className="w-full p-2 rounded border dark:bg-gray-700 dark:text-white"
-                    value={tests}
-                    onChange={e =>
-                      setTests(Array.from(e.target.selectedOptions, o => o.value))
-                    }
-                  >
-                    {testOptions.map((test) => (
-                      <option key={test} value={test}>{test}</option>
-                    ))}
-                  </select>
-                  <div className="text-xs mt-1 text-gray-500">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</div>
+                  <div className="flex gap-2">
+                    <select
+                      className="flex-1 p-2 rounded border dark:bg-gray-700 dark:text-white"
+                      value={selectedTest}
+                      onChange={e => setSelectedTest(e.target.value)}
+                    >
+                      <option value="">Select test</option>
+                      {availableTests.map((test) => (
+                        <option key={test} value={test}>{test}</option>
+                      ))}
+                    </select>
+                    <Button
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={handleAddTest}
+                      disabled={!selectedTest}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  {/* Tests Chosen */}
+                  {tests.length > 0 && (
+                    <div className="mt-3">
+                      <div className="font-semibold mb-1">Tests Chosen:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {tests.map((test) => (
+                          <span key={test} className="inline-flex items-center bg-blue-100 text-blue-800 rounded px-2 py-1 text-xs">
+                            {test}
+                            <button
+                              className="ml-1 text-blue-800 hover:text-red-600 focus:outline-none"
+                              onClick={() => handleRemoveTest(test)}
+                              aria-label="Remove test"
+                              type="button"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Treatments */}
@@ -446,7 +495,7 @@ const DoctorPending: React.FC = () => {
                   onClick={handleSubmit}
                   disabled={!canSubmit}
                 >
-                  Submit Doctor's Orders
+                  Mark as complete
                 </Button>
               </CardContent>
             </Card>
