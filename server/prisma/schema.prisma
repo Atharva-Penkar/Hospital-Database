@@ -76,6 +76,7 @@ model Treatment {
   Tr_ID        Int
   dosage       Dosage
   duration     Int
+  Status       TreatmentStatus
   appointment  Appointment         @relation(fields: [A_ID], references: [A_ID])
   treatment    TreatmentsAvailable @relation(fields: [Tr_ID], references: [Tr_ID])
 }
@@ -133,7 +134,7 @@ model Allergy {
   patient    Patient @relation(fields: [P_ID], references: [P_ID])
 }
 
-model AuthUser {
+model AuthStaff {
   id        Int      @id @default(autoincrement())
   userId    String   @unique
   password  String
@@ -164,8 +165,15 @@ enum RoomType {
 }
 
 enum TestStatus {
+  Requested
   Pending
   Completed
+  Cancelled
+}
+
+enum TreatmentStatus {
+  Requested
+  Scheduled
   Cancelled
 }
 
