@@ -207,7 +207,7 @@ const DoctorComplete: React.FC = () => {
                                         : "text-gray-600"
                               }
                             >
-                              {test.Result && test.Result.trim() !== "" ? test.Result : "No result"}
+                              {test.Result && test.Result.trim() !== null ? test.Result : "No result"}
                             </span>
                           </div>
                         </li>
