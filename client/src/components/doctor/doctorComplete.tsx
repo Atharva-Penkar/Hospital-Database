@@ -43,6 +43,7 @@ const DoctorComplete: React.FC = () => {
       setError(null);
       const urls = [
         "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
+        "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev",
         "http://127.0.0.1:5000"
       ];
       let lastError: any = null;

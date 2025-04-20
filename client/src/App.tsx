@@ -33,7 +33,6 @@ function App() {
 
         <Route path="/front-desk-dashboard" element={<FrontDeskHomePage />} />
         <Route path="/front-desk-appointments" element={<FrontDeskOpAppointments />} />
-        <Route path="/front-desk-appointments" element={<FrontDeskOpAppointments />} />
         <Route path="/front-desk-admissions" element={<FrontDeskOpAdmissions />} />
         <Route path="/front-desk-tests" element={<FrontDeskOpTestsPage />} />
         <Route path="/front-desk-treatments" element={<FrontDeskOpTreatmentsPage />} />
