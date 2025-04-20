@@ -772,6 +772,22 @@ const SPECIALIZATIONS_URLS = [
   "http://localhost:5000"
 ];
 
+const resolveBaseBySpecialization = async (specialization: string): Promise<string | null> => {
+  for (const baseUrl of SPECIALIZATIONS_URLS) {
+    try {
+      const response = await fetch(`${baseUrl}/api/dbdoctor-available`);
+      if (!response.ok) continue;
+      const doctors = await response.json();
+      if (Array.isArray(doctors) && doctors.some((d: ApiDoctor) => d.specialization === specialization)) {
+        return baseUrl;
+      }
+    } catch {
+      continue;
+    }
+  }
+  return null;
+};
+
 interface DoctorsTableProps {
   darkMode: boolean;
 }
@@ -839,22 +855,58 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
     fetchDoctors();
   }, []);
 
-  const addDoctor = async (doctor: Omit<Doctor, 'id'>): Promise<Doctor | undefined> => {
+  // const addDoctor = async (doctor: Omit<Doctor, 'id'>): Promise<Doctor | undefined> => {
+  //   try {
+  //     setLoading(true);
+      
+  //     const response = await fetch('http://localhost:5000/api/dbdoctor-available', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({
+  //         name: doctor.name,
+  //         specialization: doctor.specialization,
+  //         mail: doctor.mail,
+  //         phone: doctor.phone,
+  //         shift: doctor.shift,
+  //         available: doctor.available,
+  //         ad_id: doctor.ad_id
+  //       })
+  //     });
+  //     if (!response.ok) throw new Error('Failed to add doctor');
+  //     const responseData = await response.json();
+  //     const newDoctorData = responseData.doctor || responseData;
+  //     const newDoctorItem: Doctor = {
+  //       id: newDoctorData.D_ID,
+  //       name: newDoctorData.name,
+  //       specialization: newDoctorData.specialization,
+  //       mail: newDoctorData.mail,
+  //       phone: newDoctorData.phone,
+  //       shift: newDoctorData.shift,
+  //       available: newDoctorData.available,
+  //       ad_id: newDoctorData.ad_id
+  //     };
+  //     setDoctors(prevDoctors => [...prevDoctors, newDoctorItem]);
+  //     return newDoctorItem;
+  //   } catch (err) {
+  //     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+  //     setError(errorMessage);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const addDoctor = async (doctor: Omit<Doctor, 'id'>): Promise<void> => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/dbdoctor-available', {
+      const baseUrl = await resolveBaseBySpecialization(doctor.specialization);
+      if (!baseUrl) throw new Error("No service found for the specialization");
+
+      const response = await fetch(`${baseUrl}/api/dbdoctor-available`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: doctor.name,
-          specialization: doctor.specialization,
-          mail: doctor.mail,
-          phone: doctor.phone,
-          shift: doctor.shift,
-          available: doctor.available,
-          ad_id: doctor.ad_id
-        })
+        body: JSON.stringify(doctor)
       });
+
       if (!response.ok) throw new Error('Failed to add doctor');
       const responseData = await response.json();
       const newDoctorData = responseData.doctor || responseData;
@@ -869,10 +921,8 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
         ad_id: newDoctorData.ad_id
       };
       setDoctors(prevDoctors => [...prevDoctors, newDoctorItem]);
-      return newDoctorItem;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -881,7 +931,12 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
   const updateDoctor = async (id: number, doctorData: Partial<Doctor>): Promise<Doctor | undefined> => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/dbdoctor-available/${id}`, {
+      if (!doctorData.specialization) throw new Error("Specialization is required for update");
+
+      const baseUrl = await resolveBaseBySpecialization(doctorData.specialization);
+      if (!baseUrl) throw new Error("No service found for the specialization");
+
+      const response = await fetch(`${baseUrl}/api/dbdoctor-available/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -935,11 +990,52 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({ darkMode }) => {
       setLoading(false);
     }
   };
+  
+  // const updateDoctor = async (id: number, doctorData: Partial<Doctor>): Promise<void> => {
+    // try {
+    //   setLoading(true);
+    //   if (!doctorData.specialization) throw new Error("Specialization is required for update");
+
+    //   const baseUrl = await resolveBaseBySpecialization(doctorData.specialization);
+    //   if (!baseUrl) throw new Error("No service found for the specialization");
+
+    //   const response = await fetch(`${baseUrl}/api/dbdoctor-available/${id}`, {
+  //       method: 'PUT',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify(doctorData)
+  //     });
+
+  //     if (!response.ok) throw new Error('Update failed');
+  //     const responseData = await response.json();
+  //     const updatedDoctorData = responseData.doctor || responseData;
+  //     const updatedDoctor: Doctor = {
+  //       id: updatedDoctorData.D_ID,
+  //       name: updatedDoctorData.name,
+  //       specialization: updatedDoctorData.specialization,
+  //       mail: updatedDoctorData.mail,
+  //       phone: updatedDoctorData.phone,
+  //       shift: updatedDoctorData.shift,
+  //       available: updatedDoctorData.available,
+  //       ad_id: updatedDoctorData.ad_id
+  //     };
+  //     setDoctors(prevDoctors => prevDoctors.map(d => d.id === id ? updatedDoctor : d));
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : 'Unknown error');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const deleteDoctor = async (id: number): Promise<void> => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/dbdoctor-available/${id}`, {
+      const doctorToDelete = doctors.find(d => d.id === id);
+      if (!doctorToDelete) throw new Error("Doctor not found");
+
+      const baseUrl = await resolveBaseBySpecialization(doctorToDelete.specialization);
+      if (!baseUrl) throw new Error("No service found for the specialization");
+
+      const response = await fetch(`${baseUrl}/api/dbdoctor-available/${id}`, {
         method: 'DELETE'
       });
       if (!response.ok) {
