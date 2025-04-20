@@ -24,12 +24,12 @@ const COMPLETED_TESTS_URLS = [
 ];
 
 const SET_RESULT_URLS = [
-  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/tests-finish",
-  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/tests-finish",
-  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/tests-finish",
-  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/tests-finish",
-  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/tests-finish",
-  "http://localhost:5000/api/tests-finish"
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/tests/set-results",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/tests/set-results",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/tests/set-results",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/tests/set-results",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/tests/set-results",
+  "http://localhost:5000/api/tests/set-results"
 ];
 
 // Types

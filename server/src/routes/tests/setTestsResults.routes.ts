@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { setTestResults } from "../../controllers/dataEntry/setTestResults.controllers";
+import { setTestResults } from "../../controllers/tests/setTestsResults.controllers";
 import asyncHandler from "../../middlewares/RouteErrorHandler";
 
 const setTestResultsRouter = Router();
