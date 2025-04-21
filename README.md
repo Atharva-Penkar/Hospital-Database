@@ -49,6 +49,8 @@ npm install
 npm run dev 
 ```
 
+3. **Start the backend**
+
 ```bash
 cd server
 npm install
