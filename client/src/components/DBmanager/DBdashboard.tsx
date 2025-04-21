@@ -182,21 +182,35 @@ const sidebarItems = [
   { icon: Users, label: "Patients", id: "patients" },
   { icon: Users, label: "Doctors", id: "doctors" },
   { icon: Users, label: "Tests Available", id: "tests" },
-  { icon: Calendar, label: "Appointments", id: "appointments" }
+  // { icon: Calendar, label: "Appointments", id: "appointments" }
 ];
 
 // Dummy user data (replace with real user data if available)
-const user = { id: "U12345", name: "Dr. John Doe" };
+// const user = { id: "D12345", name: "John Doe" };
 
 const DatabaseManager = () => {
   const [activeDatabase, setActiveDatabase] = useState("home");
   const [darkMode, setDarkMode] = useState(false);
+  const [user, setUser] = useState({ id: "", name: "" });
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
   const handleLogout = () => {
     // Implement your logout logic here
     alert("Logged out!");
   };
+
+  useEffect(() => {
+    // Retrieve user ID from localStorage
+    const administratorId = localStorage.getItem("administrator_ID");
+    
+    if (administratorId) {
+      // Basic approach - just set the ID
+      setUser({ id: administratorId, name: "Administrator" });
+      
+      // Alternative: Fetch complete user info from your API
+      // fetchUserDetails(administratorId);
+    }
+  }, []);
 
   return (
     <div className={`min-h-screen flex transition-colors duration-300 font-sans ${darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"}`}>
@@ -256,12 +270,12 @@ const DatabaseManager = () => {
           {activeDatabase === "patients" && <PatientsTable darkMode={darkMode} />}
           {activeDatabase === "doctors" && <DoctorsTable darkMode={darkMode} />}
           {activeDatabase === "tests" && <TestsTable darkMode={darkMode} />}
-          {activeDatabase === "appointments" && (
+          {/* {activeDatabase === "appointments" && (
             <div className="text-center py-10">
               <h2 className="text-2xl font-bold mb-4">Appointments</h2>
               <p>Appointments management system will be available soon.</p>
             </div>
-          )}
+          )} */}
           {activeDatabase === "home" && <ProfilePage user={user} darkMode={darkMode} />}
           {!activeDatabase && (
             <div className="flex flex-col items-center justify-center h-[calc(100vh-120px)]">
