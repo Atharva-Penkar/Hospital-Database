@@ -146,7 +146,7 @@ model AuthPatient {
   isOnline  Boolean  @default(false)
 }
 
-model AuthUser {
+model AuthStaff {
   id        Int      @id @default(autoincrement())
   userId    String   @unique
   password  String
