@@ -23,6 +23,7 @@ import admissionsRouter from "./routes/admissions/admissionsBASIC.routes";
 // import roomRouter from "./routes/room/room.routes";
 // import admitPatientRouter from "./routes/admissions/updateAR2AAdmissions.routes";
 
+import diseasesRouter from "./routes/disease/getDiseases.routes";
 import doctorPendingAppointmentsRouter from "./routes/doctorSnehal/doctorPending.routes";
 import doctorCompletedAppointmentsRouter from "./routes/doctorSnehal/doctorComplete.routes";
 import doctorAdmittedPatientsRouter from "./routes/doctorSnehal/doctorAdmitted.routes";
@@ -97,8 +98,8 @@ app.use("/api/appointment-details", getAppointmentDetailsRouter)
 app.use("/api/doctors/specialization", getDoctorsBySpecializationRouter)
 app.use("/api/doctors/specializations", getSpecializationsRouter)
 
+app.use("/api/diagnoses", diseasesRouter)
 app.use("/api/tests-available", testsAvailableRouter)
-
 app.use("/api/treatments-available", treatmentsAvailableRouter)
 
 // app.use("/api/front-desk-operator/admissions", getAdmitRequestedAdmissionsRouter)
