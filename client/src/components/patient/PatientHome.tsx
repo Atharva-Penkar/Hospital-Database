@@ -1,5 +1,7 @@
+"use client";
+
 import { useEffect, useState } from "react";
-import logo from '@/assets/images/logo.png';
+import logo from "@/assets/images/logo.png";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import {
@@ -21,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { LogOut, Sun, Moon } from "lucide-react";
 
-// BACKEND_URLS remains the same.
+// BACKEND_URLS remains unchanged.
 const BACKEND_URLS = [
   "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev",
   "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev",
@@ -30,6 +32,14 @@ const BACKEND_URLS = [
   "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev",
   "http://localhost:5000"
 ];
+
+type MedicalHistoryRecord = {
+  history_id: number;
+  disease: {
+    Disease_Name: string;
+    Description?: string;
+  };
+};
 
 type Patient = {
   P_ID: number;
@@ -42,6 +52,7 @@ type Patient = {
   emergency_phone_no: string;
   admissions: any[];
   allergies: { allergy_name: string }[];
+  medicalHistory: MedicalHistoryRecord[]; // Nested medical history from patient table
 };
 
 type Appointment = {
@@ -49,15 +60,6 @@ type Appointment = {
   TimeStamp: string;
   Status: "Requested" | "Scheduled" | "Finished";
   Symptoms?: string;
-};
-
-// New type for Medical History – each record has an id and a related disease.
-type MedicalHistoryRecord = {
-  history_id: number;
-  disease: {
-    Disease_Name: string;
-    Description?: string;
-  };
 };
 
 // Fallback function to try multiple backend URLs.
@@ -94,10 +96,6 @@ const PatientHome = () => {
   // Appointment-related state
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loadingAppointments, setLoadingAppointments] = useState<boolean>(true);
-
-  // Medical History state
-  const [medicalHistory, setMedicalHistory] = useState<MedicalHistoryRecord[]>([]);
-  const [loadingMedicalHistory, setLoadingMedicalHistory] = useState<boolean>(true);
   
   // Appointment submission state (for the Request Appointment tab)
   const [appointmentData, setAppointmentData] = useState({
@@ -143,7 +141,7 @@ const PatientHome = () => {
     setAppointmentData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Fetch patient details.
+  // Fetch patient details including medicalHistory.
   useEffect(() => {
     const fetchPatient = async () => {
       try {
@@ -186,30 +184,9 @@ const PatientHome = () => {
     fetchAppointments();
   }, [patient]);
 
-  // Fetch medical history once patient data is available.
-  useEffect(() => {
-    const fetchMedicalHistory = async () => {
-      if (!patient) return;
-      setLoadingMedicalHistory(true);
-      try {
-        // Assuming the endpoint uses a query parameter for P_ID.
-        const res = await fetchFromFallbackURLs(`/api/patient/medical-history/P_ID=${patient.P_ID}`);
-        const data = await res.json();
-        if (Array.isArray(data.medicalHistory)) {
-          console.log("Fetched medical history:", data.medicalHistory);
-          setMedicalHistory(data.medicalHistory);
-        } else {
-          throw new Error("Invalid medical history data");
-        }
-      } catch (err) {
-        console.error("Error fetching medical history:", err);
-        toast.error("Failed to fetch medical history");
-      } finally {
-        setLoadingMedicalHistory(false);
-      }
-    };
-    fetchMedicalHistory();
-  }, [patient]);
+  // Since medical history is now part of the patient object,
+  // we simply derive it from patient.medicalHistory.
+  const medicalHistory = patient?.medicalHistory || [];
 
   // Appointment submission handler.
   const handleSubmit = async () => {
@@ -257,6 +234,7 @@ const PatientHome = () => {
     }
   };
 
+
   return (
     <div className={`min-h-screen p-6 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"}`}>
       {/* Top Bar */}
@@ -270,9 +248,7 @@ const PatientHome = () => {
             className="relative w-14 h-7 bg-gray-300 dark:bg-gray-700 rounded-full cursor-pointer transition"
             onClick={toggleDarkMode}
           >
-            <div
-              className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${darkMode ? "translate-x-7" : "translate-x-1"}`}
-            />
+            <div className={`absolute top-0.5 h-6 w-6 bg-white rounded-full shadow-md transition-transform duration-300 ${darkMode ? "translate-x-7" : "translate-x-1"}`} />
             <div className="absolute inset-0 flex justify-between items-center px-1.5">
               <Sun className="w-4 h-4 text-yellow-500" />
               <Moon className="w-4 h-4 text-blue-400" />
@@ -356,18 +332,18 @@ const PatientHome = () => {
                 <CardTitle>Medical History</CardTitle>
               </CardHeader>
               <CardContent>
-                {loadingMedicalHistory ? (
+                {loadingPatient ? (
                   <p>Loading medical history...</p>
-                ) : medicalHistory.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No medical history available.</p>
-                ) : (
+                ) : patient && patient.medicalHistory && patient.medicalHistory.length > 0 ? (
                   <ul className="list-disc pl-5 space-y-2">
-                    {medicalHistory.map((record) => (
+                    {patient.medicalHistory.map((record) => (
                       <li key={record.history_id}>
                         <strong>{record.disease.Disease_Name}</strong>: {record.disease.Description || "No description"}
                       </li>
                     ))}
                   </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No medical history available.</p>
                 )}
               </CardContent>
             </Card>
