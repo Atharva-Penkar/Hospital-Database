@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/card";
 import { LogOut, Moon, Sun } from "lucide-react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 // Separate backend URL arrays for each operation
 const SPECIALIZATIONS_URLS = [
@@ -31,6 +33,15 @@ const APPOINTMENT_REQUESTS_URLS = [...SPECIALIZATIONS_URLS];
 const SCHEDULED_APPOINTMENTS_URLS = [...SPECIALIZATIONS_URLS];
 const DOCTORS_BY_SPEC_URLS = [...SPECIALIZATIONS_URLS];
 const SCHEDULE_APPOINTMENT_URLS = [...SPECIALIZATIONS_URLS];
+
+const LOGOUT_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "http://localhost:5000/api/auth-staff/logout/fdo"
+];
 
 interface AppointmentRequest {
   A_ID: number;
@@ -76,6 +87,44 @@ const FrontDeskOpAppointments = ({
   const [time, setTime] = useState("");
   const [scheduledAppointments, setScheduledAppointments] = useState<ScheduledAppointment[]>([]);
   const [appointmentRequests, setAppointmentRequests] = useState<AppointmentRequest[]>([]);
+
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    try {
+      let lastError: any = null;
+      let logoutSuccess = false;
+      for (const base of LOGOUT_URLS) {
+        try {
+          const res = await fetch(base, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: localStorage.getItem("operator_ID") || ""
+            }),
+          });
+          if (!res.ok) {
+            console.error(`Logout error from ${base}: ${res.status}`);
+            continue;
+          }
+          logoutSuccess = true;
+          break; // Break out if successful
+        } catch (err) {
+          lastError = err;
+          console.error(`Logout error from ${base}:`, err);
+        }
+      }
+      if (!logoutSuccess) {
+        throw lastError;
+      }
+      localStorage.removeItem("operator_ID");
+      toast.success("Logout successful!");
+      navigate("/login-staff");
+    } catch (error: any) {
+      console.error("Logout failed:", error);
+      toast.error("Logout failed: " + error.message);
+    }
+  };
 
   const isFormComplete =
     selectedRequest && selectedSpecialization && selectedDoctor && date && time;
@@ -284,7 +333,7 @@ const FrontDeskOpAppointments = ({
               <Moon className="w-4 h-4 text-blue-400" />
             </div>
           </div>
-          <Button variant="destructive" className="flex items-center gap-2">
+          <Button variant="destructive" className="flex items-center gap-2" onClick={handleLogout}>
             <LogOut className="w-4 h-4" /> Logout
           </Button>
         </div>
