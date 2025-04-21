@@ -50,6 +50,9 @@ import dischargePatientFromRoomRouter from "./routes/admissionsSnehal/dischargeP
 import getAllRoomsRouter from "./routes/admissionsSnehal/getAllRooms.routes";
 import patientAppointmentsRouter from "./routes/patient/patientAppointments.routes";
 import medicalHistoryRouter from "./routes/medical-history/medical-history.routes";
+import logoutFDORouter from "./routes/authStaff/logoutFDO.routes";
+import logoutDEORouter from "./routes/authStaff/logoutDEO.routes";
+import logoutDARouter from "./routes/authStaff/logoutDA.routes";
 
 dotenv.config();
 const app = express();
@@ -74,6 +77,9 @@ app.use(express.json());
 
 // Routes
 app.use("/api/staff-login", loginStaffRouter);
+app.use("/api/auth-staff/logout/fdo", logoutFDORouter)
+app.use("/api/auth-staff/logout/deo", logoutDEORouter)
+app.use("/api/auth-staff/logout/da", logoutDARouter)
 
 app.use("/api/auth-patient", authRouter);
 app.use("/api/patient", patientRouter);

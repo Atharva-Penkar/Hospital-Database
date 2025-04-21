@@ -5,6 +5,8 @@ import logo from "@/assets/images/logo.png";
 import { Button } from "@/components/ui/button";
 import { Sun, Moon, LogOut } from "lucide-react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 // Updated type definitions based on the JSON returned by the server.
 type TreatmentPatient = {
@@ -43,6 +45,15 @@ const SCHEDULE_TREATMENT_URLS = [
   "http://localhost:5000/api/front-desk-operator/treatments/schedule",
 ];
 
+const LOGOUT_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "http://localhost:5000/api/auth-staff/logout/fdo"
+];
+
 const FrontDeskOpTreatments = ({
   darkMode,
   toggleDarkMode,
@@ -63,6 +74,44 @@ const FrontDeskOpTreatments = ({
   const [selectedTime, setSelectedTime] = useState<string>("");
 
   const isFormComplete = selectedTreatment && selectedDate && selectedTime;
+
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    try {
+      let lastError: any = null;
+      let logoutSuccess = false;
+      for (const base of LOGOUT_URLS) {
+        try {
+          const res = await fetch(base, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: localStorage.getItem("operator_ID") || ""
+            }),
+          });
+          if (!res.ok) {
+            console.error(`Logout error from ${base}: ${res.status}`);
+            continue;
+          }
+          logoutSuccess = true;
+          break; // Break out if successful
+        } catch (err) {
+          lastError = err;
+          console.error(`Logout error from ${base}:`, err);
+        }
+      }
+      if (!logoutSuccess) {
+        throw lastError;
+      }
+      localStorage.removeItem("operator_ID");
+      toast.success("Logout successful!");
+      navigate("/login-staff");
+    } catch (error: any) {
+      console.error("Logout failed:", error);
+      toast.error("Logout failed: " + error.message);
+    }
+  };
 
   // Fetch treatments with status Requested.
   useEffect(() => {
@@ -196,7 +245,7 @@ const FrontDeskOpTreatments = ({
               <Moon className="w-4 h-4 text-blue-400" />
             </div>
           </div>
-          <Button variant="destructive" className="flex items-center gap-2">
+          <Button variant="destructive" className="flex items-center gap-2" onClick={handleLogout}>
             <LogOut className="w-4 h-4" /> Logout
           </Button>
         </div>

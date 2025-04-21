@@ -3,6 +3,8 @@ import logo from '@/assets/images/logo.png';
 import { Button } from "@/components/ui/button";
 import { LogOut, Moon, Sun } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 type Patient = {
   id: number;
@@ -82,6 +84,15 @@ const DISCHARGE_PATIENT_URLS = [
   "http://localhost:5000/api/front-desk-operator/admissions/discharge"
 ];
 
+const LOGOUT_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/auth-staff/logout/fdo",
+  "http://localhost:5000/api/auth-staff/logout/fdo"
+];
+
 const FrontDeskOpAdmissions = ({
   darkMode,
   toggleDarkMode
@@ -96,6 +107,44 @@ const FrontDeskOpAdmissions = ({
   const [selectedWardType, setSelectedWardType] = useState<WardType>("");
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
+
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    try {
+      let lastError: any = null;
+      let logoutSuccess = false;
+      for (const base of LOGOUT_URLS) {
+        try {
+          const res = await fetch(base, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: localStorage.getItem("operator_ID") || ""
+            }),
+          });
+          if (!res.ok) {
+            console.error(`Logout error from ${base}: ${res.status}`);
+            continue;
+          }
+          logoutSuccess = true;
+          break; // Break out if successful
+        } catch (err) {
+          lastError = err;
+          console.error(`Logout error from ${base}:`, err);
+        }
+      }
+      if (!logoutSuccess) {
+        throw lastError;
+      }
+      localStorage.removeItem("operator_ID");
+      toast.success("Logout successful!");
+      navigate("/login-staff");
+    } catch (error: any) {
+      console.error("Logout failed:", error);
+      toast.error("Logout failed: " + error.message);
+    }
+  };
 
   // Fetch seeking admissions
   const fetchSeekingPatients = async () => {
@@ -263,7 +312,7 @@ const FrontDeskOpAdmissions = ({
               <Moon className="w-3 h-3 text-blue-400" />
             </div>
           </div>
-          <Button variant="destructive" className="flex items-center gap-1 text-xs sm:text-sm px-2 py-1">
+          <Button variant="destructive" className="flex items-center gap-1 text-xs sm:text-sm px-2 py-1" onClick={handleLogout}>
             <LogOut className="w-3 h-3" /> Logout
           </Button>
         </div>
