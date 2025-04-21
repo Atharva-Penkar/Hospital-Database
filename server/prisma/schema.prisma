@@ -148,11 +148,11 @@ model AuthPatient {
 
 model AuthStaff {
   id        Int      @id @default(autoincrement())
-  userId    Int
   password  String
   role      String
   createdAt DateTime @default(now())
   isOnline  Boolean  @default(false)
+  userId    Int
 }
 
 enum Gender {
