@@ -16,7 +16,6 @@ const DOSAGE_OPTIONS = [
   { value: "YYY", label: "All three times" },
 ];
 
-// All backend bases for robust fetch
 const BASES = [
   "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev",
   "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev",
@@ -61,7 +60,7 @@ const DoctorPending: React.FC = () => {
             continue;
           }
           logoutSuccess = true;
-          break; // Successful logout, exit the loop
+          break;
         } catch (err) {
           lastError = err;
           console.error(`Logout error from ${base}:`, err);
@@ -92,14 +91,15 @@ const DoctorPending: React.FC = () => {
   const [treatmentOptions, setTreatmentOptions] = useState<string[]>([]);
 
   // Form state for doctor's inputs
-  const [diagnosis, setDiagnosis] = useState("");
+  const [diagnoses, setDiagnoses] = useState<string[]>([]);
+  const [selectedDiagnosis, setSelectedDiagnosis] = useState("");
   const [tests, setTests] = useState<string[]>([]);
   const [treatments, setTreatments] = useState<
     { name: string; dosage: string; duration: string }[]
   >([]);
   const [admit, setAdmit] = useState(false);
 
-  // For treatment selection
+  // For treatment selection...
   const [selectedTreatment, setSelectedTreatment] = useState("");
   const [selectedDosage, setSelectedDosage] = useState("");
   const [selectedDuration, setSelectedDuration] = useState("");
@@ -160,7 +160,7 @@ const DoctorPending: React.FC = () => {
           if (patientData) setPatient(patientData.patient);
         }
 
-        // Fetch available diagnoses
+        // Fetch available diagnoses (diseases)
         let diagnosisData = null;
         for (let base of BASES) {
           try {
@@ -171,7 +171,7 @@ const DoctorPending: React.FC = () => {
             }
           } catch { }
         }
-        setDiagnosisOptions(diagnosisData?.diagnoses?.map((d: any) => d.diagnosis_Name) || []);
+        setDiagnosisOptions(diagnosisData?.diseases?.map((d: any) => d.Disease_Name) || []);
 
         // Fetch available tests
         let testData = null;
@@ -206,6 +206,17 @@ const DoctorPending: React.FC = () => {
     };
     if (appointmentId) fetchAll();
   }, [appointmentId]);
+
+  // --- Diagnoses: Add/Remove pattern like tests ---
+  const handleAddDiagnosis = () => {
+    if (selectedDiagnosis && !diagnoses.includes(selectedDiagnosis)) {
+      setDiagnoses(prev => [...prev, selectedDiagnosis]);
+      setSelectedDiagnosis("");
+    }
+  };
+  const handleRemoveDiagnosis = (diag: string) => {
+    setDiagnoses(prev => prev.filter(d => d !== diag));
+  };
 
   const handleAddTreatment = () => {
     if (selectedTreatment && selectedDosage && selectedDuration) {
@@ -255,7 +266,7 @@ const DoctorPending: React.FC = () => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              diagnosis,
+              diagnosis: diagnoses, // Array!
               tests,
               treatments,
               admit,
@@ -306,7 +317,7 @@ const DoctorPending: React.FC = () => {
 
   // --- Button enable/disable logic ---
   const canSubmit =
-    !!diagnosis ||
+    diagnoses.length > 0 ||
     tests.length > 0 ||
     treatments.length > 0 ||
     admit;
@@ -410,19 +421,51 @@ const DoctorPending: React.FC = () => {
                 <CardTitle>Doctor Actions</CardTitle>
               </CardHeader>
               <CardContent>
-                {/* Diagnosis */}
+                {/* Diagnoses */}
                 <div className="mb-4">
-                  <label className="font-semibold block mb-1">Diagnosis</label>
-                  <select
-                    className="w-full p-2 rounded border dark:bg-gray-700 dark:text-white"
-                    value={diagnosis}
-                    onChange={e => setDiagnosis(e.target.value)}
-                  >
-                    <option value="">Select diagnosis</option>
-                    {diagnosisOptions.map((diag) => (
-                      <option key={diag} value={diag}>{diag}</option>
-                    ))}
-                  </select>
+                  <label className="font-semibold block mb-1">Diagnoses</label>
+                  <div className="flex gap-2">
+                    <select
+                      className="flex-1 p-2 rounded border dark:bg-gray-700 dark:text-white"
+                      value={selectedDiagnosis}
+                      onChange={e => setSelectedDiagnosis(e.target.value)}
+                    >
+                      <option value="">Select diagnosis</option>
+                      {diagnosisOptions
+                        .filter(diag => !diagnoses.includes(diag))
+                        .map(diag => (
+                          <option key={diag} value={diag}>{diag}</option>
+                        ))}
+                    </select>
+                    <Button
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={handleAddDiagnosis}
+                      disabled={!selectedDiagnosis}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  {/* Diagnoses Chosen */}
+                  {diagnoses.length > 0 && (
+                    <div className="mt-3">
+                      <div className="font-semibold mb-1">Diagnoses Chosen:</div>
+                      <div className="flex flex-wrap gap-2">
+                        {diagnoses.map(diag => (
+                          <span key={diag} className="inline-flex items-center bg-green-100 text-green-800 rounded px-2 py-1 text-xs">
+                            {diag}
+                            <button
+                              className="ml-1 text-green-800 hover:text-red-600 focus:outline-none"
+                              onClick={() => handleRemoveDiagnosis(diag)}
+                              aria-label="Remove diagnosis"
+                              type="button"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Tests */}
@@ -540,8 +583,8 @@ const DoctorPending: React.FC = () => {
                 {/* Submit Button */}
                 <Button
                   className={`w-full mt-4 ${canSubmit
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "bg-gray-400 text-white cursor-not-allowed"
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-gray-400 text-white cursor-not-allowed"
                     }`}
                   onClick={handleSubmit}
                   disabled={!canSubmit}
