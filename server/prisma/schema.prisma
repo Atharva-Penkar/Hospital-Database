@@ -148,7 +148,7 @@ model AuthPatient {
 
 model AuthStaff {
   id        Int      @id @default(autoincrement())
-  userId    String   @unique
+  userId    Int
   password  String
   role      String
   createdAt DateTime @default(now())
