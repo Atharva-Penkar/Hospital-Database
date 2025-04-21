@@ -16,6 +16,7 @@ const DOSAGE_OPTIONS = [
   { value: "YYY", label: "All three times" },
 ];
 
+// All backend bases for robust fetch
 const BASES = [
   "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev",
   "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev",
@@ -86,31 +87,28 @@ const DoctorPending: React.FC = () => {
   // Data fetched from backend
   const [appointment, setAppointment] = useState<any>(null);
   const [patient, setPatient] = useState<any>(null);
-  const [diagnosisOptions, setDiagnosisOptions] = useState<string[]>([]);
-  const [testOptions, setTestOptions] = useState<string[]>([]);
-  const [treatmentOptions, setTreatmentOptions] = useState<string[]>([]);
+
+  // These will store full objects with IDs for mapping
+  const [diagnosisOptions, setDiagnosisOptions] = useState<{ Disease_Name: string }[]>([]);
+  const [testOptions, setTestOptions] = useState<{ T_ID: number, test_name: string }[]>([]);
+  const [treatmentOptions, setTreatmentOptions] = useState<{ Tr_ID: number, treatment_name: string }[]>([]);
 
   // Form state for doctor's inputs
   const [diagnoses, setDiagnoses] = useState<string[]>([]);
   const [selectedDiagnosis, setSelectedDiagnosis] = useState("");
-  const [tests, setTests] = useState<string[]>([]);
-  const [treatments, setTreatments] = useState<
-    { name: string; dosage: string; duration: string }[]
-  >([]);
-  const [admit, setAdmit] = useState(false);
-
-  // For treatment selection...
+  const [tests, setTests] = useState<{ T_ID: number, test_name: string }[]>([]);
+  const [selectedTest, setSelectedTest] = useState("");
+  const [treatments, setTreatments] = useState<{ Tr_ID: number, treatment_name: string, dosage: string, duration: string }[]>([]);
   const [selectedTreatment, setSelectedTreatment] = useState("");
   const [selectedDosage, setSelectedDosage] = useState("");
   const [selectedDuration, setSelectedDuration] = useState("");
+  const [admit, setAdmit] = useState(false);
 
   // For single-select tests dropdown
-  const [availableTests, setAvailableTests] = useState<string[]>([]);
-  const [selectedTest, setSelectedTest] = useState("");
+  const [availableTests, setAvailableTests] = useState<{ T_ID: number, test_name: string }[]>([]);
 
-  // Keep availableTests in sync with testOptions and tests
   useEffect(() => {
-    setAvailableTests(testOptions.filter((t) => !tests.includes(t)));
+    setAvailableTests(testOptions.filter((t) => !tests.some(added => added.T_ID === t.T_ID)));
   }, [testOptions, tests]);
 
   useEffect(() => {
@@ -145,7 +143,7 @@ const DoctorPending: React.FC = () => {
         if (!appointmentData) throw lastError || new Error("Failed to fetch appointment details");
         setAppointment(appointmentData.appointment);
 
-        // Fetch patient details (for medical history, allergies, etc.)
+        // Fetch patient details
         if (appointmentData.appointment?.P_ID) {
           let patientData = null;
           for (let base of BASES) {
@@ -171,7 +169,7 @@ const DoctorPending: React.FC = () => {
             }
           } catch { }
         }
-        setDiagnosisOptions(diagnosisData?.diseases?.map((d: any) => d.Disease_Name) || []);
+        setDiagnosisOptions(diagnosisData?.diseases || []);
 
         // Fetch available tests
         let testData = null;
@@ -184,7 +182,7 @@ const DoctorPending: React.FC = () => {
             }
           } catch { }
         }
-        setTestOptions(testData?.tests?.map((t: any) => t.test_name) || []);
+        setTestOptions(testData?.tests || []);
 
         // Fetch available treatments
         let treatmentData = null;
@@ -197,7 +195,7 @@ const DoctorPending: React.FC = () => {
             }
           } catch { }
         }
-        setTreatmentOptions(treatmentData?.treatments?.map((t: any) => t.treatment_name) || []);
+        setTreatmentOptions(treatmentData?.treatments || []);
       } catch (err: any) {
         setError(err.message || "Error fetching data");
       } finally {
@@ -218,37 +216,33 @@ const DoctorPending: React.FC = () => {
     setDiagnoses(prev => prev.filter(d => d !== diag));
   };
 
+  // --- Tests: Add selected test (store T_ID) ---
+  const handleAddTest = () => {
+    const testObj = testOptions.find(t => t.test_name === selectedTest);
+    if (testObj && !tests.some(t => t.T_ID === testObj.T_ID)) {
+      setTests(prev => [...prev, testObj]);
+      setSelectedTest("");
+    }
+  };
+  const handleRemoveTest = (T_ID: number) => {
+    setTests(prev => prev.filter(t => t.T_ID !== T_ID));
+  };
+
+  // --- Treatments: Add selected treatment (store Tr_ID) ---
   const handleAddTreatment = () => {
-    if (selectedTreatment && selectedDosage && selectedDuration) {
-      setTreatments((prev) => [
+    const treatObj = treatmentOptions.find(t => t.treatment_name === selectedTreatment);
+    if (treatObj && selectedDosage && selectedDuration) {
+      setTreatments(prev => [
         ...prev,
-        {
-          name: selectedTreatment,
-          dosage: selectedDosage,
-          duration: selectedDuration,
-        },
+        { ...treatObj, dosage: selectedDosage, duration: selectedDuration }
       ]);
       setSelectedTreatment("");
       setSelectedDosage("");
       setSelectedDuration("");
     }
   };
-
-  const handleRemoveTreatment = (idx: number) => {
-    setTreatments((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  // --- Tests: Add selected test ---
-  const handleAddTest = () => {
-    if (selectedTest && !tests.includes(selectedTest)) {
-      setTests((prev) => [...prev, selectedTest]);
-      setSelectedTest("");
-    }
-  };
-
-  // --- Tests: Remove a chosen test ---
-  const handleRemoveTest = (test: string) => {
-    setTests((prev) => prev.filter((t) => t !== test));
+  const handleRemoveTreatment = (Tr_ID: number) => {
+    setTreatments(prev => prev.filter(t => t.Tr_ID !== Tr_ID));
   };
 
   // --- Submit request to complete the appointment ---
@@ -257,6 +251,18 @@ const DoctorPending: React.FC = () => {
     setError(null);
 
     try {
+      // Prepare payload for backend
+      const payload = {
+        diagnosis: diagnoses, // array of strings
+        tests: tests.map(t => ({ T_ID: t.T_ID })), // array of objects
+        treatments: treatments.map(tr => ({
+          Tr_ID: tr.Tr_ID,
+          dosage: tr.dosage,
+          duration: Number(tr.duration)
+        })),
+        admit,
+      };
+
       // 1. POST to add appointment details
       let postSuccess = false;
       let lastPostError = null;
@@ -265,12 +271,7 @@ const DoctorPending: React.FC = () => {
           const res = await fetch(`${base}/api/appointment-details/add/${appointmentId}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              diagnosis: diagnoses, // Array!
-              tests,
-              treatments,
-              admit,
-            }),
+            body: JSON.stringify(payload),
           });
           if (res.ok) {
             postSuccess = true;
@@ -432,9 +433,9 @@ const DoctorPending: React.FC = () => {
                     >
                       <option value="">Select diagnosis</option>
                       {diagnosisOptions
-                        .filter(diag => !diagnoses.includes(diag))
+                        .filter(diag => !diagnoses.includes(diag.Disease_Name))
                         .map(diag => (
-                          <option key={diag} value={diag}>{diag}</option>
+                          <option key={diag.Disease_Name} value={diag.Disease_Name}>{diag.Disease_Name}</option>
                         ))}
                     </select>
                     <Button
@@ -479,7 +480,7 @@ const DoctorPending: React.FC = () => {
                     >
                       <option value="">Select test</option>
                       {availableTests.map((test) => (
-                        <option key={test} value={test}>{test}</option>
+                        <option key={test.T_ID} value={test.test_name}>{test.test_name}</option>
                       ))}
                     </select>
                     <Button
@@ -496,11 +497,11 @@ const DoctorPending: React.FC = () => {
                       <div className="font-semibold mb-1">Tests Chosen:</div>
                       <div className="flex flex-wrap gap-2">
                         {tests.map((test) => (
-                          <span key={test} className="inline-flex items-center bg-blue-100 text-blue-800 rounded px-2 py-1 text-xs">
-                            {test}
+                          <span key={test.T_ID} className="inline-flex items-center bg-blue-100 text-blue-800 rounded px-2 py-1 text-xs">
+                            {test.test_name}
                             <button
                               className="ml-1 text-blue-800 hover:text-red-600 focus:outline-none"
-                              onClick={() => handleRemoveTest(test)}
+                              onClick={() => handleRemoveTest(test.T_ID)}
                               aria-label="Remove test"
                               type="button"
                             >
@@ -524,7 +525,7 @@ const DoctorPending: React.FC = () => {
                     >
                       <option value="">Select treatment</option>
                       {treatmentOptions.map((treat) => (
-                        <option key={treat} value={treat}>{treat}</option>
+                        <option key={treat.Tr_ID} value={treat.treatment_name}>{treat.treatment_name}</option>
                       ))}
                     </select>
                     <select
@@ -556,11 +557,11 @@ const DoctorPending: React.FC = () => {
                   {/* List of added treatments */}
                   <ul>
                     {treatments.map((t, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-sm mb-1">
+                      <li key={t.Tr_ID} className="flex items-center gap-2 text-sm mb-1">
                         <span>
-                          {t.name} | Dosage: {t.dosage} | Duration: {t.duration} days
+                          {t.treatment_name} | Dosage: {t.dosage} | Duration: {t.duration} days
                         </span>
-                        <Button size="sm" variant="outline" onClick={() => handleRemoveTreatment(idx)}>
+                        <Button size="sm" variant="outline" onClick={() => handleRemoveTreatment(t.Tr_ID)}>
                           Remove
                         </Button>
                       </li>

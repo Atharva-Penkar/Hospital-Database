@@ -8,7 +8,7 @@ export const setAppointmentDetails = async (req: Request, res: Response) => {
   if (isNaN(appointmentId)) {
     return res.status(400).json({ error: "Invalid appointment ID" });
   }
-
+console.log("Received data:", req.body);
   // If you want to allow updating other direct fields, get them from req.body
   // For now, we'll just set Status to "Finished"
   try {

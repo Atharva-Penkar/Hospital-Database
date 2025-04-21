@@ -10,6 +10,7 @@ export const addAppointmentDetails = async (req: Request, res: Response) => {
   }
 
   const { admit, diagnosis, tests, treatments } = req.body;
+  console.log("Received data:", { admit, diagnosis, tests, treatments });
 
   try {
     // Get appointment for IDs
