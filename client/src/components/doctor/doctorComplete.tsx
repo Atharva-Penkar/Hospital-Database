@@ -80,7 +80,7 @@ const DoctorComplete: React.FC = () => {
       toast.error("Logout failed: " + error.message);
     }
   };
-  
+
 
   useEffect(() => {
     const id = localStorage.getItem("appointmentId");
@@ -140,7 +140,11 @@ const DoctorComplete: React.FC = () => {
               <Moon className="w-4 h-4 text-blue-400" />
             </div>
           </div>
-          <Button variant="destructive" className="flex items-center gap-2" onClick={handleLogout}>
+          <Button
+            variant="destructive"
+            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white transition-colors"
+            onClick={handleLogout}
+          >
             <LogOut className="w-4 h-4" />
             Logout
           </Button>
