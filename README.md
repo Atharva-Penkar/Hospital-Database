@@ -41,7 +41,18 @@ git clone https://github.com/your-repo/hospital-management-system.git
 cd hospital-management-system 
 ```
 
-2. **Start the frontend**
+2. **Set up environment variables**
+
+Inside the server directory, create a .env file.
+Add your Supabase connection string and other necessary secrets like this:
+
+```bash
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-secret-key
+DATABASE_URL=your_postgresql_connection_string
+```
+
+3. **Start the frontend**
 
 ```bash
 cd client
@@ -49,7 +60,7 @@ npm install
 npm run dev 
 ```
 
-3. **Start the backend**
+4. **Start the backend**
 
 ```bash
 cd server
@@ -57,7 +68,7 @@ npm install
 npm run dev
 ```
 
-4. **Access the application**
+5. **Access the application**
 
-  Once both servers are running, Ctrl + Click the link shown in the client terminal (usually http://localhost:5173) to open the app in your browser.
-  You’ll land on the homepage where you can log in as a patient or staff member.
+    Once both servers are running, Ctrl + Click the link shown in the client terminal (usually http://localhost:5173) to open the app in your browser.
+    You’ll land on the homepage where you can log in as a patient or staff member.
