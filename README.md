@@ -11,7 +11,7 @@ A full-stack hospital management system built using modern technologies like Rea
 
 ---
 
-## 🚀 Tech Stack
+## Tech Stack
 
 ### Frontend (client)
 - **React** – UI framework
@@ -38,8 +38,14 @@ A full-stack hospital management system built using modern technologies like Rea
 1. **Clone the repository**
 ```bash
 git clone https://github.com/your-repo/hospital-management-system.git
-cd hospital-management-system
+cd hospital-management-system ```
 
 2. **Start the frontend**
+
+```bash
+cd client
+npm install
+npm run dev ```
+
 
 
