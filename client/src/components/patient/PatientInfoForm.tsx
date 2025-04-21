@@ -10,7 +10,7 @@ import {
   SelectContent,
   SelectItem,
 } from "../../components/ui/select";
-import { toast } from "sonner";
+//import { toast } from "sonner";
 
 // Try Codespace URL first, then localhost
 const BACKEND_URLS = [
@@ -65,9 +65,9 @@ const PatientInfoForm: React.FC<PatientInfoFormProps> = ({ userId }) => {
 
         localStorage.setItem("userId", data.user.userId);
 
-        toast.success("Patient info saved successfully!", {
-          className: "bg-emerald-500 text-white",
-        });
+        // toast.success("Patient info saved successfully!", {
+        //   className: "bg-emerald-500 text-white",
+        // });
 
         // Navigate to patient home after success
         navigate("/patientHome");
@@ -79,9 +79,9 @@ const PatientInfoForm: React.FC<PatientInfoFormProps> = ({ userId }) => {
       }
     }
     // If none of the URLs succeeded, show an error.
-    toast.error("Submission error: " + (lastError?.message || "Unknown error"), {
-      className: "bg-rose-500 text-white",
-    });
+    // toast.error("Submission error: " + (lastError?.message || "Unknown error"), {
+    //   className: "bg-rose-500 text-white",
+    // });
   };
 
   return (
