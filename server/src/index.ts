@@ -53,6 +53,7 @@ import medicalHistoryRouter from "./routes/medical-history/medical-history.route
 import logoutFDORouter from "./routes/authStaff/logoutFDO.routes";
 import logoutDEORouter from "./routes/authStaff/logoutDEO.routes";
 import logoutDARouter from "./routes/authStaff/logoutDA.routes";
+import logoutDoctorRouter from "./routes/authStaff/logoutDoctor.routes";
 
 dotenv.config();
 const app = express();
@@ -80,6 +81,7 @@ app.use("/api/staff-login", loginStaffRouter);
 app.use("/api/auth-staff/logout/fdo", logoutFDORouter)
 app.use("/api/auth-staff/logout/deo", logoutDEORouter)
 app.use("/api/auth-staff/logout/da", logoutDARouter)
+app.use("/api/auth-staff/logout/doctor", logoutDoctorRouter)
 
 app.use("/api/auth-patient", authRouter);
 app.use("/api/patient", patientRouter);

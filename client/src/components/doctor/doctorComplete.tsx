@@ -3,6 +3,8 @@ import logo from "@/assets/images/logo.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { LogOut, Sun, Moon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const dosageLabels: Record<string, string> = {
   "NNN": "None",
@@ -25,12 +27,60 @@ const APPOINTMENT_DETAILS_BASES = [
   "http://localhost:5000"
 ];
 
+const LOGOUT_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/auth-staff/logout/doctor",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/auth-staff/logout/doctor",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/auth-staff/logout/doctor",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/auth-staff/logout/doctor",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/auth-staff/logout/doctor",
+  "http://localhost:5000/api/auth-staff/logout/doctor"
+];
+
 const DoctorComplete: React.FC = () => {
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [appointment, setAppointment] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    try {
+      let lastError: any = null;
+      let logoutSuccess = false;
+      for (const base of LOGOUT_URLS) {
+        try {
+          const res = await fetch(base, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: localStorage.getItem("D_ID") || ""
+            }),
+          });
+          if (!res.ok) {
+            console.error(`Logout error from ${base}: ${res.status}`);
+            continue;
+          }
+          logoutSuccess = true;
+          break; // Successful logout, exit the loop
+        } catch (err) {
+          lastError = err;
+          console.error(`Logout error from ${base}:`, err);
+        }
+      }
+      if (!logoutSuccess) {
+        throw lastError;
+      }
+      localStorage.removeItem("D_ID");
+      toast.success("Logout successful!");
+      navigate("/login-staff");
+    } catch (error: any) {
+      console.error("Logout failed:", error);
+      toast.error("Logout failed: " + error.message);
+    }
+  };
+  
 
   useEffect(() => {
     const id = localStorage.getItem("appointmentId");
@@ -90,7 +140,7 @@ const DoctorComplete: React.FC = () => {
               <Moon className="w-4 h-4 text-blue-400" />
             </div>
           </div>
-          <Button variant="destructive" className="flex items-center gap-2">
+          <Button variant="destructive" className="flex items-center gap-2" onClick={handleLogout}>
             <LogOut className="w-4 h-4" />
             Logout
           </Button>
