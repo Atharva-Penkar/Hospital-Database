@@ -59,5 +59,5 @@ npm run dev
 
 4. **Access the application**
 
- Once both servers are running, Ctrl + Click the link shown in the client terminal (usually http://localhost:5173) to open the app in your browser.
- You’ll land on the homepage where you can log in as a patient or staff member.
+  Once both servers are running, Ctrl + Click the link shown in the client terminal (usually http://localhost:5173) to open the app in your browser.
+  You’ll land on the homepage where you can log in as a patient or staff member.
