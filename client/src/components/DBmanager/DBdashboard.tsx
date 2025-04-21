@@ -133,7 +133,7 @@
 
 // export default DatabaseManager;
 // pages/DatabaseManager.jsx
-
+import logo from "@/assets/images/logo.png";
 import { useState } from "react";
 import { Database, Users, Calendar, ChevronRight, LogOut, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button"; // Adjust path as needed
@@ -202,8 +202,8 @@ const DatabaseManager = () => {
     <div className={`min-h-screen flex transition-colors duration-300 font-sans ${darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"}`}>
       {/* Sidebar */}
       <div className={`w-64 fixed left-0 top-0 h-full ${darkMode ? "bg-gray-800" : "bg-blue-800"} text-white`}>
-        <img src="/hospital-logo.png" alt="Hospital Logo" className="h-12 w-12" />
-        <h1 className="text-3xl font-bold">MediCare Hospital</h1>
+        <img src={logo} alt="Hospital Logo" className="h-12 w-12" />
+        <h1 className="text-3xl font-bold">MASA Hospital</h1>
         <div className="p-4 border-b border-opacity-20 flex items-center gap-2">
           <h1 className="text-xl font-bold">Hospital DB</h1>
         </div>
