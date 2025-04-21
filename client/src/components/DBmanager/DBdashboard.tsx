@@ -141,11 +141,30 @@ import PatientsTable from "@/components/DBmanager/PatientTable";
 import DoctorsTable from "@/components/DBmanager/DoctorTable";
 import TestsTable from "@/components/DBmanager/TestTablenew";
 import ProfilePage from "@/components/DBmanager/ProfilePage";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
+
+
+interface LogoutButtonProps {
+  onLogout: () => void;
+}
+
 interface HomePageProps {
       darkMode: boolean;
       toggleDarkMode: () => void;
     }  
 // Theme Toggle Switch
+const LOGOUT_URLS = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev/api/auth-staff/logout/da",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev/api/auth-staff/logout/da",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev/api/auth-staff/logout/da",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev/api/auth-staff/logout/da",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev/api/auth-staff/logout/da",
+  "http://localhost:5000/api/auth-staff/logout/da"
+];
+
+
 const ThemeToggleSwitch = ({ darkMode, toggleDarkMode }:HomePageProps) => (
   <div
     className="relative w-14 h-7 bg-gray-300 dark:bg-gray-700 rounded-full cursor-pointer transition"
@@ -165,7 +184,7 @@ const ThemeToggleSwitch = ({ darkMode, toggleDarkMode }:HomePageProps) => (
 );
 
 // Logout Button
-const LogoutButton = ({ onLogout }) => (
+const LogoutButton = ({ onLogout }: LogoutButtonProps) => (
   <Button
     variant="destructive"
     className="flex items-center gap-2"
@@ -193,10 +212,43 @@ const DatabaseManager = () => {
   const [darkMode, setDarkMode] = useState(false);
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
-  const handleLogout = () => {
-    // Implement your logout logic here
-    alert("Logged out!");
-  };
+  const navigate = useNavigate()
+  
+ const handleLogout = async () => {
+     try {
+       let lastError: any = null;
+       let logoutSuccess = false;
+       for (const base of LOGOUT_URLS) {
+         try {
+           const res = await fetch(base, {
+             method: "POST",
+             headers: { "Content-Type": "application/json" },
+             body: JSON.stringify({
+               userId: localStorage.getItem("administrator_ID") || ""
+             }),
+           });
+           if (!res.ok) {
+             console.error(`Logout error from ${base}: ${res.status}`);
+             continue;
+           }
+           logoutSuccess = true;
+           break; // Break out if successful
+         } catch (err) {
+           lastError = err;
+           console.error(`Logout error from ${base}:`, err);
+         }
+       }
+       if (!logoutSuccess) {
+         throw lastError;
+       }
+       localStorage.removeItem("administrator_ID");
+       toast.success("Logout successful!");
+       navigate("/login-staff");
+     } catch (error: any) {
+       console.error("Logout failed:", error);
+       toast.error("Logout failed: " + error.message);
+     }
+   };
 
   return (
     <div className={`min-h-screen flex transition-colors duration-300 font-sans ${darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"}`}>
