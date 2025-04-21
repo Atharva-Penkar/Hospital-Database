@@ -49,5 +49,9 @@ npm install
 npm run dev 
 ```
 
-
+```bash
+cd server
+npm install
+npm run dev
+```
 
