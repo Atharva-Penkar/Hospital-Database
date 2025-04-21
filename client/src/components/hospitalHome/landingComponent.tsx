@@ -46,7 +46,7 @@ const HospitalHome = ({ darkMode, toggleDarkMode }: HospitalHomePageProps) => {
             className="w-full text-2xl py-6 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg"
             onClick={() => navigate("/login-patient")}
           >
-            Patient Login
+            Patient Login/SignUp
           </Button>
           <Button
             className="w-full text-2xl py-6 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg"

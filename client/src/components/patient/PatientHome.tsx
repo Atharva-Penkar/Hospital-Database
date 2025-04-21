@@ -46,13 +46,13 @@ type Patient = {
   name: string;
   address: string;
   DOB: string;
-  Sex: string; // Returned as "Sex" (capitalized)
+  Sex: string;
   mail: string;
   phone_no: string;
   emergency_phone_no: string;
   admissions: any[];
   allergies: { allergy_name: string }[];
-  medicalHistory: MedicalHistoryRecord[]; // Nested medical history from patient table
+  medicalHistory: MedicalHistoryRecord[];
 };
 
 type Appointment = {
@@ -62,26 +62,22 @@ type Appointment = {
   Symptoms?: string;
 };
 
-// Fallback function to try multiple backend URLs.
 const fetchFromFallbackURLs = async (path: string, options?: RequestInit) => {
   let lastError: any = null;
   for (const baseUrl of BACKEND_URLS) {
     try {
       const res = await fetch(baseUrl + path, options);
       if (!res.ok) {
-        console.error(`Error from ${baseUrl + path}: status ${res.status}`);
         continue;
       }
       return res;
     } catch (err) {
       lastError = err;
-      console.error(`Error fetching from ${baseUrl + path}:`, err);
     }
   }
   throw lastError;
 };
 
-// Status to color mapping for appointments.
 const statusColors: { [key: string]: string } = {
   Requested: "text-red-600",
   Scheduled: "text-yellow-600",
@@ -92,18 +88,18 @@ const PatientHome = () => {
   const navigate = useNavigate();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [loadingPatient, setLoadingPatient] = useState(true);
-  
+
   // Appointment-related state
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loadingAppointments, setLoadingAppointments] = useState<boolean>(true);
-  
+
   // Appointment submission state (for the Request Appointment tab)
   const [appointmentData, setAppointmentData] = useState({
     date: "",
     time: "",
     message: "",
   });
-  
+
   const [darkMode, setDarkMode] = useState(false);
 
   // Dark mode effect on mount using localStorage.
@@ -149,7 +145,6 @@ const PatientHome = () => {
         if (!userId) throw new Error("User ID not found");
         const res = await fetchFromFallbackURLs(`/api/patient/${userId}`);
         const data = await res.json();
-        console.log("Fetched patient:", data.patient);
         setPatient(data.patient);
       } catch (err) {
         console.error("Error fetching patient:", err);
@@ -169,13 +164,11 @@ const PatientHome = () => {
         const res = await fetchFromFallbackURLs(`/api/appointments/patient/${patient.P_ID}`);
         const data = await res.json();
         if (Array.isArray(data.appointments)) {
-          console.log("Fetched appointments:", data.appointments);
           setAppointments(data.appointments);
         } else {
           throw new Error("Invalid appointments data");
         }
       } catch (err) {
-        console.error("Error fetching appointments:", err);
         toast.error("Failed to fetch appointments");
       } finally {
         setLoadingAppointments(false);
@@ -184,9 +177,15 @@ const PatientHome = () => {
     fetchAppointments();
   }, [patient]);
 
-  // Since medical history is now part of the patient object,
-  // we simply derive it from patient.medicalHistory.
-  const medicalHistory = patient?.medicalHistory || [];
+  // Split appointments into not finished and finished
+  const upcomingAppointments = appointments.filter(a => a.Status !== "Finished");
+  const finishedAppointments = appointments.filter(a => a.Status === "Finished");
+
+  // Handler for clicking a finished appointment
+  const handleFinishedAppointmentClick = (A_ID: number) => {
+    localStorage.setItem("appointmentId", String(A_ID));
+    navigate("/patient-finished");
+  };
 
   // Appointment submission handler.
   const handleSubmit = async () => {
@@ -210,7 +209,6 @@ const PatientHome = () => {
       toast.success("Appointment requested successfully!");
       setAppointmentData({ date: "", time: "", message: "" });
     } catch (err: any) {
-      console.error("Error occurred:", err);
       toast.error(`Failed: ${err.message}`);
     }
   };
@@ -233,7 +231,6 @@ const PatientHome = () => {
       toast.error(`Logout failed: ${err.message}`);
     }
   };
-
 
   return (
     <div className={`min-h-screen p-6 transition-colors duration-300 ${darkMode ? "bg-gray-900 text-blue-400" : "bg-gray-100 text-black"}`}>
@@ -294,29 +291,65 @@ const PatientHome = () => {
         </Card>
 
         {/* Tabs */}
-        <Tabs defaultValue="appointments" className="w-full">
+        <Tabs defaultValue="upcoming" className="w-full">
           <TabsList className="mb-4">
-            <TabsTrigger value="appointments">Appointments</TabsTrigger>
+            <TabsTrigger value="upcoming">Upcoming Appointments</TabsTrigger>
+            <TabsTrigger value="finished">Completed Appointments</TabsTrigger>
             <TabsTrigger value="history">Medical History</TabsTrigger>
             <TabsTrigger value="request">Request Appointment</TabsTrigger>
           </TabsList>
 
-          {/* Appointments Tab */}
-          <TabsContent value="appointments">
+          {/* Upcoming Appointments Tab */}
+          <TabsContent value="upcoming">
             <Card className={`rounded-xl shadow ${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
               <CardHeader>
-                <CardTitle>My Appointments</CardTitle>
+                <CardTitle>Upcoming Appointments</CardTitle>
               </CardHeader>
               <CardContent>
                 {loadingAppointments ? (
                   <p>Loading appointments...</p>
-                ) : appointments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No appointments found.</p>
+                ) : upcomingAppointments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No upcoming appointments found.</p>
                 ) : (
                   <ul className="space-y-2">
-                    {appointments.map((appt) => (
+                    {upcomingAppointments.map((appt) => (
                       <li key={appt.A_ID} className={statusColors[appt.Status] || "text-base"}>
                         {format(new Date(appt.TimeStamp), "PPP p")} - {appt.Status}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Completed Appointments Tab */}
+          <TabsContent value="finished">
+            <Card className={`rounded-xl shadow ${darkMode ? "bg-gray-800 border-gray-700" : ""}`}>
+              <CardHeader>
+                <CardTitle>Completed Appointments</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingAppointments ? (
+                  <p>Loading appointments...</p>
+                ) : finishedAppointments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No completed appointments found.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {finishedAppointments.map((appt) => (
+                      <li
+                        key={appt.A_ID}
+                        className={`cursor-pointer underline ${statusColors[appt.Status] || "text-base"}`}
+                        onClick={() => handleFinishedAppointmentClick(appt.A_ID)}
+                        tabIndex={0}
+                        role="button"
+                        onKeyDown={e => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            handleFinishedAppointmentClick(appt.A_ID);
+                          }
+                        }}
+                      >
+                        {format(new Date(appt.TimeStamp), "PPP p")} - {appt.Status} (View Details)
                       </li>
                     ))}
                   </ul>
