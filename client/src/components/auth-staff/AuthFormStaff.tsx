@@ -101,7 +101,7 @@ export const AuthFormStaff = () => {
     let lastError: any = null;
     for (const base of STAFF_LOGIN_BASES) {
       try {
-        const res = await fetch(`${base}/api/auth/staff/login`, {
+        const res = await fetch(`${base}/api/staff-login/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
