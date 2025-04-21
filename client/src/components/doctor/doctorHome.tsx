@@ -71,8 +71,7 @@ async function fetchFromAllBases(bases: string[], endpoint: string, options?: Re
 }
 
 const DoctorHome: React.FC = () => {
-  // Replace with actual doctor ID (from auth or context)
-  const doctorId = 103;
+  const [doctorId, setDoctorId] = useState<number | null>(null);
   const navigate = useNavigate();
 
   const [darkMode, setDarkMode] = useState(false);
@@ -85,8 +84,20 @@ const DoctorHome: React.FC = () => {
   const [admittedPatients, setAdmittedPatients] = useState<AdmittedPatient[]>([]);
   const [activeTab, setActiveTab] = useState<"pending" | "completed" | "admitted">("pending");
 
-  // Fetch all data in parallel using for-loop fallback logic
+  // Get doctorId from localStorage on mount
   useEffect(() => {
+    const id = Number(localStorage.getItem("D_ID"));
+    if (id) {
+      setDoctorId(id);
+    } else {
+      setFetchError("No doctor ID found. Please log in again.");
+      navigate("/staff-login");
+    }
+  }, []);
+
+  // Fetch all data in parallel using for-loop fallback logic, only when doctorId is available
+  useEffect(() => {
+    if (!doctorId) return;
     setLoading(true);
     setFetchError(null);
 
@@ -133,6 +144,7 @@ const DoctorHome: React.FC = () => {
 
   // Request discharge for a patient using all bases
   const handleRequestDischarge = async (admit_id: number) => {
+    if (!doctorId) return;
     let dischargeSuccess = false;
     for (let base of BASE_URLS) {
       try {

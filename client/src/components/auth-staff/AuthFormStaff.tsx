@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import logo from "@/assets/images/logo.png";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,16 @@ const STAFF_ROLES = [
   { value: "database-administrator", label: "Database Administrator" },
 ];
 
+// All backend bases for robust login
+const STAFF_LOGIN_BASES = [
+  "https://probable-parakeet-9vw4979p6q5c4x4-5000.app.github.dev",
+  "https://effective-enigma-6jx7j47vvj635gqv-5000.app.github.dev",
+  "https://improved-umbrella-6997vv74rqgpc59gx-5000.app.github.dev",
+  "https://bug-free-zebra-7qw4vwr6jq5cwp6x-5000.app.github.dev",
+  "https://special-spoon-q7wxq4pjqwrf4rrw-5000.app.github.dev",
+  "http://localhost:5000"
+];
+
 export const AuthFormStaff = () => {
   const [formData, setFormData] = useState({
     userId: "",
@@ -28,6 +39,7 @@ export const AuthFormStaff = () => {
     role: "",
   });
   const [darkMode, setDarkMode] = useState(false);
+  const navigate = useNavigate();
 
   // On mount, set theme based on localStorage or system preference – apply to root (<html>)
   useEffect(() => {
@@ -62,25 +74,51 @@ export const AuthFormStaff = () => {
     setFormData({ ...formData, role });
   };
 
+  // Common handler for navigation and localStorage
+  const handleLoginSuccess = (user: any, role: string) => {
+    if (role === "doctor") {
+      // Set D_ID in localStorage and navigate
+      localStorage.setItem("D_ID", String(user.userId ?? user.D_ID ?? user.id));
+      navigate("/doctor-home");
+    } else if (role === "front-desk-operator") {
+      localStorage.setItem("operator_ID", String(user.userId ?? user.id));
+      navigate("/front-desk-dashboard");
+    } else if (role === "data-entry-operator") {
+      localStorage.setItem("operator_ID", String(user.userId ?? user.id));
+      navigate("/data-entry-home");
+    } else if (role === "database-administrator") {
+      localStorage.setItem("administrator_ID", String(user.userId ?? user.id));
+      navigate("/database-manager");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.userId || !formData.password || !formData.role) {
       toast.error("Please fill all fields");
       return;
     }
-    try {
-      const res = await fetch("http://localhost:5000/api/auth/staff/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Login failed");
-      toast.success("Login successful!");
-      // Redirect based on role if needed.
-    } catch (err: any) {
-      toast.error(err.message);
+    let lastError: any = null;
+    for (const base of STAFF_LOGIN_BASES) {
+      try {
+        const res = await fetch(`${base}/api/auth/staff/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...formData,
+            userId: isNaN(Number(formData.userId)) ? formData.userId : Number(formData.userId)
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Login failed");
+        toast.success("Login successful!");
+        handleLoginSuccess(data.user, formData.role);
+        return;
+      } catch (err: any) {
+        lastError = err;
+      }
     }
+    toast.error(lastError?.message || "Login failed");
   };
 
   return (
