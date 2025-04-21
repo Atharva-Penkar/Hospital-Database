@@ -357,8 +357,8 @@ const FrontDeskOpAdmissions = ({
                 >
                   <option value="">-- Select --</option>
                   <option value="General">General (1-20)</option>
-                  <option value="Maternity">Maternity (21-30)</option>
-                  <option value="ICU">ICU (31-40)</option>
+                  <option value="ICU">ICU (21-30)</option>
+                  <option value="Maternity">Maternity (31-40)</option>
                 </select>
               </div>
             </div>
