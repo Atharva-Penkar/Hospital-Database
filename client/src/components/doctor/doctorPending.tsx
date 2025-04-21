@@ -155,7 +155,7 @@ const DoctorPending: React.FC = () => {
                 patientData = await patientRes.json();
                 break;
               }
-            } catch {}
+            } catch { }
           }
           if (patientData) setPatient(patientData.patient);
         }
@@ -169,7 +169,7 @@ const DoctorPending: React.FC = () => {
               diagnosisData = await diagnosisRes.json();
               break;
             }
-          } catch {}
+          } catch { }
         }
         setDiagnosisOptions(diagnosisData?.diagnoses?.map((d: any) => d.diagnosis_Name) || []);
 
@@ -182,7 +182,7 @@ const DoctorPending: React.FC = () => {
               testData = await testRes.json();
               break;
             }
-          } catch {}
+          } catch { }
         }
         setTestOptions(testData?.tests?.map((t: any) => t.test_name) || []);
 
@@ -195,7 +195,7 @@ const DoctorPending: React.FC = () => {
               treatmentData = await treatmentRes.json();
               break;
             }
-          } catch {}
+          } catch { }
         }
         setTreatmentOptions(treatmentData?.treatments?.map((t: any) => t.treatment_name) || []);
       } catch (err: any) {
@@ -332,7 +332,11 @@ const DoctorPending: React.FC = () => {
               <Moon className="w-4 h-4 text-blue-400" />
             </div>
           </div>
-          <Button variant="destructive" className="flex items-center gap-2" onClick={handleLogout}>
+          <Button
+            variant="destructive"
+            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white transition-colors"
+            onClick={handleLogout}
+          >
             <LogOut className="w-4 h-4" />
             Logout
           </Button>
@@ -364,8 +368,8 @@ const DoctorPending: React.FC = () => {
                 <ul className="list-disc ml-6">
                   {patient.medicalHistory?.length
                     ? patient.medicalHistory.map((mh: any, i: number) =>
-                        <li key={i}>{mh.disease?.Disease_Name || "Unknown"}</li>
-                      )
+                      <li key={i}>{mh.disease?.Disease_Name || "Unknown"}</li>
+                    )
                     : <li>None</li>
                   }
                 </ul>
@@ -373,8 +377,8 @@ const DoctorPending: React.FC = () => {
                 <ul className="list-disc ml-6">
                   {patient.allergies?.length
                     ? patient.allergies.map((a: any, i: number) =>
-                        <li key={i}>{a.name || "Unknown"}</li>
-                      )
+                      <li key={i}>{a.name || "Unknown"}</li>
+                    )
                     : <li>None</li>
                   }
                 </ul>
@@ -535,11 +539,10 @@ const DoctorPending: React.FC = () => {
 
                 {/* Submit Button */}
                 <Button
-                  className={`w-full mt-4 ${
-                    canSubmit
+                  className={`w-full mt-4 ${canSubmit
                       ? "bg-blue-600 hover:bg-blue-700 text-white"
                       : "bg-gray-400 text-white cursor-not-allowed"
-                  }`}
+                    }`}
                   onClick={handleSubmit}
                   disabled={!canSubmit}
                 >
