@@ -5,8 +5,8 @@ A full-stack hospital management system built using modern technologies like Rea
 ---
 
 ## 📁 Project Structure
-<pre> . ├── client # Frontend - React + TypeScript + Tailwind CSS + shadcn 
-    └── server # Backend - Express.js + Prisma + PostgreSQL  </pre>
+<pre> ├── client # Frontend - React + TypeScript + Tailwind CSS + shadcn 
+└── server # Backend - Express.js + Prisma + PostgreSQL  </pre>
 
 
 ---
