@@ -133,9 +133,8 @@
 
 // export default DatabaseManager;
 // pages/DatabaseManager.jsx
-
-import { useState } from "react";
-import { Database, Users, Calendar, ChevronRight, LogOut, Sun, Moon } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Database, Users, ChevronRight, LogOut, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button"; // Adjust path as needed
 import PatientsTable from "@/components/DBmanager/PatientTable";
 import DoctorsTable from "@/components/DBmanager/DoctorTable";
@@ -210,10 +209,24 @@ const user = { id: "D12345", name: "John Doe" };
 const DatabaseManager = () => {
   const [activeDatabase, setActiveDatabase] = useState("home");
   const [darkMode, setDarkMode] = useState(false);
+  const [user, setUser] = useState({ id: "", name: "" });
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
   const navigate = useNavigate()
-  
+
+  useEffect(() => {
+    // Retrieve user ID from localStorage
+    const administratorId = localStorage.getItem("administrator_ID");
+    
+    if (administratorId) {
+      // Basic approach - just set the ID
+      setUser({ id: administratorId, name: "Administrator" });
+      
+      // Alternative: Fetch complete user info from your API
+      // fetchUserDetails(administratorId);
+    }
+  }, []);
+
  const handleLogout = async () => {
      try {
        let lastError: any = null;
