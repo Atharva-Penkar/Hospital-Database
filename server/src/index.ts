@@ -4,6 +4,8 @@ import cors from "cors";
 import prisma from "./utils/prisma"
 
 // Routers
+import loginStaffRouter from "./routes/authStaff/loginStaff.routes";
+
 import authRouter from "./routes/authPatient/authPatient.routes";
 import patientRouter from "./routes/patient/patientHome.routes";
 import patientInfoRouter from "./routes/patient/patientInfo.routes";
@@ -71,6 +73,8 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
+app.use("/api/staff-login", loginStaffRouter);
+
 app.use("/api/auth-patient", authRouter);
 app.use("/api/patient", patientRouter);
 app.use("/api/patient-info", patientInfoRouter)

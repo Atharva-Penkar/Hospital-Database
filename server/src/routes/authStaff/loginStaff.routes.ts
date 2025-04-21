@@ -2,9 +2,9 @@ import { Router } from "express";
 import { loginStaff } from "../../controllers/authStaff/loginStaff.controllers";
 import asyncHandler from "../../middlewares/RouteErrorHandler";
 
-const authStaffRouter = Router();
+const loginStaffRouter = Router();
 
 // POST /api/auth/staff/login
-authStaffRouter.post("/", asyncHandler(loginStaff));
+loginStaffRouter.post("/", asyncHandler(loginStaff));
 
-export default authStaffRouter;
+export default loginStaffRouter;
