@@ -57,6 +57,8 @@ DATABASE_URL=your_postgresql_connection_string
 ```bash
 cd client
 npm install
+npx prisma db pull
+npz prisma generate
 npm run dev 
 ```
 
